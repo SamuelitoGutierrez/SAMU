@@ -14,13 +14,12 @@ def registrar_rutas(app):
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
             
-            <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
-            
             <style>
+                /* Aplicamos la fuente Arial Rounded MT Bold a todo el sistema */
                 body {
                     background: radial-gradient(circle at center, #ffffff 0%, #f4f6f9 60%, #e8edf2 100%);
                     margin: 0;
-                    font-family: 'Playfair Display', serif; /* Letra clásica aplicada a todo */
+                    font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif; 
                     overflow: hidden;
                     height: 100vh;
                     display: flex;
@@ -33,7 +32,7 @@ def registrar_rutas(app):
                     flex-direction: column;
                     align-items: center;
                     width: 100%;
-                    max-width: 400px;
+                    max-width: 420px; /* Un poco más de margen para el logo grande */
                     position: relative;
                 }
 
@@ -42,39 +41,37 @@ def registrar_rutas(app):
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    transform: translateY(10vh); /* Empieza un poco abajo */
+                    transform: translateY(12vh); /* Inicia acomodado para el nuevo tamaño */
                     transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
                     z-index: 2;
                 }
                 
-                /* Movimiento del bloque completo hacia arriba */
                 .brand-group.move-up-group {
-                    transform: translateY(-5vh);
+                    transform: translateY(-4vh);
                 }
 
-                /* 1. Logo */
+                /* 1. Logo (Ahora mucho más grande) */
                 .logo-img {
-                    width: 200px;
+                    width: 250px; /* Aumentado de 200px a 250px */
                     opacity: 0;
                     transform: translateY(0);
-                    filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.08));
+                    filter: drop-shadow(0px 12px 25px rgba(0,0,0,0.1));
                     transition: opacity 1.2s ease, transform 1s ease;
                 }
                 .logo-img.fade-in {
                     opacity: 1;
                 }
                 .logo-img.move-up-logo {
-                    transform: translateY(-15px); /* Pequeño salto inicial del logo */
+                    transform: translateY(-15px);
                 }
 
                 /* 2. Texto SAMU */
                 .brand-samu {
-                    font-size: 4rem;
-                    font-weight: 800;
+                    font-size: 4.2rem;
                     color: #1a1e24;
                     opacity: 0;
                     margin-top: 5px;
-                    letter-spacing: 0.15em;
+                    letter-spacing: 0.05em; /* Ligeramente más junto para combinar con Arial Rounded */
                     transition: opacity 1.2s ease;
                 }
                 .brand-samu.fade-in {
@@ -84,14 +81,14 @@ def registrar_rutas(app):
                 /* --- ÁREA DE ACCIÓN (Botones y Login) --- */
                 .action-area {
                     width: 100%;
-                    opacity: 0; /* Oculto al inicio */
+                    opacity: 0;
                     visibility: hidden;
                     transform: translateY(20px);
                     transition: all 1s ease;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    margin-top: 20px;
+                    margin-top: 15px;
                 }
                 .action-area.show {
                     opacity: 1;
@@ -99,16 +96,15 @@ def registrar_rutas(app):
                     transform: translateY(0);
                 }
 
-                /* Botones Clásicos */
+                /* Botones */
                 .btn-comenzar {
                     background-color: #1a1e24;
                     color: #ffffff;
                     padding: 16px 40px;
-                    border-radius: 4px; /* Bordes menos redondeados, más clásicos */
+                    border-radius: 12px; /* Bordes redondeados haciendo juego con la letra */
                     border: none;
-                    font-weight: 600;
                     font-size: 1.1rem;
-                    letter-spacing: 2px;
+                    letter-spacing: 1px;
                     box-shadow: 0 10px 25px rgba(26, 30, 36, 0.15);
                     transition: all 0.3s ease;
                     width: 90%;
@@ -127,12 +123,11 @@ def registrar_rutas(app):
                 .btn-panel {
                     background-color: transparent;
                     color: #5a6473;
-                    border: 1px solid #cdd4dc;
+                    border: 2px solid #cdd4dc;
                     padding: 14px 40px;
-                    border-radius: 4px;
-                    font-weight: 600;
+                    border-radius: 12px;
                     font-size: 0.95rem;
-                    letter-spacing: 2px;
+                    letter-spacing: 1px;
                     width: 90%;
                     transition: all 0.3s ease;
                     text-transform: uppercase;
@@ -143,34 +138,32 @@ def registrar_rutas(app):
                     border-color: #a0abb8;
                 }
 
-                /* Tarjeta de Login (Elegante y minimalista) */
+                /* Tarjeta de Login */
                 #login-box {
-                    display: none; /* Oculto inicialmente, manejado por jQuery */
+                    display: none; 
                     width: 90%;
                     background: #ffffff;
-                    padding: 40px 30px;
-                    border-radius: 4px;
-                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+                    padding: 35px 30px;
+                    border-radius: 15px;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
                     text-align: left;
                     margin-bottom: 20px;
-                    border-top: 3px solid #1a1e24; /* Detalle elegante en la parte superior */
+                    border-top: 4px solid #1a1e24; 
                 }
 
                 .form-label {
-                    font-weight: 600;
-                    font-size: 0.9rem;
+                    font-size: 0.95rem;
                     color: #4a5360;
-                    letter-spacing: 1px;
+                    letter-spacing: 0.5px;
                     text-transform: uppercase;
                 }
 
                 .form-control {
                     background-color: #f8fafc;
                     border: 1px solid #e2e8f0;
-                    border-radius: 2px;
+                    border-radius: 8px;
                     padding: 12px 15px;
-                    font-family: 'Playfair Display', serif;
-                    font-style: italic; /* Toque clásico en el texto de entrada */
+                    font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
                     font-size: 1rem;
                     color: #1a1e24;
                     transition: all 0.3s ease;
@@ -184,10 +177,10 @@ def registrar_rutas(app):
                 .btn-ingresar {
                     background-color: #1a1e24;
                     color: white;
-                    border-radius: 2px;
+                    border-radius: 8px;
                     padding: 14px;
-                    font-weight: 600;
-                    letter-spacing: 2px;
+                    font-size: 1.05rem;
+                    letter-spacing: 1px;
                     border: none;
                     text-transform: uppercase;
                     transition: background-color 0.3s ease;
@@ -213,7 +206,7 @@ def registrar_rutas(app):
                     </button>
 
                     <div id="login-box">
-                        <h4 class="mb-4 text-center fw-bold" style="color: #1a1e24; font-size: 1.5rem; letter-spacing: 1px;">Ingreso Seguro</h4>
+                        <h4 class="mb-4 text-center" style="color: #1a1e24; font-size: 1.5rem; letter-spacing: 1px;">INGRESO SEGURO</h4>
                         <div class="mb-3">
                             <label class="form-label">Usuario</label>
                             <input type="text" class="form-control" placeholder="Ej: Administrador">
@@ -235,39 +228,30 @@ def registrar_rutas(app):
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
                 window.onload = function() {
-                    // 1. Aparece el Logo
                     setTimeout(() => {
                         document.getElementById('logoImg').classList.add('fade-in');
                     }, 300);
 
-                    // 2. El logo sube sutilmente para hacerle espacio a SAMU
                     setTimeout(() => {
                         document.getElementById('logoImg').classList.add('move-up-logo');
                     }, 1200);
 
-                    // 3. Aparece la palabra SAMU
                     setTimeout(() => {
                         document.getElementById('brandName').classList.add('fade-in');
                     }, 1800);
 
-                    // 4. Todo el bloque (Logo + SAMU) sube hacia la parte superior
                     setTimeout(() => {
                         document.getElementById('brandGroup').classList.add('move-up-group');
                     }, 2800);
 
-                    // 5. Aparecen los botones en el espacio que quedó abajo
                     setTimeout(() => {
                         document.getElementById('actionArea').classList.add('show');
                     }, 3500);
                 };
 
-                // Lógica de interacción fluida
                 $('#btnComenzar').click(function() {
-                    // Oculta el botón COMENZAR deslizándolo hacia arriba
                     $(this).slideUp(300);
                     
-                    // Muestra el Login deslizándolo hacia abajo, 
-                    // empujando naturalmente a PANEL PRINCIPAL
                     setTimeout(() => {
                         $('#login-box').slideDown(500);
                     }, 300);
