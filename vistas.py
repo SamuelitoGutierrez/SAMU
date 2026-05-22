@@ -15,18 +15,26 @@ def registrar_rutas(app):
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
             
             <style>
-                /* Fondo claro y luminoso */
+                /* ANIMACIÓN DEL FONDO DINÁMICO */
+                @keyframes gradienteDinamico {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+
                 body {
-                    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+                    /* Degradado mezclando los colores de tu imagen: Azul profundo, cyan neón, y toques violetas */
+                    background: linear-gradient(-45deg, #050b14, #0a1128, #113154, #09091c, #004d7a);
+                    background-size: 400% 400%;
+                    animation: gradienteDinamico 15s ease infinite;
                     margin: 0;
-                    /* Fuente principal Bauhaus 93, con alternativas limpias por si acaso */
                     font-family: 'Bauhaus 93', 'Arial Rounded MT Bold', sans-serif;
                     overflow: hidden;
                     height: 100vh;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    color: #1e293b;
+                    color: #ffffff;
                 }
 
                 .main-wrapper {
@@ -52,12 +60,12 @@ def registrar_rutas(app):
                     transform: translateY(-4vh);
                 }
 
-                /* Logo con sombra suave clara */
+                /* Logo con resplandor neón */
                 .logo-img {
                     width: 250px;
                     opacity: 0;
                     transform: translateY(0);
-                    filter: drop-shadow(0px 15px 25px rgba(0,0,0,0.08));
+                    filter: drop-shadow(0px 0px 25px rgba(0, 195, 255, 0.4));
                     transition: opacity 1.2s ease, transform 1s ease;
                 }
                 .logo-img.fade-in {
@@ -67,13 +75,14 @@ def registrar_rutas(app):
                     transform: translateY(-15px);
                 }
 
-                /* Texto SAMU en Bauhaus 93 */
+                /* Texto SAMU */
                 .brand-samu {
-                    font-size: 4.8rem;
-                    color: #0f172a;
+                    font-size: 5rem;
+                    color: #ffffff;
                     opacity: 0;
                     margin-top: 5px;
-                    letter-spacing: 0.05em;
+                    letter-spacing: 0.08em;
+                    text-shadow: 0px 10px 30px rgba(0, 195, 255, 0.6);
                     transition: opacity 1.2s ease;
                 }
                 .brand-samu.fade-in {
@@ -98,16 +107,16 @@ def registrar_rutas(app):
                     transform: translateY(0);
                 }
 
-                /* Botones elegantes y sólidos */
+                /* Botón COMENZAR vibrante */
                 .btn-comenzar {
-                    background-color: #0f172a;
+                    background: linear-gradient(90deg, #0073ff 0%, #00c3ff 100%);
                     color: #ffffff;
                     padding: 16px 40px;
                     border-radius: 16px;
                     border: none;
                     font-size: 1.2rem;
                     letter-spacing: 2px;
-                    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+                    box-shadow: 0 10px 30px rgba(0, 195, 255, 0.4);
                     transition: all 0.3s ease;
                     width: 90%;
                     margin-bottom: 20px;
@@ -115,8 +124,7 @@ def registrar_rutas(app):
                 }
                 .btn-comenzar:hover {
                     transform: translateY(-3px);
-                    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.3);
-                    background-color: #1e293b;
+                    box-shadow: 0 15px 40px rgba(0, 195, 255, 0.6);
                 }
                 .btn-comenzar i {
                     margin-left: 10px;
@@ -125,8 +133,8 @@ def registrar_rutas(app):
 
                 .btn-panel {
                     background-color: transparent;
-                    color: #64748b;
-                    border: 2px solid #cbd5e1;
+                    color: #b0c4de;
+                    border: 2px solid rgba(255, 255, 255, 0.2);
                     padding: 14px 40px;
                     border-radius: 16px;
                     font-size: 1rem;
@@ -136,55 +144,58 @@ def registrar_rutas(app):
                     text-transform: uppercase;
                 }
                 .btn-panel:hover {
-                    background-color: #ffffff;
-                    color: #0f172a;
-                    border-color: #94a3b8;
+                    background-color: rgba(255, 255, 255, 0.1);
+                    color: #ffffff;
+                    border-color: #ffffff;
                 }
 
-                /* --- NUEVO CUADRO DE LOGIN ELEGANTE --- */
+                /* --- LOGIN CON EFECTO CRISTAL (Glassmorphism) --- */
                 #login-box {
                     display: none; 
                     width: 90%;
-                    background: #ffffff;
+                    background: rgba(255, 255, 255, 0.05); /* Blanco súper transparente */
+                    backdrop-filter: blur(16px); /* Desenfoque del fondo */
+                    -webkit-backdrop-filter: blur(16px);
                     padding: 40px 35px;
-                    border-radius: 24px; /* Bordes más redondeados */
-                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05); /* Sombra súper difuminada y suave */
+                    border-radius: 24px;
+                    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
                     text-align: left;
                     margin-bottom: 20px;
-                    border: 1px solid rgba(0, 0, 0, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.15); /* Borde luminoso */
                 }
 
                 .form-label {
                     font-size: 0.95rem;
-                    color: #64748b;
+                    color: #e2e8f0;
                     letter-spacing: 1px;
                     text-transform: uppercase;
                     margin-bottom: 8px;
-                    font-family: 'Arial Rounded MT Bold', sans-serif; /* Para que sea más legible */
+                    font-family: 'Arial Rounded MT Bold', sans-serif;
                 }
 
-                /* Casillas de texto minimalistas */
+                /* Casillas de texto adaptadas al diseño oscuro */
                 .form-control {
-                    background-color: #f8fafc; /* Gris perlado muy claro */
-                    border: 1px solid transparent;
+                    background-color: rgba(0, 0, 0, 0.2);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                     border-radius: 12px;
                     padding: 15px;
-                    font-family: 'Arial', sans-serif; /* Letra estándar para leer bien lo que se escribe */
+                    font-family: 'Arial', sans-serif;
                     font-size: 1rem;
-                    color: #0f172a;
+                    color: #ffffff;
                     transition: all 0.3s ease;
                 }
                 .form-control:focus {
-                    background-color: #ffffff;
-                    border: 1px solid #3b82f6;
-                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); /* Resplandor azul al hacer clic */
+                    background-color: rgba(0, 0, 0, 0.4);
+                    border: 1px solid #00c3ff;
+                    box-shadow: 0 0 0 4px rgba(0, 195, 255, 0.2);
+                    color: #ffffff;
                 }
                 .form-control::placeholder {
-                    color: #cbd5e1;
+                    color: #94a3b8;
                 }
 
                 .btn-ingresar {
-                    background-color: #0ea5e9;
+                    background: linear-gradient(90deg, #0073ff 0%, #00c3ff 100%);
                     color: white;
                     border-radius: 12px;
                     padding: 15px;
@@ -194,10 +205,10 @@ def registrar_rutas(app):
                     text-transform: uppercase;
                     transition: background-color 0.3s ease;
                     margin-top: 15px;
-                    box-shadow: 0 8px 15px rgba(14, 165, 233, 0.2);
+                    box-shadow: 0 8px 20px rgba(0, 195, 255, 0.3);
                 }
                 .btn-ingresar:hover {
-                    background-color: #0284c7;
+                    filter: brightness(1.2);
                 }
             </style>
         </head>
@@ -217,7 +228,7 @@ def registrar_rutas(app):
                     </button>
 
                     <div id="login-box">
-                        <h4 class="mb-4 text-center" style="color: #0f172a; font-size: 1.8rem; letter-spacing: 2px;">INGRESO</h4>
+                        <h4 class="mb-4 text-center" style="color: #ffffff; font-size: 1.8rem; letter-spacing: 2px;">INGRESO</h4>
                         <div class="mb-3">
                             <label class="form-label">Usuario</label>
                             <input type="text" class="form-control" placeholder="Escribe tu usuario">
