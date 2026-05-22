@@ -3,14 +3,13 @@ from flask import render_template_string, url_for
 def registrar_rutas(app):
     @app.route('/')
     def inicio():
-        # Usamos render_template_string para poder enlazar la carpeta static correctamente
         return render_template_string("""
         <!DOCTYPE html>
         <html lang="es">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>SAMU - Acceso</title>
+            <title>SAMU - Panel Principal</title>
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
             <style>
                 body {
@@ -24,7 +23,6 @@ def registrar_rutas(app):
                     align-items: center;
                 }
 
-                /* Contenedor principal de la animación */
                 #splash-container {
                     text-align: center;
                     width: 100%;
@@ -32,18 +30,17 @@ def registrar_rutas(app):
                     padding: 20px;
                 }
 
-                /* Estilo del Video / Logo */
+                /* Video / Logo */
                 .video-logo {
-                    width: 160px;
+                    width: 140px;
                     border-radius: 50%;
-                    box-shadow: 0px 15px 25px rgba(0,0,0,0.15); /* Sombra elegante abajo */
-                    transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1);
-                    background-color: #ffffff; /* Fondo blanco por si el video es transparente */
+                    box-shadow: 0px 10px 20px rgba(0,0,0,0.12);
+                    transition: transform 0.4s ease-in-out;
+                    background-color: #ffffff;
                 }
                 
-                /* Clase para cuando el logo sube */
                 .video-logo.move-up {
-                    transform: translateY(-30px) scale(0.85);
+                    transform: translateY(-15px) scale(0.9);
                 }
 
                 /* Texto SAMU */
@@ -52,8 +49,8 @@ def registrar_rutas(app):
                     font-weight: 700;
                     color: #1d1d1f;
                     opacity: 0;
-                    transform: translateY(20px);
-                    transition: all 1s ease;
+                    transform: translateY(10px);
+                    transition: all 0.4s ease-in-out;
                     margin-top: 5px;
                     letter-spacing: 0.05em;
                 }
@@ -66,35 +63,48 @@ def registrar_rutas(app):
                 .btn-comenzar {
                     background-color: #1d1d1f;
                     color: white;
-                    padding: 12px 40px;
+                    padding: 12px 50px;
                     border-radius: 30px;
                     border: none;
                     font-weight: 600;
                     letter-spacing: 1px;
-                    margin-top: 20px;
-                    display: none; /* Oculto al inicio */
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                    margin: 20px auto 10px auto;
+                    display: none; 
+                    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
                     transition: transform 0.2s;
+                    text-transform: uppercase;
                 }
                 .btn-comenzar:hover {
-                    transform: scale(1.05);
+                    transform: scale(1.03);
                 }
 
-                /* Panel de Login que se desliza */
+                /* Texto Panel Principal abajo */
+                .panel-principal-text {
+                    font-size: 0.85rem;
+                    color: #86868b;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    font-weight: 500;
+                    opacity: 0;
+                    transition: opacity 0.4s ease-in-out;
+                    margin-top: 5px;
+                }
+
+                /* Tarjeta de Login Deslizable */
                 #login-box {
                     display: none;
                     background: #ffffff;
-                    padding: 35px 30px;
+                    padding: 30px;
                     border-radius: 20px;
-                    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-                    margin-top: 15px;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+                    margin-top: 20px;
                     text-align: left;
                 }
                 .form-control {
                     background-color: #f5f5f7;
                     border: none;
                     border-radius: 12px;
-                    padding: 14px;
+                    padding: 12px;
                 }
                 .form-control:focus {
                     background-color: #ffffff;
@@ -111,15 +121,16 @@ def registrar_rutas(app):
                 </video>
                 
                 <div class="brand-samu" id="brandName">SAMU</div>
-                <div class="text-muted small mb-2" id="subtitle" style="opacity: 0; transition: 1s;">PANEL PRINCIPAL</div>
                 
-                <button class="btn-comenzar mx-auto" id="btnComenzar">COMENZAR</button>
+                <button class="btn-comenzar" id="btnComenzar">COMENZAR</button>
+                
+                <div class="panel-principal-text" id="panelLabel">PANEL PRINCIPAL</div>
 
                 <div id="login-box">
                     <h5 class="mb-4 text-center fw-bold" style="color: #1d1d1f;">Ingreso al Sistema</h5>
                     <div class="mb-3">
                         <label class="form-label small text-muted">Usuario</label>
-                        <input type="text" class="form-control" placeholder="Ej: Administrador">
+                        <input type="text" class="form-control" placeholder="Introducir usuario">
                     </div>
                     <div class="mb-4">
                         <label class="form-label small text-muted">Contraseña</label>
@@ -136,42 +147,39 @@ def registrar_rutas(app):
             <script>
                 const video = document.getElementById('logoVideo');
                 const brandName = document.getElementById('brandName');
-                const subtitle = document.getElementById('subtitle');
+                const panelLabel = document.getElementById('panelLabel');
                 const btnComenzar = document.getElementById('btnComenzar');
                 const loginBox = document.getElementById('login-box');
 
-                // Motor de la animación principal
-                function ejecutarAnimacion() {
+                // Acción de transición ultra rápida
+                function iniciarPlataforma() {
                     video.classList.add('move-up');
                     brandName.classList.add('show');
-                    subtitle.style.opacity = '1';
                     
-                    // Mostramos el botón después de que el logo sube
                     setTimeout(() => {
-                        $(btnComenzar).fadeIn(600);
-                    }, 500);
+                        panelLabel.style.opacity = '1';
+                        $(btnComenzar).fadeIn(300);
+                    }, 200);
                 }
 
-                // Disparador 1: Cuando el video termina de reproducirse
-                video.onended = ejecutarAnimacion;
+                // Disparador inmediato al terminar el video
+                video.onended = iniciarPlataforma;
 
-                // Disparador 2 (Seguro de vida): Si el video falla o no existe, 
-                // arrancamos la animación a los 2.5 segundos de todas formas.
+                // Seguro de aceleración extrema: si el video no responde en 500ms, fuerza la carga
                 setTimeout(() => {
                     if (!brandName.classList.contains('show')) {
-                        ejecutarAnimacion();
+                        iniciarPlataforma();
                     }
-                }, 2500);
+                }, 500);
 
-                // Acción al presionar COMENZAR
+                // Evento al presionar COMENZAR
                 btnComenzar.addEventListener('click', function() {
-                    $(this).fadeOut(200);
-                    $(subtitle).slideUp(200);
+                    $(this).fadeOut(150);
+                    $(panelLabel).fadeOut(150);
                     
-                    // Desliza el panel de ingreso hacia abajo
                     setTimeout(() => {
-                        $(loginBox).slideDown(600);
-                    }, 300);
+                        $(loginBox).slideDown(400); // Deslizamiento fluido hacia abajo
+                    }, 200);
                 });
             </script>
         </body>
