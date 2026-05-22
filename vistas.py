@@ -15,6 +15,7 @@ def registrar_rutas(app):
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
             
             <style>
+                /* Variables para rastrear la posición fluida del mouse */
                 :root {
                     --x: 50vw;
                     --y: 50vh;
@@ -29,61 +30,51 @@ def registrar_rutas(app):
                     justify-content: center;
                     align-items: center;
                     color: #0f172a;
-                    /* Fondo base completamente blanco puro */
+                    /* El fondo base real de la página es blanco puro */
                     background-color: #ffffff; 
                 }
 
-                /* --- FONDO INTERACTIVO SÚPER SUTIL --- */
-                .bg-mesh {
+                /* --- CAPA DE COLORES (Que será "espantada" por el mouse) --- */
+                .color-layer {
                     position: fixed;
                     top: 0; left: 0; width: 100vw; height: 100vh;
                     z-index: -1;
                     overflow: hidden;
                     background: #ffffff;
+                    
+                    /* LA MAGIA: Una máscara que oculta los colores justo donde está el mouse */
+                    -webkit-mask-image: radial-gradient(circle 35vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 40%);
+                    mask-image: radial-gradient(circle 35vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 40%);
                 }
 
-                /* Las esferas ahora tienen un difuminado extremo para que no parezcan manchas */
                 .blob {
                     position: absolute;
                     border-radius: 50%;
-                    filter: blur(160px); /* Difuminado masivo */
+                    filter: blur(120px);
                 }
 
-                /* 1. La luz que sigue al mouse (Muy transparente y lenta) */
-                .blob-interactive {
-                    width: 70vw; 
-                    height: 70vw;
-                    background: #0ea5e9; /* Azul vibrante pero... */
-                    opacity: 0.12; /* ...sumamente transparente (solo 12% visible) */
-                    top: -35vw; 
-                    left: -35vw;
-                    transform: translate(var(--x), var(--y));
-                }
-
-                /* 2. Luz rosada flotante (Casi imperceptible) */
-                .blob-pink {
-                    width: 80vw; 
-                    height: 80vw;
-                    background: #f472b6; 
-                    bottom: -20%; right: -20%;
-                    opacity: 0.08; /* Solo 8% visible */
-                    animation: flotar 40s infinite ease-in-out alternate;
-                }
-
-                /* 3. Luz azul de apoyo */
+                /* Luz Azul vibrante pero suave */
                 .blob-blue {
-                    width: 60vw; 
-                    height: 60vw;
-                    background: #3b82f6; 
-                    top: -20%; left: -10%;
-                    opacity: 0.06; /* Solo 6% visible */
-                    animation: flotar 45s infinite ease-in-out alternate-reverse;
+                    width: 70vw; height: 70vw;
+                    background: #0ea5e9; 
+                    opacity: 0.35; 
+                    top: -10%; left: -10%;
+                    animation: flotar 20s infinite ease-in-out alternate;
+                }
+
+                /* Luz Rosada un poco más clara y elegante */
+                .blob-pink {
+                    width: 70vw; height: 70vw;
+                    background: #f9a8d4; /* Rosado más claro */
+                    opacity: 0.35; 
+                    bottom: -10%; right: -10%;
+                    animation: flotar 25s infinite ease-in-out alternate-reverse;
                 }
 
                 @keyframes flotar {
                     0% { transform: translate(0, 0) scale(1); }
-                    50% { transform: translate(3%, 5%) scale(1.05); }
-                    100% { transform: translate(-3%, 3%) scale(0.98); }
+                    50% { transform: translate(8%, 5%) scale(1.1); }
+                    100% { transform: translate(-5%, 8%) scale(0.95); }
                 }
 
                 /* --- ESTRUCTURA PRINCIPAL --- */
@@ -111,7 +102,6 @@ def registrar_rutas(app):
                     width: 250px;
                     opacity: 0;
                     transform: translateY(0);
-                    /* Sombra muy limpia y grisácea para fondo blanco */
                     filter: drop-shadow(0px 15px 30px rgba(0, 0, 0, 0.08));
                     transition: opacity 1.2s ease, transform 1s ease;
                 }
@@ -185,20 +175,19 @@ def registrar_rutas(app):
                     border-color: #94a3b8;
                 }
 
-                /* --- LOGIN MÁS LIMPIO Y BLANCO --- */
+                /* --- LOGIN LIMPIO --- */
                 #login-box {
                     display: none; 
                     width: 90%;
-                    /* Fondo casi blanco sólido para máxima legibilidad */
                     background: rgba(255, 255, 255, 0.85);
                     backdrop-filter: blur(25px);
                     -webkit-backdrop-filter: blur(25px);
                     padding: 35px 30px;
                     border-radius: 24px;
-                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.04); /* Sombra suavizada */
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
                     text-align: left;
                     margin-bottom: 20px;
-                    border: 1px solid rgba(0, 0, 0, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 1);
                 }
 
                 .form-label {
@@ -249,19 +238,20 @@ def registrar_rutas(app):
                     .btn-panel { font-size: 0.9rem; padding: 12px 30px; }
                     #login-box { padding: 30px 25px; }
                     
-                    /* Movimiento súper lento y sutil en celular */
-                    .blob-interactive {
-                        animation: flotar 30s infinite ease-in-out alternate;
+                    /* En celulares, como no hay mouse, anulamos la máscara para que se vea el color suavemente */
+                    .color-layer {
+                        -webkit-mask-image: none;
+                        mask-image: none;
+                        opacity: 0.5;
                     }
                 }
             </style>
         </head>
         <body>
 
-            <div class="bg-mesh">
+            <div class="color-layer">
                 <div class="blob blob-pink"></div>
                 <div class="blob blob-blue"></div>
-                <div class="blob blob-interactive"></div>
             </div>
 
             <div class="main-wrapper">
@@ -299,7 +289,7 @@ def registrar_rutas(app):
 
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
-                // --- MOTOR DEL MOUSE (MÁS LENTO Y RELAJADO) ---
+                // --- MOTOR DEL MOUSE FLUIDO (ESPANTA LOS COLORES) ---
                 let curX = window.innerWidth / 2;
                 let curY = window.innerHeight / 2;
                 let tgX = curX;
@@ -312,9 +302,9 @@ def registrar_rutas(app):
                     });
 
                     function animate() {
-                        // Cambié de 0.05 a 0.015 para que la luz te siga de forma muuuuy lenta y despacio
-                        curX += (tgX - curX) * 0.015;
-                        curY += (tgY - curY) * 0.015;
+                        // Interpolación para que la máscara se mueva suavemente detrás del mouse
+                        curX += (tgX - curX) * 0.05;
+                        curY += (tgY - curY) * 0.05;
                         
                         document.documentElement.style.setProperty('--x', Math.round(curX) + 'px');
                         document.documentElement.style.setProperty('--y', Math.round(curY) + 'px');
