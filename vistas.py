@@ -15,6 +15,11 @@ def registrar_rutas(app):
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
             
             <style>
+                :root {
+                    --x: 50vw;
+                    --y: 50vh;
+                }
+
                 body {
                     margin: 0;
                     font-family: 'Bauhaus 93', 'Arial Rounded MT Bold', sans-serif;
@@ -24,47 +29,60 @@ def registrar_rutas(app):
                     justify-content: center;
                     align-items: center;
                     color: #0f172a;
-                    background-color: #ffffff; /* Base blanca */
+                    background-color: #f8fafc; /* Blanco perla muy sutil */
                 }
 
-                /* --- FONDO DINÁMICO ESTILO AURORA / LUZ --- */
+                /* --- FONDO INTERACTIVO Y MESH GRADIENT --- */
                 .bg-mesh {
                     position: fixed;
                     top: 0; left: 0; width: 100vw; height: 100vh;
                     z-index: -1;
                     overflow: hidden;
+                    background: #ffffff;
                 }
+
                 .blob {
                     position: absolute;
                     border-radius: 50%;
-                    filter: blur(100px); /* Difumina las esferas para crear ondas de luz */
-                    opacity: 0.6;
-                    animation: flotar 20s infinite ease-in-out alternate;
+                    filter: blur(120px);
+                    opacity: 0.7;
                 }
-                .blob-1 {
-                    width: 55vw; height: 55vw;
-                    background: #00c3ff; /* Cyan brillante */
-                    top: -15%; left: -10%;
-                    animation-duration: 18s;
+
+                /* 1. La luz azul que sigue al mouse (Interactiva) */
+                .blob-interactive {
+                    width: 50vw; 
+                    height: 50vw;
+                    background: #0ea5e9; /* Azul vibrante / Cyan */
+                    top: -25vw; /* Centrado respecto al cursor */
+                    left: -25vw;
+                    transform: translate(var(--x), var(--y));
+                    /* El movimiento se suaviza con JS, no con CSS para mayor rendimiento */
                 }
-                .blob-2 {
-                    width: 65vw; height: 65vw;
-                    background: #e0f2fe; /* Azul muy muy claro */
-                    bottom: -20%; right: -10%;
-                    animation-duration: 22s;
-                    animation-direction: alternate-reverse;
+
+                /* 2. La luz rosada sutil (Flotante) */
+                .blob-pink {
+                    width: 60vw; 
+                    height: 60vw;
+                    background: #f472b6; /* Rosado elegante y sutil */
+                    bottom: -10%; right: -10%;
+                    opacity: 0.4; /* Muy difuminado para que no sature */
+                    animation: flotar 25s infinite ease-in-out alternate;
                 }
-                .blob-3 {
-                    width: 45vw; height: 45vw;
-                    background: #7dd3fc; /* Azul cielo suave */
-                    top: 40%; left: 50%;
-                    animation-duration: 25s;
+
+                /* 3. Luz azul claro de apoyo (Flotante) */
+                .blob-blue {
+                    width: 45vw; 
+                    height: 45vw;
+                    background: #3b82f6; /* Azul rey claro */
+                    top: -10%; left: -10%;
+                    opacity: 0.3;
+                    animation: flotar 30s infinite ease-in-out alternate-reverse;
                 }
 
                 @keyframes flotar {
                     0% { transform: translate(0, 0) scale(1); }
-                    50% { transform: translate(8%, 12%) scale(1.1); }
-                    100% { transform: translate(-8%, 5%) scale(0.95); }
+                    50% { transform: translate(5%, 10%) scale(1.1); }
+                    100% { transform: translate(-5%, 5%) scale(0.95); }
                 }
 
                 /* --- ESTRUCTURA PRINCIPAL --- */
@@ -78,7 +96,6 @@ def registrar_rutas(app):
                     z-index: 10;
                 }
 
-                /* --- GRUPO DE MARCA --- */
                 .brand-group {
                     display: flex;
                     flex-direction: column;
@@ -87,29 +104,24 @@ def registrar_rutas(app):
                     transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
                 }
                 
-                .brand-group.move-up-group {
-                    transform: translateY(-2vh);
-                }
+                .brand-group.move-up-group { transform: translateY(-2vh); }
 
-                /* Logo */
                 .logo-img {
-                    width: 250px; /* Tamaño PC */
+                    width: 250px;
                     opacity: 0;
                     transform: translateY(0);
-                    filter: drop-shadow(0px 15px 25px rgba(0, 195, 255, 0.2));
+                    filter: drop-shadow(0px 15px 25px rgba(14, 165, 233, 0.25));
                     transition: opacity 1.2s ease, transform 1s ease;
                 }
                 .logo-img.fade-in { opacity: 1; }
                 .logo-img.move-up-logo { transform: translateY(-15px); }
 
-                /* Texto SAMU */
                 .brand-samu {
-                    font-size: 5rem; /* Tamaño PC */
-                    color: #0f172a; /* Azul marino casi negro */
+                    font-size: 5rem;
+                    color: #0f172a;
                     opacity: 0;
                     margin-top: 5px;
                     letter-spacing: 0.08em;
-                    text-shadow: 0px 10px 30px rgba(0, 195, 255, 0.3);
                     transition: opacity 1.2s ease;
                 }
                 .brand-samu.fade-in { opacity: 1; }
@@ -132,9 +144,8 @@ def registrar_rutas(app):
                     transform: translateY(0);
                 }
 
-                /* Botón COMENZAR */
                 .btn-comenzar {
-                    background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+                    background: #0f172a;
                     color: #ffffff;
                     padding: 16px 40px;
                     border-radius: 16px;
@@ -150,10 +161,10 @@ def registrar_rutas(app):
                 .btn-comenzar:hover {
                     transform: translateY(-3px);
                     box-shadow: 0 15px 30px rgba(15, 23, 42, 0.3);
+                    background: #1e293b;
                 }
                 .btn-comenzar i { margin-left: 10px; font-size: 1.2rem; }
 
-                /* Botón PANEL PRINCIPAL */
                 .btn-panel {
                     background-color: transparent;
                     color: #64748b;
@@ -172,16 +183,16 @@ def registrar_rutas(app):
                     border-color: #94a3b8;
                 }
 
-                /* --- LOGIN CON EFECTO CRISTAL (Glassmorphism Claro) --- */
+                /* --- LOGIN CON EFECTO CRISTAL --- */
                 #login-box {
                     display: none; 
                     width: 90%;
-                    background: rgba(255, 255, 255, 0.7); /* Blanco semi-transparente */
-                    backdrop-filter: blur(20px); /* Desenfoque intenso */
-                    -webkit-backdrop-filter: blur(20px);
+                    background: rgba(255, 255, 255, 0.6);
+                    backdrop-filter: blur(25px);
+                    -webkit-backdrop-filter: blur(25px);
                     padding: 35px 30px;
                     border-radius: 24px;
-                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08); /* Sombra elegante */
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
                     text-align: left;
                     margin-bottom: 20px;
                     border: 1px solid rgba(255, 255, 255, 1);
@@ -196,7 +207,6 @@ def registrar_rutas(app):
                     font-family: 'Arial Rounded MT Bold', sans-serif;
                 }
 
-                /* Casillas de texto claras */
                 .form-control {
                     background-color: rgba(241, 245, 249, 0.8);
                     border: 1px solid rgba(226, 232, 240, 0.8);
@@ -209,14 +219,13 @@ def registrar_rutas(app):
                 }
                 .form-control:focus {
                     background-color: #ffffff;
-                    border: 1px solid #00c3ff;
-                    box-shadow: 0 0 0 4px rgba(0, 195, 255, 0.15);
-                    color: #0f172a;
+                    border: 1px solid #0ea5e9;
+                    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
                 }
                 .form-control::placeholder { color: #94a3b8; }
 
                 .btn-ingresar {
-                    background: linear-gradient(90deg, #0073ff 0%, #00c3ff 100%);
+                    background: linear-gradient(90deg, #0ea5e9 0%, #3b82f6 100%);
                     color: white;
                     border-radius: 12px;
                     padding: 15px;
@@ -226,30 +235,19 @@ def registrar_rutas(app):
                     text-transform: uppercase;
                     transition: filter 0.3s ease;
                     margin-top: 10px;
-                    box-shadow: 0 8px 20px rgba(0, 195, 255, 0.3);
+                    box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3);
                 }
                 .btn-ingresar:hover { filter: brightness(1.1); }
 
-                /* =========================================
-                   REGLAS PARA CELULARES (ADAPTACIÓN MÓVIL)
-                   ========================================= */
                 @media (max-width: 576px) {
-                    .logo-img {
-                        width: 150px !important; /* Logo más pequeño en celular */
-                    }
-                    .brand-samu {
-                        font-size: 3.5rem !important; /* Letra más pequeña */
-                    }
-                    .btn-comenzar {
-                        font-size: 1rem;
-                        padding: 14px 30px;
-                    }
-                    .btn-panel {
-                        font-size: 0.9rem;
-                        padding: 12px 30px;
-                    }
-                    #login-box {
-                        padding: 30px 25px; /* Menos padding lateral para que encaje mejor */
+                    .logo-img { width: 160px !important; }
+                    .brand-samu { font-size: 3.8rem !important; }
+                    .btn-comenzar { font-size: 1.05rem; padding: 14px 30px; }
+                    .btn-panel { font-size: 0.9rem; padding: 12px 30px; }
+                    #login-box { padding: 30px 25px; }
+                    /* En celulares, la luz azul se mueve sola ya que no hay mouse */
+                    .blob-interactive {
+                        animation: flotar 20s infinite ease-in-out;
                     }
                 }
             </style>
@@ -257,9 +255,9 @@ def registrar_rutas(app):
         <body>
 
             <div class="bg-mesh">
-                <div class="blob blob-1"></div>
-                <div class="blob blob-2"></div>
-                <div class="blob blob-3"></div>
+                <div class="blob blob-pink"></div>
+                <div class="blob blob-blue"></div>
+                <div class="blob blob-interactive"></div>
             </div>
 
             <div class="main-wrapper">
@@ -297,34 +295,45 @@ def registrar_rutas(app):
 
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
+                // --- MOTOR DE SEGUIMIENTO DEL MOUSE (SUPER FLUIDO) ---
+                let curX = window.innerWidth / 2;
+                let curY = window.innerHeight / 2;
+                let tgX = curX;
+                let tgY = curY;
+
+                // Solo activamos el seguimiento si no es un celular (pantalla táctil)
+                if (window.matchMedia("(pointer: fine)").matches) {
+                    window.addEventListener('mousemove', (e) => {
+                        tgX = e.clientX;
+                        tgY = e.clientY;
+                    });
+
+                    function animate() {
+                        // El factor 0.05 crea ese efecto de "líquido" que persigue al cursor suavemente
+                        curX += (tgX - curX) * 0.05;
+                        curY += (tgY - curY) * 0.05;
+                        
+                        document.documentElement.style.setProperty('--x', Math.round(curX) + 'px');
+                        document.documentElement.style.setProperty('--y', Math.round(curY) + 'px');
+                        
+                        requestAnimationFrame(animate);
+                    }
+                    animate();
+                }
+
+                // --- SECUENCIA DE ANIMACIÓN INICIAL ---
                 window.onload = function() {
-                    setTimeout(() => {
-                        document.getElementById('logoImg').classList.add('fade-in');
-                    }, 300);
-
-                    setTimeout(() => {
-                        document.getElementById('logoImg').classList.add('move-up-logo');
-                    }, 1200);
-
-                    setTimeout(() => {
-                        document.getElementById('brandName').classList.add('fade-in');
-                    }, 1800);
-
-                    setTimeout(() => {
-                        document.getElementById('brandGroup').classList.add('move-up-group');
-                    }, 2800);
-
-                    setTimeout(() => {
-                        document.getElementById('actionArea').classList.add('show');
-                    }, 3500);
+                    setTimeout(() => { document.getElementById('logoImg').classList.add('fade-in'); }, 300);
+                    setTimeout(() => { document.getElementById('logoImg').classList.add('move-up-logo'); }, 1200);
+                    setTimeout(() => { document.getElementById('brandName').classList.add('fade-in'); }, 1800);
+                    setTimeout(() => { document.getElementById('brandGroup').classList.add('move-up-group'); }, 2800);
+                    setTimeout(() => { document.getElementById('actionArea').classList.add('show'); }, 3500);
                 };
 
+                // --- ACCIÓN DEL BOTÓN COMENZAR ---
                 $('#btnComenzar').click(function() {
                     $(this).slideUp(300);
-                    
-                    setTimeout(() => {
-                        $('#login-box').slideDown(500);
-                    }, 300);
+                    setTimeout(() => { $('#login-box').slideDown(500); }, 300);
                 });
             </script>
         </body>
