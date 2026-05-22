@@ -7,123 +7,133 @@ def registrar_rutas(app):
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>SAMU - Acceso</title>
+            <title>SAMU - Panel Principal</title>
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
             <style>
                 body {
-                    background-color: #f4f7f6; /* Fondo gris muy claro y elegante */
+                    background-color: #f8f9fa;
                     height: 100vh;
                     display: flex;
                     justify-content: center;
                     align-items: center;
                     margin: 0;
-                    overflow: hidden; /* Evita que la pantalla se mueva durante la animación */
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    overflow: hidden;
+                    font-family: 'Segoe UI', sans-serif;
                 }
-                
-                /* Contenedor principal */
-                .splash-container {
+
+                .main-container {
                     text-align: center;
-                    position: relative;
                     width: 100%;
-                    max-width: 400px;
-                    padding: 20px;
+                    max-width: 450px;
+                    z-index: 10;
                 }
 
-                /* Diseño de la S inicial */
-                .logo-s {
-                    font-size: 7rem;
-                    font-weight: 800;
-                    color: #0d6efd; /* Azul profesional */
-                    position: absolute;
-                    top: 50vh; /* Centrado verticalmente al inicio */
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    transition: all 1s ease-in-out; /* La magia del movimiento fluido */
-                    margin: 0;
+                /* Video con Sombra */
+                .video-logo {
+                    width: 180px;
+                    border-radius: 50%;
+                    filter: drop-shadow(0px 15px 10px rgba(0,0,0,0.3)); /* Sombra abajo */
+                    transition: all 1s ease-in-out;
                 }
 
-                /* Clase que se activa para subir la S */
-                .logo-s.move-up {
-                    top: 0; 
-                    position: relative;
-                    transform: translate(-50%, 0);
-                    font-size: 4rem; /* Se hace un poco más pequeña al subir */
+                .video-logo.move-up {
+                    transform: translateY(-20px) scale(0.8);
                 }
 
-                /* Diseño del texto SAMU */
-                .brand-name {
-                    font-size: 2.5rem;
+                /* Textos iniciales */
+                .brand-samu {
+                    font-size: 3rem;
                     font-weight: bold;
-                    color: #2c3e50;
-                    opacity: 0; /* Invisible al inicio */
-                    transform: translateY(20px); /* Ligeramente abajo al inicio */
-                    transition: all 1s ease-in-out;
-                    margin-top: -10px;
-                    letter-spacing: 2px;
+                    color: #1a2a6c;
+                    opacity: 0;
+                    transition: 1s;
+                    margin-top: 10px;
                 }
 
-                /* Clase que se activa para mostrar SAMU */
-                .brand-name.show {
-                    opacity: 1;
-                    transform: translateY(0);
+                .btn-comenzar {
+                    display: none; /* Se activa por JS */
+                    margin: 20px auto;
+                    padding: 12px 40px;
+                    border-radius: 30px;
+                    font-weight: bold;
                 }
 
-                /* Diseño de la tarjeta de Iniciar Sesión */
-                .login-container {
-                    opacity: 0; /* Invisible al inicio */
-                    transform: translateY(20px);
-                    transition: all 1s ease-in-out;
-                    margin-top: 30px;
+                .panel-text {
+                    font-size: 0.9rem;
+                    color: #6c757d;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    opacity: 0;
+                    transition: 1.5s;
                 }
 
-                /* Clase que se activa para mostrar el Login */
-                .login-container.show {
-                    opacity: 1;
-                    transform: translateY(0);
+                /* Contenedor del Login (Oculto al inicio) */
+                #loginSection {
+                    display: none;
+                    margin-top: 20px;
                 }
+
+                /* Animaciones de entrada */
+                .show { opacity: 1 !important; }
             </style>
         </head>
         <body>
-            <div class="splash-container">
-                <div class="logo-s" id="logo">S</div>
+
+            <div class="main-container">
+                <video id="logoVideo" class="video-logo" autoplay muted playsinline>
+                    <source src="/static/logo_s.mp4" type="video/mp4">
+                    Tu navegador no soporta videos.
+                </video>
+
+                <div class="brand-samu" id="brandName">SAMU</div>
                 
-                <div class="brand-name" id="brand">SAMU</div>
+                <button class="btn btn-primary btn-comenzar shadow" id="btnComenzar">COMENZAR</button>
                 
-                <div class="login-container" id="loginForm">
-                    <div class="card shadow-lg border-0 rounded-4">
-                        <div class="card-body p-4 p-sm-5">
-                            <h5 class="card-title text-center mb-4 text-muted">Iniciar Sesión</h5>
-                            <form>
-                                <div class="mb-3">
-                                    <input type="text" class="form-control form-control-lg" placeholder="Usuario" required>
-                                </div>
-                                <div class="mb-4">
-                                    <input type="password" class="form-control form-control-lg" placeholder="Contraseña" required>
-                                </div>
-                                <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">Ingresar</button>
-                            </form>
+                <div class="panel-text" id="panelLabel">PANEL PRINCIPAL</div>
+
+                <div id="loginSection" class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                    <div class="card-body p-4">
+                        <h5 class="text-center mb-4 text-primary">Ingreso al Sistema</h5>
+                        <div class="mb-3 text-start">
+                            <label class="form-label small">Usuario</label>
+                            <input type="text" class="form-control" placeholder="Ej: Ingeniero_Puno">
+                        </div>
+                        <div class="mb-3 text-start">
+                            <label class="form-label small">Contraseña</label>
+                            <input type="password" class="form-control" placeholder="••••••••">
+                        </div>
+                        <button class="btn btn-dark w-100 rounded-3 mb-3">INGRESAR</button>
+                        <div class="text-center">
+                            <a href="#" class="text-decoration-none small text-muted">¿Olvidaste tu contraseña?</a>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
-                document.addEventListener("DOMContentLoaded", () => {
-                    // Paso 1: Espera 1 segundo y sube la "S"
+                const video = document.getElementById('logoVideo');
+                
+                // Cuando el video termina
+                video.onended = function() {
+                    video.classList.add('move-up');
+                    document.getElementById('brandName').classList.add('show');
+                    document.getElementById('panelLabel').classList.add('show');
+                    
+                    // Mostrar botón COMENZAR suavemente
                     setTimeout(() => {
-                        document.getElementById("logo").classList.add("move-up");
-                    }, 1000); 
+                        $("#btnComenzar").fadeIn();
+                    }, 500);
+                };
 
-                    // Paso 2: A la par que la "S" sube, aparece "SAMU"
+                // Acción del botón COMENZAR
+                $("#btnComenzar").click(function() {
+                    $(this).fadeOut(300);
+                    $("#panelLabel").fadeOut(300);
+                    
                     setTimeout(() => {
-                        document.getElementById("brand").classList.add("show");
-                    }, 1400); 
-
-                    // Paso 3: Un segundo después, aparece suavemente el Login
-                    setTimeout(() => {
-                        document.getElementById("loginForm").classList.add("show");
-                    }, 2200); 
+                        $("#loginSection").slideDown(800); // Efecto de deslizamiento hacia abajo
+                    }, 400);
                 });
             </script>
         </body>
