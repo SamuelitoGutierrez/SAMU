@@ -19,80 +19,94 @@ def registrar_rutas(app):
                 body {
                     background-color: #f5f5f7;
                     margin: 0;
-                    font-family: 'Montserrat', sans-serif; /* Aplicando la nueva letra */
-                    overflow-x: hidden;
+                    font-family: 'Montserrat', sans-serif;
+                    overflow: hidden; /* Evita cualquier salto o barra de desplazamiento */
                     height: 100vh;
                     display: flex;
                     justify-content: center;
                     align-items: center;
                 }
 
-                #splash-container {
-                    text-align: center;
-                    width: 100%;
-                    max-width: 420px;
-                    padding: 20px;
+                /* Contenedor central animado */
+                .main-wrapper {
+                    position: relative;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                }
-
-                /* 1. Logo Transparente */
-                .logo-img {
-                    width: 130px;
-                    opacity: 0; /* Oculto al inicio para el desvanecimiento */
-                    filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.1)); /* Sombra suave sin círculo blanco */
-                    transform: translateY(20px);
-                    transition: opacity 1.2s ease, transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+                    transform: translateY(40px); /* Empieza un poco más abajo */
+                    transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+                    width: 100%;
+                    max-width: 400px;
                 }
                 
-                /* Estado 2: Desvanecer (Aparece) */
+                /* Clase que hace que todo el bloque suba suavemente */
+                .main-wrapper.move-up {
+                    transform: translateY(-50px);
+                }
+
+                /* 1. Logo mucho más grande */
+                .logo-img {
+                    width: 220px; /* Aumentado de 130px a 220px */
+                    opacity: 0;
+                    filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.1));
+                    transition: opacity 1.5s ease;
+                }
                 .logo-img.fade-in {
                     opacity: 1;
-                    transform: translateY(0);
-                }
-                
-                /* Estado 3: Subir */
-                .logo-img.move-up {
-                    transform: translateY(-20px) scale(0.9);
                 }
 
-                /* Texto SAMU */
+                /* 2. Texto SAMU mucho más grande */
                 .brand-samu {
-                    font-size: 3rem;
+                    font-size: 4rem; /* Aumentado de 3rem a 4rem */
                     font-weight: 800;
                     color: #1d1d1f;
                     opacity: 0;
-                    transform: translateY(20px);
-                    transition: all 1s ease;
-                    margin-top: -10px;
+                    margin-top: 5px;
                     letter-spacing: 0.1em;
+                    transition: opacity 1.5s ease;
                 }
-                .brand-samu.show {
+                .brand-samu.fade-in {
                     opacity: 1;
-                    transform: translateY(-10px); /* Sube junto con el logo */
+                }
+
+                /* 3. Área de acciones estática (No empuja nada) */
+                .action-area {
+                    position: absolute;
+                    top: 100%; /* Siempre se ubica exactamente debajo de SAMU */
+                    width: 100%;
+                    margin-top: 30px;
                 }
 
                 /* Contenedor de Botones */
                 .botones-container {
-                    display: none; /* Ocultos hasta que termine la animación */
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: opacity 0.8s ease;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    position: absolute;
                     width: 100%;
-                    margin-top: 10px;
+                    top: 0;
+                }
+                .botones-container.show {
+                    opacity: 1;
+                    visibility: visible;
                 }
 
-                /* Botón Comenzar */
+                /* Diseño de Botones */
                 .btn-comenzar {
                     background-color: #1d1d1f;
                     color: white;
-                    padding: 14px 40px;
+                    padding: 15px 40px;
                     border-radius: 30px;
                     border: none;
                     font-weight: 600;
-                    font-size: 0.95rem;
+                    font-size: 1rem;
                     letter-spacing: 2px;
                     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
                     transition: all 0.3s ease;
-                    width: 80%;
+                    width: 85%;
                     margin-bottom: 15px;
                 }
                 .btn-comenzar:hover {
@@ -106,10 +120,9 @@ def registrar_rutas(app):
                     transition: margin-left 0.3s ease;
                 }
                 .btn-comenzar:hover i {
-                    margin-left: 15px; /* La flecha se mueve al pasar el mouse */
+                    margin-left: 15px;
                 }
 
-                /* Botón Panel Principal */
                 .btn-panel {
                     background-color: transparent;
                     color: #86868b;
@@ -119,7 +132,7 @@ def registrar_rutas(app):
                     font-weight: 600;
                     font-size: 0.85rem;
                     letter-spacing: 1px;
-                    width: 80%;
+                    width: 85%;
                     transition: all 0.3s ease;
                 }
                 .btn-panel:hover {
@@ -127,16 +140,27 @@ def registrar_rutas(app):
                     color: #1d1d1f;
                 }
 
-                /* Tarjeta de Login */
+                /* 4. Tarjeta de Login (Oculta al inicio) */
                 #login-box {
-                    display: none;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateY(-20px); /* Preparado para deslizarse hacia abajo */
+                    transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+                    position: absolute;
+                    width: 100%;
+                    top: 0;
                     background: #ffffff;
-                    padding: 35px;
+                    padding: 35px 30px;
                     border-radius: 20px;
                     box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-                    width: 100%;
                     text-align: left;
                 }
+                #login-box.show {
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translateY(0); /* Se desliza a su posición original */
+                }
+
                 .form-control {
                     background-color: #f5f5f7;
                     border: none;
@@ -153,70 +177,76 @@ def registrar_rutas(app):
         </head>
         <body>
 
-            <div id="splash-container">
+            <div class="main-wrapper" id="mainWrapper">
+                
                 <img id="logoImg" src="{{ url_for('static', filename='logo_s.png') }}" class="logo-img" alt="Logo">
                 
                 <div class="brand-samu" id="brandName">SAMU</div>
                 
-                <div class="botones-container" id="botonesContainer">
-                    <button class="btn-comenzar" id="btnComenzar">
-                        COMENZAR <i class="bi bi-arrow-right"></i>
-                    </button>
-                    <br>
-                    <button class="btn-panel" id="btnPanel">
-                        PANEL PRINCIPAL
-                    </button>
-                </div>
+                <div class="action-area">
+                    
+                    <div class="botones-container" id="botonesContainer">
+                        <button class="btn-comenzar" id="btnComenzar">
+                            COMENZAR <i class="bi bi-arrow-right"></i>
+                        </button>
+                        <button class="btn-panel" id="btnPanel">
+                            PANEL PRINCIPAL
+                        </button>
+                    </div>
 
-                <div id="login-box">
-                    <h5 class="mb-4 text-center fw-bold" style="color: #1d1d1f;">Acceso Seguro</h5>
-                    <div class="mb-3">
-                        <label class="form-label small text-muted fw-bold">Usuario</label>
-                        <input type="text" class="form-control" placeholder="Introducir usuario">
+                    <div id="login-box">
+                        <h5 class="mb-4 text-center fw-bold" style="color: #1d1d1f;">Acceso Seguro</h5>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted fw-bold">Usuario</label>
+                            <input type="text" class="form-control" placeholder="Introducir usuario">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small text-muted fw-bold">Contraseña</label>
+                            <input type="password" class="form-control" placeholder="••••••••">
+                        </div>
+                        <button class="btn w-100" style="background-color: #0071e3; color: white; border-radius: 12px; padding: 14px; font-weight: 600; letter-spacing: 1px;">Ingresar</button>
                     </div>
-                    <div class="mb-4">
-                        <label class="form-label small text-muted fw-bold">Contraseña</label>
-                        <input type="password" class="form-control" placeholder="••••••••">
-                    </div>
-                    <button class="btn w-100" style="background-color: #0071e3; color: white; border-radius: 12px; padding: 14px; font-weight: 600; letter-spacing: 1px;">Ingresar</button>
+
                 </div>
             </div>
 
-            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
+                // Variables de los elementos
                 const logoImg = document.getElementById('logoImg');
                 const brandName = document.getElementById('brandName');
+                const mainWrapper = document.getElementById('mainWrapper');
                 const botonesContainer = document.getElementById('botonesContainer');
                 const btnComenzar = document.getElementById('btnComenzar');
-                const btnPanel = document.getElementById('btnPanel');
                 const loginBox = document.getElementById('login-box');
 
-                // Secuencia de animación tipo presentación
+                // Secuencia exacta y fluida
                 window.onload = function() {
-                    // 1. Desvanecer el logo (Aparece suavemente)
+                    // 1. Aparece el Logo
                     setTimeout(() => {
                         logoImg.classList.add('fade-in');
                     }, 200);
 
-                    // 2. El logo sube y SAMU aparece desde abajo
+                    // 2. Aparece SAMU (sin saltos, solo se desvanece)
                     setTimeout(() => {
-                        logoImg.classList.add('move-up');
-                        brandName.classList.add('show');
-                    }, 1400);
+                        brandName.classList.add('fade-in');
+                    }, 1000);
 
-                    // 3. Aparecen los botones
+                    // 3. Todo sube suavemente y aparecen los botones
                     setTimeout(() => {
-                        $(botonesContainer).fadeIn(600);
+                        mainWrapper.classList.add('move-up');
+                        botonesContainer.classList.add('show');
                     }, 2000);
                 };
 
-                // Acción al presionar COMENZAR (Muestra el Login)
+                // Acción al presionar COMENZAR
                 btnComenzar.addEventListener('click', function() {
-                    $(botonesContainer).fadeOut(200);
+                    // Desaparecen los botones
+                    botonesContainer.classList.remove('show');
                     
+                    // Se desliza el login hacia abajo en el mismo lugar
                     setTimeout(() => {
-                        $(loginBox).slideDown(500);
-                    }, 250);
+                        loginBox.classList.add('show');
+                    }, 400); // Espera a que los botones desaparezcan para evitar cruces
                 });
             </script>
         </body>
