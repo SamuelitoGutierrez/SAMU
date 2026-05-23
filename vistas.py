@@ -32,43 +32,54 @@ def registrar_rutas(app):
                     background-color: #ffffff; 
                 }
 
-                /* --- CAPA DE COLORES --- */
+                /* --- CAPA DE COLORES DINÁMICOS --- */
                 .color-layer {
                     position: fixed;
                     top: 0; left: 0; width: 100vw; height: 100vh;
                     z-index: -1;
                     overflow: hidden;
                     background: #ffffff;
-                    -webkit-mask-image: radial-gradient(circle 35vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%);
-                    mask-image: radial-gradient(circle 35vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%);
+                    
+                    /* Máscara que mantiene el centro blanco puro */
+                    -webkit-mask-image: radial-gradient(circle 40vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%);
+                    mask-image: radial-gradient(circle 40vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%);
                 }
 
                 .blob {
                     position: absolute;
                     border-radius: 50%;
-                    filter: blur(100px);
+                    filter: blur(90px);
                 }
 
+                /* Degradado Azul (Ahora con movimiento notorio) */
                 .blob-blue {
-                    width: 55vw; height: 55vw;
+                    width: 60vw; height: 60vw;
                     background: #0ea5e9; 
                     opacity: 0.25; 
-                    top: -5%; left: -5%;
-                    animation: flotar 25s infinite ease-in-out alternate;
+                    top: -10%; left: -10%;
+                    animation: movDinamicoAzul 18s infinite ease-in-out;
                 }
 
+                /* Degradado Rosado (Con movimiento notorio) */
                 .blob-pink {
-                    width: 55vw; height: 55vw;
+                    width: 60vw; height: 60vw;
                     background: #f9a8d4; 
                     opacity: 0.20; 
-                    bottom: -5%; right: -5%;
-                    animation: flotar 30s infinite ease-in-out alternate-reverse;
+                    bottom: -10%; right: -10%;
+                    animation: movDinamicoRosa 22s infinite ease-in-out;
                 }
 
-                @keyframes flotar {
-                    0% { transform: translate(0, 0) scale(1); }
-                    50% { transform: translate(5%, 3%) scale(1.05); }
-                    100% { transform: translate(-3%, 5%) scale(0.98); }
+                /* Animaciones de traslación para que los colores fluyan de verdad */
+                @keyframes movDinamicoAzul {
+                    0%, 100% { transform: translate(0, 0) scale(1); }
+                    33% { transform: translate(12vw, 8vh) scale(1.15); }
+                    66% { transform: translate(-8vw, 12vh) scale(0.9); }
+                }
+
+                @keyframes movDinamicoRosa {
+                    0%, 100% { transform: translate(0, 0) scale(1); }
+                    33% { transform: translate(-12vw, -8vh) scale(1.15); }
+                    66% { transform: translate(8vw, -12vh) scale(0.9); }
                 }
 
                 /* --- ESTRUCTURA PRINCIPAL --- */
@@ -90,10 +101,10 @@ def registrar_rutas(app):
                     transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
                 }
                 
-                .brand-group.move-up-group { transform: translateY(-2vh); }
+                .brand-group.move-up-group { transform: translateY(-3vh); }
 
                 .logo-img {
-                    width: 250px;
+                    width: 240px;
                     opacity: 0;
                     transform: translateY(0);
                     filter: drop-shadow(0px 15px 30px rgba(0, 0, 0, 0.05));
@@ -112,7 +123,7 @@ def registrar_rutas(app):
                 }
                 .brand-samu.fade-in { opacity: 1; }
 
-                /* --- ÁREA DE ACCIÓN (Animaciones 100% Fluidas) --- */
+                /* --- ÁREA DE ACCIÓN --- */
                 .action-area {
                     width: 100%;
                     opacity: 0;
@@ -130,18 +141,7 @@ def registrar_rutas(app):
                     transform: translateY(0);
                 }
 
-                /* Contenedor del Botón COMENZAR */
-                .btn-comenzar-wrap {
-                    width: 100%;
-                    display: flex;
-                    justify-content: center;
-                    max-height: 100px;
-                    opacity: 1;
-                    /* La transición del alto es el secreto de la fluidez */
-                    transition: max-height 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
-                    overflow: hidden;
-                }
-
+                /* --- ESTILOS DE LOS BOTONES --- */
                 .btn-comenzar {
                     background: #0f172a;
                     color: #ffffff;
@@ -150,53 +150,48 @@ def registrar_rutas(app):
                     border: none;
                     font-size: 1.2rem;
                     letter-spacing: 2px;
-                    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
+                    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
                     transition: all 0.3s ease;
                     width: 90%;
-                    margin-bottom: 20px;
                     text-transform: uppercase;
                 }
                 .btn-comenzar:hover {
                     transform: translateY(-3px);
-                    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.2);
+                    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.25);
                     background: #1e293b;
                 }
                 .btn-comenzar i { margin-left: 10px; font-size: 1.2rem; }
 
-                /* Contenedor del LOGIN */
-                .login-wrap {
-                    width: 100%;
-                    display: flex;
-                    justify-content: center;
-                    max-height: 0; /* Empieza en 0 */
-                    opacity: 0;
-                    /* Mismas curvas de animación para empujar sin saltos */
-                    transition: max-height 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
-                    overflow: hidden;
+                .btn-panel {
+                    background-color: transparent;
+                    color: #64748b;
+                    border: 2px solid #cbd5e1;
+                    padding: 14px 40px;
+                    border-radius: 16px;
+                    font-size: 1rem;
+                    letter-spacing: 1.5px;
+                    width: 90%;
+                    transition: all 0.3s ease;
+                    text-transform: uppercase;
+                    margin-top: 5px;
+                }
+                .btn-panel:hover {
+                    background-color: #f1f5f9;
+                    color: #0f172a;
+                    border-color: #94a3b8;
                 }
 
-                /* ESTADOS CUANDO EL LOGIN ESTÁ ACTIVO */
-                .action-area.login-active .btn-comenzar-wrap {
-                    max-height: 0; /* Desaparece suavemente */
-                    opacity: 0;
-                }
-
-                .action-area.login-active .login-wrap {
-                    max-height: 450px; /* Crece para alojar la tarjeta */
-                    opacity: 1;
-                }
-
-                /* --- LOGIN BOX ELEGANTE --- */
+                /* --- LOGIN BOX --- */
                 #login-box {
                     width: 90%;
+                    margin: 0 auto;
                     background: rgba(255, 255, 255, 0.95);
                     backdrop-filter: blur(25px);
                     -webkit-backdrop-filter: blur(25px);
-                    padding: 30px;
+                    padding: 35px 30px;
                     border-radius: 24px;
                     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
                     text-align: left;
-                    margin-bottom: 20px;
                     border: 1px solid rgba(0, 0, 0, 0.04);
                 }
 
@@ -253,61 +248,24 @@ def registrar_rutas(app):
                 }
                 .btn-ingresar:hover { filter: brightness(1.1); }
 
-                /* Botón Panel Inferior */
-                .btn-panel {
-                    background-color: transparent;
-                    color: #64748b;
-                    border: 2px solid #cbd5e1;
-                    padding: 14px 40px;
-                    border-radius: 16px;
-                    font-size: 1rem;
-                    letter-spacing: 1.5px;
-                    width: 90%;
-                    transition: all 0.3s ease;
-                    text-transform: uppercase;
-                }
-                .btn-panel:hover {
-                    background-color: #f1f5f9;
-                    color: #0f172a;
-                    border-color: #94a3b8;
-                }
-
                 /* =========================================
-                   AJUSTES SÚPER COMPACTOS PARA CELULAR
+                   AJUSTES REDUCIDOS PARA CELULAR
                    ========================================= */
                 @media (max-width: 576px) {
-                    .logo-img { width: 110px !important; } /* Mucho más chico */
-                    .brand-samu { font-size: 3rem !important; margin-top: 0 !important; } 
+                    .logo-img { width: 110px !important; } /* Logo mucho más chico */
+                    .brand-samu { font-size: 2.8rem !important; margin-top: 0 !important; } 
                     
                     /* Botones más compactos */
-                    .btn-comenzar { 
-                        font-size: 1rem; 
-                        padding: 12px 20px; 
-                        border-radius: 12px; 
-                        margin-bottom: 10px;
-                    }
-                    .btn-panel { 
-                        font-size: 0.9rem; 
-                        padding: 12px 20px; 
-                        border-radius: 12px;
-                    }
+                    .btn-comenzar { font-size: 1rem; padding: 12px 20px; border-radius: 12px; }
+                    .btn-panel { font-size: 0.85rem; padding: 12px 20px; border-radius: 12px; margin-top: 5px; }
                     
-                    /* Formulario encogido */
-                    .login-wrap { max-height: 0; }
-                    .action-area.login-active .login-wrap { max-height: 400px; }
-                    
-                    #login-box { 
-                        padding: 20px 20px; 
-                        border-radius: 16px;
-                        margin-bottom: 15px;
-                    }
+                    #login-box { padding: 25px 20px; border-radius: 18px; }
                     .form-label { font-size: 0.8rem; margin-bottom: 5px; }
                     .form-control { font-size: 0.9rem; padding: 10px 12px; }
                     .btn-ingresar { font-size: 1rem; padding: 12px; margin-top: 10px; }
                     .btn-volver { font-size: 1.2rem; }
                     h4 { font-size: 1.3rem !important; }
                     
-                    /* La máscara se anula para mostrar el color en móvil suavemente */
                     .color-layer {
                         -webkit-mask-image: none;
                         mask-image: none;
@@ -332,34 +290,40 @@ def registrar_rutas(app):
                 
                 <div class="action-area" id="actionArea">
                     
-                    <div class="btn-comenzar-wrap">
-                        <button class="btn-comenzar" id="btnComenzar">
-                            COMENZAR <i class="bi bi-arrow-right"></i>
-                        </button>
-                    </div>
-
-                    <div class="login-wrap">
-                        <div id="login-box">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <button class="btn-volver" id="btnVolver" title="Retroceder"><i class="bi bi-arrow-left"></i></button>
-                                <h4 class="m-0 text-center flex-grow-1" style="color: #0f172a; font-size: 1.5rem; letter-spacing: 2px; transform: translateX(-10px);">INGRESO</h4>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Usuario</label>
-                                <input type="text" class="form-control" placeholder="Ej: Administrador">
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label">Contraseña</label>
-                                <input type="password" class="form-control" placeholder="••••••••">
-                            </div>
-                            <button class="btn btn-ingresar">Ingresar</button>
+                    <div id="btnComenzarWrapper" style="width: 100%;">
+                        <div style="padding: 10px; display: flex; justify-content: center;">
+                            <button class="btn-comenzar" id="btnComenzar">
+                                COMENZAR <i class="bi bi-arrow-right"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <button class="btn-panel" id="btnPanel">
-                        PANEL PRINCIPAL
-                    </button>
+                    <div id="loginWrapper" style="display: none; width: 100%;">
+                        <div style="padding: 15px 10px; display: flex; justify-content: center;">
+                            <div id="login-box">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <button class="btn-volver" id="btnVolver" title="Retroceder"><i class="bi bi-arrow-left"></i></button>
+                                    <h4 class="m-0 text-center flex-grow-1" style="color: #0f172a; font-size: 1.5rem; letter-spacing: 2px; transform: translateX(-10px);">INGRESO</h4>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Usuario</label>
+                                    <input type="text" class="form-control" placeholder="Ej: Administrador">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label">Contraseña</label>
+                                    <input type="password" class="form-control" placeholder="••••••••">
+                                </div>
+                                <button class="btn btn-ingresar">Ingresar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="width: 100%; padding: 0 10px; display: flex; justify-content: center;">
+                        <button class="btn-panel" id="btnPanel">
+                            PANEL PRINCIPAL
+                        </button>
+                    </div>
                     
                 </div>
             </div>
@@ -377,14 +341,14 @@ def registrar_rutas(app):
                         tgY = e.clientY;
                     });
 
-                    function animate() {
+                    function animateCursor() {
                         curX += (tgX - curX) * 0.05;
                         curY += (tgY - curY) * 0.05;
                         document.documentElement.style.setProperty('--x', Math.round(curX) + 'px');
                         document.documentElement.style.setProperty('--y', Math.round(curY) + 'px');
-                        requestAnimationFrame(animate);
+                        requestAnimationFrame(animateCursor);
                     }
-                    animate();
+                    animateCursor();
                 }
 
                 // --- ANIMACIÓN INICIAL AL CARGAR ---
@@ -396,20 +360,63 @@ def registrar_rutas(app):
                     setTimeout(() => { document.getElementById('actionArea').classList.add('show'); }, 3500);
                 };
 
-                // --- TRANSICIÓN PERFECTA DE BOTÓN A LOGIN ---
-                const btnComenzar = document.getElementById('btnComenzar');
-                const btnVolver = document.getElementById('btnVolver');
-                const actionArea = document.getElementById('actionArea');
+                // --- LÓGICA DE TRANSICIÓN ULTRA FLUIDA (CERO RECORTES) ---
+                const btnWrap = document.getElementById('btnComenzarWrapper');
+                const loginWrap = document.getElementById('loginWrapper');
 
-                // Abrir el panel de login
-                btnComenzar.addEventListener('click', () => {
-                    actionArea.classList.add('login-active');
+                // Función maestra para ocultar elementos fluidamente
+                function animOut(el, onComplete) {
+                    el.style.height = el.scrollHeight + 'px';
+                    el.style.overflow = 'hidden';
+                    el.offsetHeight; // Reflow forzado
+                    
+                    el.style.transition = 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease, transform 0.4s ease';
+                    el.style.transform = 'scale(0.95)';
+                    el.style.height = '0px';
+                    el.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        el.style.display = 'none';
+                        el.style.transform = 'scale(1)';
+                        if(onComplete) onComplete();
+                    }, 400);
+                }
+
+                // Función maestra para mostrar elementos fluidamente
+                function animIn(el) {
+                    el.style.display = 'block';
+                    el.style.overflow = 'hidden';
+                    el.style.opacity = '0';
+                    el.style.transform = 'scale(0.95)';
+                    
+                    let targetHeight = el.scrollHeight;
+                    el.style.height = '0px';
+                    el.offsetHeight; // Reflow forzado
+                    
+                    el.style.transition = 'height 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease, transform 0.5s ease';
+                    el.style.height = targetHeight + 'px';
+                    el.style.opacity = '1';
+                    el.style.transform = 'scale(1)';
+                    
+                    setTimeout(() => {
+                        el.style.height = 'auto';
+                        el.style.overflow = 'visible'; // Libera las sombras para que no se corten
+                    }, 500);
+                }
+
+                // Evento al presionar COMENZAR
+                document.getElementById('btnComenzar').addEventListener('click', () => {
+                    animOut(btnWrap, () => {
+                        animIn(loginWrap);
+                    });
                 });
 
-                // Retroceder y cerrar panel
-                btnVolver.addEventListener('click', (e) => {
-                    e.preventDefault(); // Evita recargas
-                    actionArea.classList.remove('login-active');
+                // Evento al presionar RETROCEDER (Flecha)
+                document.getElementById('btnVolver').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    animOut(loginWrap, () => {
+                        animIn(btnWrap);
+                    });
                 });
             </script>
         </body>
