@@ -15,7 +15,6 @@ def registrar_rutas(app):
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
             
             <style>
-                /* Variables para el mouse */
                 :root {
                     --x: 50vw;
                     --y: 50vh;
@@ -30,11 +29,10 @@ def registrar_rutas(app):
                     justify-content: center;
                     align-items: center;
                     color: #0f172a;
-                    /* Fondo 100% blanco puro garantizado */
                     background-color: #ffffff; 
                 }
 
-                /* --- CAPA DE COLORES (Intensidad ajustada) --- */
+                /* --- CAPA DE COLORES INTERACTIVA --- */
                 .color-layer {
                     position: fixed;
                     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -42,7 +40,7 @@ def registrar_rutas(app):
                     overflow: hidden;
                     background: #ffffff;
                     
-                    /* Máscara ajustada para que el color sí se note en los bordes */
+                    /* Máscara gigante para que el mouse deje el centro inmaculado */
                     -webkit-mask-image: radial-gradient(circle 35vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%);
                     mask-image: radial-gradient(circle 35vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%);
                 }
@@ -53,20 +51,18 @@ def registrar_rutas(app):
                     filter: blur(100px);
                 }
 
-                /* Luz Azul aumentada sutilmente */
                 .blob-blue {
                     width: 55vw; height: 55vw;
                     background: #0ea5e9; 
-                    opacity: 0.25; /* Aumentado a 25% */
+                    opacity: 0.25; 
                     top: -5%; left: -5%;
                     animation: flotar 25s infinite ease-in-out alternate;
                 }
 
-                /* Luz Rosada aumentada sutilmente */
                 .blob-pink {
                     width: 55vw; height: 55vw;
                     background: #f9a8d4; 
-                    opacity: 0.20; /* Aumentado a 20% */
+                    opacity: 0.20; 
                     bottom: -5%; right: -5%;
                     animation: flotar 30s infinite ease-in-out alternate-reverse;
                 }
@@ -136,6 +132,33 @@ def registrar_rutas(app):
                     transform: translateY(0);
                 }
 
+                /* =========================================
+                   EL SECRETO DE LA EXTREMA FLUIDEZ (GRID)
+                   ========================================= */
+                .fluid-container {
+                    display: grid;
+                    grid-template-rows: 0fr; /* Empieza cerrado */
+                    transition: grid-template-rows 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+                    width: 100%;
+                }
+                .fluid-container.open {
+                    grid-template-rows: 1fr; /* Se abre perfectamente sin importar el contenido */
+                }
+                .fluid-inner {
+                    overflow: hidden;
+                    width: 100%;
+                    display: flex;
+                    justify-content: center;
+                    opacity: 0;
+                    transform: translateY(-10px);
+                    transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+                }
+                .fluid-container.open > .fluid-inner {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+
+                /* --- BOTONES --- */
                 .btn-comenzar {
                     background: #0f172a;
                     color: #ffffff;
@@ -147,7 +170,7 @@ def registrar_rutas(app):
                     box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
                     transition: all 0.3s ease;
                     width: 90%;
-                    margin-bottom: 20px;
+                    margin-bottom: 20px; /* Este margen se esconde fluidamente cuando se cierra */
                     text-transform: uppercase;
                 }
                 .btn-comenzar:hover {
@@ -177,7 +200,6 @@ def registrar_rutas(app):
 
                 /* --- LOGIN ELEGANTE --- */
                 #login-box {
-                    display: none; 
                     width: 90%;
                     background: rgba(255, 255, 255, 0.95);
                     backdrop-filter: blur(25px);
@@ -190,7 +212,6 @@ def registrar_rutas(app):
                     border: 1px solid rgba(0, 0, 0, 0.04);
                 }
 
-                /* Estilo del botón de retroceder */
                 .btn-volver {
                     background: none;
                     border: none;
@@ -200,9 +221,7 @@ def registrar_rutas(app):
                     cursor: pointer;
                     transition: color 0.3s ease;
                 }
-                .btn-volver:hover {
-                    color: #0f172a;
-                }
+                .btn-volver:hover { color: #0f172a; }
 
                 .form-label {
                     font-size: 0.95rem;
@@ -276,25 +295,33 @@ def registrar_rutas(app):
                 
                 <div class="action-area" id="actionArea">
                     
-                    <button class="btn-comenzar" id="btnComenzar">
-                        COMENZAR <i class="bi bi-arrow-right"></i>
-                    </button>
+                    <div class="fluid-container open" id="wrapComenzar">
+                        <div class="fluid-inner">
+                            <button class="btn-comenzar" id="btnComenzar">
+                                COMENZAR <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
 
-                    <div id="login-box">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <button class="btn-volver" id="btnVolver" title="Volver"><i class="bi bi-arrow-left"></i></button>
-                            <h4 class="m-0 text-center flex-grow-1" style="color: #0f172a; font-size: 1.6rem; letter-spacing: 2px; transform: translateX(-10px);">INGRESO</h4>
+                    <div class="fluid-container" id="wrapLogin">
+                        <div class="fluid-inner">
+                            <div id="login-box">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <button class="btn-volver" id="btnVolver" title="Volver"><i class="bi bi-arrow-left"></i></button>
+                                    <h4 class="m-0 text-center flex-grow-1" style="color: #0f172a; font-size: 1.6rem; letter-spacing: 2px; transform: translateX(-10px);">INGRESO</h4>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Usuario</label>
+                                    <input type="text" class="form-control" placeholder="Escribe tu usuario">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label">Contraseña</label>
+                                    <input type="password" class="form-control" placeholder="••••••••">
+                                </div>
+                                <button class="btn w-100 btn-ingresar">Entrar</button>
+                            </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Usuario</label>
-                            <input type="text" class="form-control" placeholder="Escribe tu usuario">
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" placeholder="••••••••">
-                        </div>
-                        <button class="btn w-100 btn-ingresar">Entrar</button>
                     </div>
 
                     <button class="btn-panel" id="btnPanel">
@@ -304,7 +331,6 @@ def registrar_rutas(app):
                 </div>
             </div>
 
-            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
                 // --- MOTOR DEL MOUSE FLUIDO ---
                 let curX = window.innerWidth / 2;
@@ -339,18 +365,34 @@ def registrar_rutas(app):
                     setTimeout(() => { document.getElementById('actionArea').classList.add('show'); }, 3500);
                 };
 
-                // --- LÓGICA DE DESGLOSE Y RETROCESO ---
-                // Abrir el panel de login
-                $('#btnComenzar').click(function() {
-                    $(this).slideUp(300);
-                    setTimeout(() => { $('#login-box').slideDown(400); }, 300);
+                // --- LÓGICA DE INTERCAMBIO FLUIDO (NATIVO, SIN JQUERY) ---
+                const wrapComenzar = document.getElementById('wrapComenzar');
+                const wrapLogin = document.getElementById('wrapLogin');
+                const btnComenzar = document.getElementById('btnComenzar');
+                const btnVolver = document.getElementById('btnVolver');
+
+                // Al hacer clic en COMENZAR
+                btnComenzar.addEventListener('click', () => {
+                    // Cierra el botón comenzar suavemente
+                    wrapComenzar.classList.remove('open');
+                    
+                    // Abre el panel de login suavemente
+                    setTimeout(() => {
+                        wrapLogin.classList.add('open');
+                    }, 200); // Pequeño retraso para que no choquen visualmente
                 });
 
-                // Cerrar el panel de login y volver al estado inicial
-                $('#btnVolver').click(function(e) {
-                    e.preventDefault(); // Previene que recargue la página si está dentro de un form
-                    $('#login-box').slideUp(300);
-                    setTimeout(() => { $('#btnComenzar').slideDown(400); }, 300);
+                // Al hacer clic en Volver (Flecha atrás)
+                btnVolver.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Cierra el panel de login suavemente
+                    wrapLogin.classList.remove('open');
+                    
+                    // Abre el botón comenzar nuevamente
+                    setTimeout(() => {
+                        wrapComenzar.classList.add('open');
+                    }, 250); 
                 });
             </script>
         </body>
