@@ -6,74 +6,190 @@ login_bp = Blueprint('login', __name__)
 def mostrar_login():
     error = None
     if request.method == 'POST':
-        # .strip() elimina espacios en blanco accidentales al inicio o final
+        # Capturamos los datos y limpiamos los espacios en blanco
         usuario = request.form.get('usuario', '').strip()
         password = request.form.get('password', '').strip()
 
-        # --- CUENTA MAESTRA DEL DUEÑO (SAMU) ---
+        # --- VALIDACIÓN DE TU CUENTA MAESTRA ---
         if usuario == 'SAMU' and password == '716285':
             session['usuario_id'] = 1
             session['nombre'] = 'SAMU - Dirección'
             session['rol'] = 'Admin' 
+            # Redirige al panel principal liberado
             return redirect(url_for('inicio.panel_principal'))
         else:
-            error = "Credenciales incorrectas. Intenta de nuevo."
+            error = "Credenciales incorrectas. Inténtalo de nuevo."
 
     return render_template_string("""
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>SAMU - Ingreso</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>SAMU</title>
+        
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        
         <style>
             :root { --x: 50vw; --y: 50vh; }
-            body { margin: 0; font-family: 'Bauhaus 93', 'Arial Rounded MT Bold', sans-serif; overflow: hidden; height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #ffffff; }
-            .color-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: #ffffff; -webkit-mask-image: radial-gradient(circle 40vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%); }
+            body {
+                margin: 0; font-family: 'Bauhaus 93', 'Arial Rounded MT Bold', sans-serif;
+                overflow: hidden; height: 100vh; display: flex; justify-content: center;
+                align-items: center; color: #0f172a; background-color: #ffffff; 
+            }
+            .color-layer {
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                z-index: -1; overflow: hidden; background: #ffffff;
+                -webkit-mask-image: radial-gradient(circle 40vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%);
+                mask-image: radial-gradient(circle 40vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%);
+            }
             .blob { position: absolute; border-radius: 50%; filter: blur(90px); }
-            .blob-blue { width: 60vw; height: 60vw; background: #0ea5e9; opacity: 0.25; top: -10%; left: -10%; animation: mov 18s infinite ease-in-out; }
-            .blob-pink { width: 60vw; height: 60vw; background: #f9a8d4; opacity: 0.20; bottom: -10%; right: -10%; animation: mov 22s infinite ease-in-out reverse; }
-            @keyframes mov { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(10vw, 5vh) scale(1.1); } }
-            .main-wrapper { width: 100%; max-width: 400px; text-align: center; z-index: 10; }
-            #login-box { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); padding: 35px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
-            .form-control { border-radius: 12px; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-family: Arial, sans-serif;}
-            .btn-ingresar { background: #000; color: #fff; width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; margin-top: 10px; cursor: pointer;}
-            .nav-btn { background: none; border: 2px solid #000; color: #000; width: 100%; padding: 12px; border-radius: 12px; margin-top: 15px; font-weight: bold; text-decoration: none; display: block; }
+            .blob-blue { width: 60vw; height: 60vw; background: #0ea5e9; opacity: 0.25; top: -10%; left: -10%; animation: movDinamicoAzul 18s infinite ease-in-out; }
+            .blob-pink { width: 60vw; height: 60vw; background: #f9a8d4; opacity: 0.20; bottom: -10%; right: -10%; animation: movDinamicoRosa 22s infinite ease-in-out; }
+            @keyframes movDinamicoAzul { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(12vw, 8vh) scale(1.15); } 66% { transform: translate(-8vw, 12vh) scale(0.9); } }
+            @keyframes movDinamicoRosa { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(-12vw, -8vh) scale(1.15); } 66% { transform: translate(8vw, -12vh) scale(0.9); } }
+            .main-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 420px; position: relative; z-index: 10; }
+            .brand-group { display: flex; flex-direction: column; align-items: center; transform: translateY(12vh); transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
+            .brand-group.move-up-group { transform: translateY(-3vh); }
+            .logo-img { width: 240px; opacity: 0; transform: translateY(0); filter: drop-shadow(0px 15px 30px rgba(0, 0, 0, 0.05)); transition: opacity 1.2s ease, transform 1s ease; }
+            .logo-img.fade-in { opacity: 1; } .logo-img.move-up-logo { transform: translateY(-15px); }
+            .brand-samu { font-size: 5rem; color: #0f172a; opacity: 0; margin-top: 5px; letter-spacing: 0.08em; transition: opacity 1.2s ease; }
+            .brand-samu.fade-in { opacity: 1; }
+            .action-area { width: 100%; opacity: 0; visibility: hidden; transform: translateY(20px); transition: all 1s ease; display: flex; flex-direction: column; align-items: center; margin-top: 15px; }
+            .action-area.show { opacity: 1; visibility: visible; transform: translateY(0); }
+            
+            /* Botones fluidos */
+            .btn-comenzar { background: #0f172a; color: #ffffff; padding: 16px 40px; border-radius: 16px; border: none; font-size: 1.2rem; letter-spacing: 2px; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15); transition: all 0.3s ease; width: 90%; text-transform: uppercase; cursor: pointer; }
+            .btn-comenzar:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(15, 23, 42, 0.25); background: #1e293b; }
+            .btn-panel { background-color: transparent; color: #64748b; border: 2px solid #cbd5e1; padding: 14px 40px; border-radius: 16px; font-size: 1rem; letter-spacing: 1.5px; width: 90%; transition: all 0.3s ease; text-transform: uppercase; margin-top: 5px; cursor: pointer; display: block; text-align: center; text-decoration: none;}
+            .btn-panel:hover { background-color: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
+            
+            /* Contenedor del form */
+            #login-box { width: 90%; margin: 0 auto; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); padding: 35px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06); text-align: left; border: 1px solid rgba(0, 0, 0, 0.04); }
+            .btn-volver { background: none; border: none; color: #94a3b8; font-size: 1.4rem; padding: 0; cursor: pointer; transition: color 0.3s ease; }
+            .btn-volver:hover { color: #0f172a; }
+            .form-label { font-size: 0.95rem; color: #64748b; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; font-family: 'Arial Rounded MT Bold', sans-serif; }
+            .form-control { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 15px; font-family: 'Arial', sans-serif; font-size: 1rem; color: #0f172a; transition: all 0.3s ease; }
+            .form-control:focus { background-color: #ffffff; border: 1px solid #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); outline: none; }
+            .btn-ingresar { background: linear-gradient(90deg, #0ea5e9 0%, #3b82f6 100%); color: white; border-radius: 12px; padding: 15px; font-size: 1.1rem; letter-spacing: 2px; border: none; text-transform: uppercase; transition: filter 0.3s ease; margin-top: 15px; box-shadow: 0 8px 20px rgba(14, 165, 233, 0.2); width: 100%; cursor: pointer; }
+            .btn-ingresar:hover { filter: brightness(1.1); }
+            .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-family: 'Arial', sans-serif; font-size: 0.9rem; border-radius: 8px; padding: 10px; margin-bottom: 15px; text-align: center; }
+
+            @media (max-width: 576px) {
+                .logo-img { width: 110px !important; } .brand-samu { font-size: 2.8rem !important; margin-top: 0 !important; } 
+                .btn-comenzar { font-size: 1rem; padding: 12px 20px; border-radius: 12px; }
+                .btn-panel { font-size: 0.85rem; padding: 12px 20px; border-radius: 12px; margin-top: 5px; }
+                #login-box { padding: 25px 20px; border-radius: 18px; }
+                .form-control { font-size: 0.9rem; padding: 10px 12px; }
+                .btn-ingresar { font-size: 1rem; padding: 12px; margin-top: 10px; }
+                .color-layer { -webkit-mask-image: none; mask-image: none; opacity: 0.6; }
+            }
         </style>
     </head>
     <body>
-        <div class="color-layer"><div class="blob blob-blue"></div><div class="blob blob-pink"></div></div>
+
+        <div class="color-layer">
+            <div class="blob blob-pink"></div>
+            <div class="blob blob-blue"></div>
+        </div>
+
         <div class="main-wrapper">
-            <img src="/static/logo_s.png" style="width: 180px; margin-bottom: 20px;" alt="SAMU">
-            <div id="login-box">
-                <form method="POST" action="/" id="formLogin">
-                    <h4 class="mb-4">INGRESO</h4>
-                    {% if error %}<div class="alert alert-danger py-2" style="font-size: 0.8rem; font-family: Arial, sans-serif;">{{ error }}</div>{% endif %}
-                    
-                    <input type="text" name="usuario" id="inputUsuario" class="form-control mb-3" placeholder="Usuario" required autocomplete="off">
-                    <input type="password" name="password" id="inputPassword" class="form-control mb-4" placeholder="Contraseña" required>
-                    
-                    <button type="submit" class="btn-ingresar">INGRESAR</button>
-                </form>
-                <a href="/panel" class="nav-btn">PANEL PRINCIPAL</a>
+            <div class="brand-group" id="brandGroup">
+                <img id="logoImg" src="/static/logo_s.png" class="logo-img" alt="Logo SAMU">
+                <div class="brand-samu" id="brandName">SAMU</div>
+            </div>
+            
+            <div class="action-area" id="actionArea">
+                
+                <div id="btnComenzarWrapper" style="width: 100%; {% if error %}display: none;{% endif %}">
+                    <div style="padding: 10px; display: flex; justify-content: center;">
+                        <button class="btn-comenzar" id="btnComenzar">
+                            COMENZAR <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="loginWrapper" style="width: 100%; {% if not error %}display: none;{% endif %}">
+                    <div style="padding: 15px 10px; display: flex; justify-content: center;">
+                        
+                        <form id="login-box" method="POST" action="/">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <button type="button" class="btn-volver" id="btnVolver" title="Retroceder"><i class="bi bi-arrow-left"></i></button>
+                                <h4 class="m-0 text-center flex-grow-1" style="color: #0f172a; font-size: 1.5rem; letter-spacing: 2px; transform: translateX(-10px);">INGRESO</h4>
+                            </div>
+                            
+                            {% if error %}
+                            <div class="alert-error">{{ error }}</div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Usuario</label>
+                                <input type="text" name="usuario" class="form-control" placeholder="Ej: SAMU" required autocomplete="off">
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Contraseña</label>
+                                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                            </div>
+                            <button type="submit" class="btn-ingresar">INGRESAR</button>
+                        </form>
+
+                    </div>
+                </div>
+
+                <div style="width: 100%; padding: 0 10px; display: flex; justify-content: center;">
+                    <a href="/panel?modo=visual" class="btn-panel">
+                        PANEL PRINCIPAL
+                    </a>
+                </div>
+                
             </div>
         </div>
-        
-        <script>
-            // Movimiento del cristal
-            window.addEventListener('mousemove', (e) => {
-                document.documentElement.style.setProperty('--x', e.clientX + 'px');
-                document.documentElement.style.setProperty('--y', e.clientY + 'px');
-            });
 
-            // FUERZA EL ENVÍO AL PRESIONAR ENTER
-            document.getElementById('formLogin').addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault(); // Evita comportamientos extraños del navegador
-                    this.submit();      // Envía los datos a Python
+        <script>
+            // Motor de cursor
+            let curX = window.innerWidth / 2, curY = window.innerHeight / 2, tgX = curX, tgY = curY;
+            if (window.matchMedia("(pointer: fine)").matches) {
+                window.addEventListener('mousemove', (e) => { tgX = e.clientX; tgY = e.clientY; });
+                function animateCursor() {
+                    curX += (tgX - curX) * 0.05; curY += (tgY - curY) * 0.05;
+                    document.documentElement.style.setProperty('--x', Math.round(curX) + 'px');
+                    document.documentElement.style.setProperty('--y', Math.round(curY) + 'px');
+                    requestAnimationFrame(animateCursor);
                 }
-            });
+                animateCursor();
+            }
+
+            // Animación inicial
+            window.onload = function() {
+                setTimeout(() => { document.getElementById('logoImg').classList.add('fade-in'); }, 300);
+                setTimeout(() => { document.getElementById('logoImg').classList.add('move-up-logo'); }, 1200);
+                setTimeout(() => { document.getElementById('brandName').classList.add('fade-in'); }, 1800);
+                setTimeout(() => { document.getElementById('brandGroup').classList.add('move-up-group'); }, 2800);
+                setTimeout(() => { document.getElementById('actionArea').classList.add('show'); }, 3500);
+            };
+
+            // Fluidez sin recortes
+            const btnWrap = document.getElementById('btnComenzarWrapper');
+            const loginWrap = document.getElementById('loginWrapper');
+
+            function animOut(el, onComplete) {
+                el.style.height = el.scrollHeight + 'px'; el.style.overflow = 'hidden'; el.offsetHeight; 
+                el.style.transition = 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease, transform 0.4s ease';
+                el.style.transform = 'scale(0.95)'; el.style.height = '0px'; el.style.opacity = '0';
+                setTimeout(() => { el.style.display = 'none'; el.style.transform = 'scale(1)'; if(onComplete) onComplete(); }, 400);
+            }
+
+            function animIn(el) {
+                el.style.display = 'block'; el.style.overflow = 'hidden'; el.style.opacity = '0'; el.style.transform = 'scale(0.95)';
+                let targetHeight = el.scrollHeight; el.style.height = '0px'; el.offsetHeight; 
+                el.style.transition = 'height 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease, transform 0.5s ease';
+                el.style.height = targetHeight + 'px'; el.style.opacity = '1'; el.style.transform = 'scale(1)';
+                setTimeout(() => { el.style.height = 'auto'; el.style.overflow = 'visible'; }, 500);
+            }
+
+            document.getElementById('btnComenzar').addEventListener('click', () => { animOut(btnWrap, () => { animIn(loginWrap); }); });
+            document.getElementById('btnVolver').addEventListener('click', (e) => { e.preventDefault(); animOut(loginWrap, () => { animIn(btnWrap); }); });
         </script>
     </body>
     </html>
