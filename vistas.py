@@ -15,7 +15,6 @@ def registrar_rutas(app):
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
             
             <style>
-                /* Variables para el mouse */
                 :root {
                     --x: 50vw;
                     --y: 50vh;
@@ -33,7 +32,7 @@ def registrar_rutas(app):
                     background-color: #ffffff; 
                 }
 
-                /* --- CAPA DE COLORES (Con intensidad ajustada) --- */
+                /* --- CAPA DE COLORES CORREGIDA --- */
                 .color-layer {
                     position: fixed;
                     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -41,39 +40,39 @@ def registrar_rutas(app):
                     overflow: hidden;
                     background: #ffffff;
                     
-                    /* Máscara que espanta el color, dejando el centro blanco puro */
-                    -webkit-mask-image: radial-gradient(circle 50vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 80%);
-                    mask-image: radial-gradient(circle 50vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 80%);
+                    /* Máscara ajustada: limpia un círculo más pequeño alrededor del mouse 
+                       para que los colores sí se vean en los bordes */
+                    -webkit-mask-image: radial-gradient(circle 25vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 100%);
+                    mask-image: radial-gradient(circle 25vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 100%);
                 }
 
                 .blob {
                     position: absolute;
                     border-radius: 50%;
-                    filter: blur(120px);
+                    filter: blur(100px); /* Difuminado ligeramente menor para notar el color */
                 }
 
-                /* Luz Azul con un poco más de presencia (25%) */
+                /* Azul y Rosado con la intensidad justa */
                 .blob-blue {
                     width: 55vw; height: 55vw;
                     background: #0ea5e9; 
-                    opacity: 0.25; 
-                    top: -5%; left: -5%;
-                    animation: flotar 25s infinite ease-in-out alternate;
+                    opacity: 0.35; /* Mayor intensidad para que resalte */
+                    top: -10%; left: -10%;
+                    animation: flotar 20s infinite ease-in-out alternate;
                 }
 
-                /* Luz Rosada un poco más visible (20%) */
                 .blob-pink {
                     width: 55vw; height: 55vw;
                     background: #f9a8d4; 
-                    opacity: 0.20; 
-                    bottom: -5%; right: -5%;
-                    animation: flotar 30s infinite ease-in-out alternate-reverse;
+                    opacity: 0.25; 
+                    bottom: -10%; right: -10%;
+                    animation: flotar 25s infinite ease-in-out alternate-reverse;
                 }
 
                 @keyframes flotar {
                     0% { transform: translate(0, 0) scale(1); }
-                    50% { transform: translate(5%, 3%) scale(1.05); }
-                    100% { transform: translate(-3%, 5%) scale(0.98); }
+                    50% { transform: translate(6%, 4%) scale(1.05); }
+                    100% { transform: translate(-4%, 6%) scale(0.98); }
                 }
 
                 /* --- ESTRUCTURA PRINCIPAL --- */
@@ -91,17 +90,17 @@ def registrar_rutas(app):
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    transform: translateY(12vh);
+                    transform: translateY(10vh); /* Centrado perfecto */
                     transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
                 }
                 
-                .brand-group.move-up-group { transform: translateY(-2vh); }
+                .brand-group.move-up-group { transform: translateY(-3vh); }
 
                 .logo-img {
                     width: 250px;
                     opacity: 0;
                     transform: translateY(0);
-                    filter: drop-shadow(0px 15px 30px rgba(0, 0, 0, 0.05)); 
+                    filter: drop-shadow(0px 15px 30px rgba(0, 0, 0, 0.08)); 
                     transition: opacity 1.2s ease, transform 1s ease;
                 }
                 .logo-img.fade-in { opacity: 1; }
@@ -143,18 +142,26 @@ def registrar_rutas(app):
                     border: none;
                     font-size: 1.2rem;
                     letter-spacing: 2px;
-                    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
+                    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
                     transition: all 0.3s ease;
                     width: 90%;
-                    margin-bottom: 20px;
+                    margin-bottom: 15px; /* Margen reducido para que el login quede cerca */
                     text-transform: uppercase;
                 }
                 .btn-comenzar:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.2);
+                    transform: translateY(-2px);
+                    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.25);
                     background: #1e293b;
                 }
-                .btn-comenzar i { margin-left: 10px; font-size: 1.2rem; }
+                .btn-comenzar i { 
+                    margin-left: 10px; 
+                    font-size: 1.2rem; 
+                    transition: transform 0.3s ease; 
+                }
+                /* Animación de la flecha cuando se abre el panel */
+                .btn-comenzar.active i {
+                    transform: rotate(90deg);
+                }
 
                 .btn-panel {
                     background-color: transparent;
@@ -169,27 +176,32 @@ def registrar_rutas(app):
                     text-transform: uppercase;
                 }
                 .btn-panel:hover {
-                    background-color: #f1f5f9;
+                    background-color: #f8fafc;
                     color: #0f172a;
                     border-color: #94a3b8;
                 }
 
-                /* --- LOGIN LIMPIO Y PROFESIONAL --- */
+                /* --- LOGIN DESGLOSABLE Y ELEGANTE --- */
+                #login-wrapper {
+                    display: none; /* Oculto inicialmente */
+                    width: 100%;
+                    padding: 0 5%; /* Para que coincida con el 90% del botón */
+                    margin-bottom: 20px;
+                }
+
                 #login-box {
-                    display: none; 
-                    width: 90%;
+                    width: 100%;
                     background: rgba(255, 255, 255, 0.95); 
                     backdrop-filter: blur(25px);
                     -webkit-backdrop-filter: blur(25px);
                     padding: 35px 30px;
-                    border-radius: 24px;
-                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06); /* Sombra un poco más definida */
+                    border-radius: 20px;
+                    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08); 
                     text-align: left;
-                    margin-bottom: 20px;
-                    border: 1px solid rgba(0, 0, 0, 0.04);
+                    border: 1px solid rgba(0, 0, 0, 0.05);
                 }
 
-                /* Botón para retroceder (Flecha elegante) */
+                /* Botón de Retroceder integrado en el formulario */
                 .btn-volver {
                     background: none;
                     border: none;
@@ -213,8 +225,8 @@ def registrar_rutas(app):
                 }
 
                 .form-control {
-                    background-color: #f8fafc;
-                    border: 1px solid #e2e8f0;
+                    background-color: #f1f5f9;
+                    border: 1px solid transparent;
                     border-radius: 12px;
                     padding: 14px 15px;
                     font-family: 'Arial', sans-serif;
@@ -240,7 +252,7 @@ def registrar_rutas(app):
                     text-transform: uppercase;
                     transition: filter 0.3s ease;
                     margin-top: 15px;
-                    box-shadow: 0 8px 20px rgba(14, 165, 233, 0.2);
+                    box-shadow: 0 8px 20px rgba(14, 165, 233, 0.25);
                 }
                 .btn-ingresar:hover { filter: brightness(1.1); }
 
@@ -279,21 +291,23 @@ def registrar_rutas(app):
                         COMENZAR <i class="bi bi-arrow-right"></i>
                     </button>
 
-                    <div id="login-box">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <button class="btn-volver" id="btnVolver" title="Volver"><i class="bi bi-arrow-left"></i></button>
-                            <h4 class="m-0 text-center flex-grow-1" style="color: #0f172a; font-size: 1.6rem; letter-spacing: 2px; transform: translateX(-10px);">INGRESO</h4>
+                    <div id="login-wrapper">
+                        <div id="login-box">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <button class="btn-volver" id="btnVolver" title="Retroceder"><i class="bi bi-arrow-left"></i></button>
+                                <h4 class="m-0 text-center flex-grow-1" style="color: #0f172a; font-size: 1.5rem; letter-spacing: 2px; transform: translateX(-10px);">INGRESO</h4>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Usuario</label>
+                                <input type="text" class="form-control" placeholder="Ej: Administrador">
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" placeholder="••••••••">
+                            </div>
+                            <button class="btn w-100 btn-ingresar">Ingresar</button>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Usuario</label>
-                            <input type="text" class="form-control" placeholder="Escribe tu usuario">
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" placeholder="••••••••">
-                        </div>
-                        <button class="btn w-100 btn-ingresar">Entrar</button>
                     </div>
 
                     <button class="btn-panel" id="btnPanel">
@@ -305,7 +319,7 @@ def registrar_rutas(app):
 
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
-                // --- MOTOR DEL MOUSE FLUIDO ---
+                // --- MOVIMIENTO DEL MOUSE PARA DESPEJAR EL COLOR ---
                 let curX = window.innerWidth / 2;
                 let curY = window.innerHeight / 2;
                 let tgX = curX;
@@ -329,7 +343,7 @@ def registrar_rutas(app):
                     animate();
                 }
 
-                // --- SECUENCIA DE ANIMACIÓN INICIAL ---
+                // --- ANIMACIÓN DE ENTRADA AL CARGAR LA PÁGINA ---
                 window.onload = function() {
                     setTimeout(() => { document.getElementById('logoImg').classList.add('fade-in'); }, 300);
                     setTimeout(() => { document.getElementById('logoImg').classList.add('move-up-logo'); }, 1200);
@@ -338,19 +352,24 @@ def registrar_rutas(app):
                     setTimeout(() => { document.getElementById('actionArea').classList.add('show'); }, 3500);
                 };
 
-                // --- LÓGICA DE INTERACCIÓN (DESGLOSAR Y RETROCEDER) ---
-                
-                // Abrir panel
-                $('#btnComenzar').click(function() {
-                    $(this).slideUp(300);
-                    setTimeout(() => { $('#login-box').slideDown(400); }, 300);
+                // --- LÓGICA DE "DESGLOSAR" Y "RETROCEDER" ---
+                const btnComenzar = $('#btnComenzar');
+                const loginWrapper = $('#login-wrapper');
+
+                // Abrir y cerrar con el botón COMENZAR
+                btnComenzar.click(function() {
+                    // Alternar la clase 'active' para que la flecha del botón gire hacia abajo
+                    $(this).toggleClass('active');
+                    
+                    // Desglosar (slideToggle abre si está cerrado, cierra si está abierto)
+                    loginWrapper.slideToggle(400);
                 });
 
-                // Cerrar panel (Retroceder)
+                // Cerrar explícitamente con el botón de retroceso (Flecha izquierda)
                 $('#btnVolver').click(function(e) {
-                    e.preventDefault(); // Evita recargar la página por error
-                    $('#login-box').slideUp(300);
-                    setTimeout(() => { $('#btnComenzar').slideDown(400); }, 300);
+                    e.preventDefault();
+                    btnComenzar.removeClass('active'); // Regresa la flecha a su posición original
+                    loginWrapper.slideUp(400); // Pliega el panel hacia arriba
                 });
             </script>
         </body>
