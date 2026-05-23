@@ -15,7 +15,7 @@ def registrar_rutas(app):
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
             
             <style>
-                /* Variables para rastrear la posición fluida del mouse */
+                /* Variables para el mouse */
                 :root {
                     --x: 50vw;
                     --y: 50vh;
@@ -30,11 +30,11 @@ def registrar_rutas(app):
                     justify-content: center;
                     align-items: center;
                     color: #0f172a;
-                    /* El fondo base real de la página es blanco puro */
+                    /* Fondo 100% blanco puro garantizado */
                     background-color: #ffffff; 
                 }
 
-                /* --- CAPA DE COLORES (Que será "espantada" por el mouse) --- */
+                /* --- CAPA DE COLORES SÚPER SUTIL --- */
                 .color-layer {
                     position: fixed;
                     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -42,9 +42,10 @@ def registrar_rutas(app):
                     overflow: hidden;
                     background: #ffffff;
                     
-                    /* LA MAGIA: Una máscara que oculta los colores justo donde está el mouse */
-                    -webkit-mask-image: radial-gradient(circle 35vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 40%);
-                    mask-image: radial-gradient(circle 35vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 40%);
+                    /* La máscara que "espanta" el color ahora es gigante. 
+                       Deja un área inmensa de color blanco puro. */
+                    -webkit-mask-image: radial-gradient(circle 50vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 80%);
+                    mask-image: radial-gradient(circle 50vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 80%);
                 }
 
                 .blob {
@@ -53,28 +54,28 @@ def registrar_rutas(app):
                     filter: blur(120px);
                 }
 
-                /* Luz Azul vibrante pero suave */
+                /* Luz Azul ahora muy reducida en tamaño y transparencia */
                 .blob-blue {
-                    width: 70vw; height: 70vw;
+                    width: 50vw; height: 50vw;
                     background: #0ea5e9; 
-                    opacity: 0.35; 
-                    top: -10%; left: -10%;
-                    animation: flotar 20s infinite ease-in-out alternate;
+                    opacity: 0.12; /* Muy transparente */
+                    top: -5%; left: -5%;
+                    animation: flotar 25s infinite ease-in-out alternate;
                 }
 
-                /* Luz Rosada un poco más clara y elegante */
+                /* Luz Rosada sumamente sutil */
                 .blob-pink {
-                    width: 70vw; height: 70vw;
-                    background: #f9a8d4; /* Rosado más claro */
-                    opacity: 0.35; 
-                    bottom: -10%; right: -10%;
-                    animation: flotar 25s infinite ease-in-out alternate-reverse;
+                    width: 50vw; height: 50vw;
+                    background: #f9a8d4; 
+                    opacity: 0.10; /* Casi invisible, solo da un toque de calidez */
+                    bottom: -5%; right: -5%;
+                    animation: flotar 30s infinite ease-in-out alternate-reverse;
                 }
 
                 @keyframes flotar {
                     0% { transform: translate(0, 0) scale(1); }
-                    50% { transform: translate(8%, 5%) scale(1.1); }
-                    100% { transform: translate(-5%, 8%) scale(0.95); }
+                    50% { transform: translate(5%, 3%) scale(1.05); }
+                    100% { transform: translate(-3%, 5%) scale(0.98); }
                 }
 
                 /* --- ESTRUCTURA PRINCIPAL --- */
@@ -102,7 +103,7 @@ def registrar_rutas(app):
                     width: 250px;
                     opacity: 0;
                     transform: translateY(0);
-                    filter: drop-shadow(0px 15px 30px rgba(0, 0, 0, 0.08));
+                    filter: drop-shadow(0px 15px 30px rgba(0, 0, 0, 0.05)); /* Sombra muy suave para fondo blanco */
                     transition: opacity 1.2s ease, transform 1s ease;
                 }
                 .logo-img.fade-in { opacity: 1; }
@@ -144,7 +145,7 @@ def registrar_rutas(app):
                     border: none;
                     font-size: 1.2rem;
                     letter-spacing: 2px;
-                    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+                    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
                     transition: all 0.3s ease;
                     width: 90%;
                     margin-bottom: 20px;
@@ -152,7 +153,7 @@ def registrar_rutas(app):
                 }
                 .btn-comenzar:hover {
                     transform: translateY(-3px);
-                    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.25);
+                    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.2);
                     background: #1e293b;
                 }
                 .btn-comenzar i { margin-left: 10px; font-size: 1.2rem; }
@@ -179,15 +180,15 @@ def registrar_rutas(app):
                 #login-box {
                     display: none; 
                     width: 90%;
-                    background: rgba(255, 255, 255, 0.85);
+                    background: rgba(255, 255, 255, 0.95); /* Aún más blanco */
                     backdrop-filter: blur(25px);
                     -webkit-backdrop-filter: blur(25px);
                     padding: 35px 30px;
                     border-radius: 24px;
-                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.04);
                     text-align: left;
                     margin-bottom: 20px;
-                    border: 1px solid rgba(255, 255, 255, 1);
+                    border: 1px solid rgba(0, 0, 0, 0.03);
                 }
 
                 .form-label {
@@ -238,11 +239,11 @@ def registrar_rutas(app):
                     .btn-panel { font-size: 0.9rem; padding: 12px 30px; }
                     #login-box { padding: 30px 25px; }
                     
-                    /* En celulares, como no hay mouse, anulamos la máscara para que se vea el color suavemente */
+                    /* En celulares, la capa de color es casi blanca por defecto */
                     .color-layer {
                         -webkit-mask-image: none;
                         mask-image: none;
-                        opacity: 0.5;
+                        opacity: 0.4;
                     }
                 }
             </style>
@@ -289,7 +290,7 @@ def registrar_rutas(app):
 
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
-                // --- MOTOR DEL MOUSE FLUIDO (ESPANTA LOS COLORES) ---
+                // --- MOTOR DEL MOUSE FLUIDO (ESPANTA LOS COLORES EN MAYOR RADIO) ---
                 let curX = window.innerWidth / 2;
                 let curY = window.innerHeight / 2;
                 let tgX = curX;
@@ -302,7 +303,6 @@ def registrar_rutas(app):
                     });
 
                     function animate() {
-                        // Interpolación para que la máscara se mueva suavemente detrás del mouse
                         curX += (tgX - curX) * 0.05;
                         curY += (tgY - curY) * 0.05;
                         
