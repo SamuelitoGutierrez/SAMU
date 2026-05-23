@@ -30,11 +30,10 @@ def registrar_rutas(app):
                     justify-content: center;
                     align-items: center;
                     color: #0f172a;
-                    /* Fondo 100% blanco puro garantizado */
                     background-color: #ffffff; 
                 }
 
-                /* --- CAPA DE COLORES SÚPER SUTIL --- */
+                /* --- CAPA DE COLORES (Con intensidad ajustada) --- */
                 .color-layer {
                     position: fixed;
                     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -42,8 +41,7 @@ def registrar_rutas(app):
                     overflow: hidden;
                     background: #ffffff;
                     
-                    /* La máscara que "espanta" el color ahora es gigante. 
-                       Deja un área inmensa de color blanco puro. */
+                    /* Máscara que espanta el color, dejando el centro blanco puro */
                     -webkit-mask-image: radial-gradient(circle 50vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 80%);
                     mask-image: radial-gradient(circle 50vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 80%);
                 }
@@ -54,20 +52,20 @@ def registrar_rutas(app):
                     filter: blur(120px);
                 }
 
-                /* Luz Azul ahora muy reducida en tamaño y transparencia */
+                /* Luz Azul con un poco más de presencia (25%) */
                 .blob-blue {
-                    width: 50vw; height: 50vw;
+                    width: 55vw; height: 55vw;
                     background: #0ea5e9; 
-                    opacity: 0.12; /* Muy transparente */
+                    opacity: 0.25; 
                     top: -5%; left: -5%;
                     animation: flotar 25s infinite ease-in-out alternate;
                 }
 
-                /* Luz Rosada sumamente sutil */
+                /* Luz Rosada un poco más visible (20%) */
                 .blob-pink {
-                    width: 50vw; height: 50vw;
+                    width: 55vw; height: 55vw;
                     background: #f9a8d4; 
-                    opacity: 0.10; /* Casi invisible, solo da un toque de calidez */
+                    opacity: 0.20; 
                     bottom: -5%; right: -5%;
                     animation: flotar 30s infinite ease-in-out alternate-reverse;
                 }
@@ -103,7 +101,7 @@ def registrar_rutas(app):
                     width: 250px;
                     opacity: 0;
                     transform: translateY(0);
-                    filter: drop-shadow(0px 15px 30px rgba(0, 0, 0, 0.05)); /* Sombra muy suave para fondo blanco */
+                    filter: drop-shadow(0px 15px 30px rgba(0, 0, 0, 0.05)); 
                     transition: opacity 1.2s ease, transform 1s ease;
                 }
                 .logo-img.fade-in { opacity: 1; }
@@ -176,19 +174,33 @@ def registrar_rutas(app):
                     border-color: #94a3b8;
                 }
 
-                /* --- LOGIN LIMPIO --- */
+                /* --- LOGIN LIMPIO Y PROFESIONAL --- */
                 #login-box {
                     display: none; 
                     width: 90%;
-                    background: rgba(255, 255, 255, 0.95); /* Aún más blanco */
+                    background: rgba(255, 255, 255, 0.95); 
                     backdrop-filter: blur(25px);
                     -webkit-backdrop-filter: blur(25px);
                     padding: 35px 30px;
                     border-radius: 24px;
-                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.04);
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06); /* Sombra un poco más definida */
                     text-align: left;
                     margin-bottom: 20px;
-                    border: 1px solid rgba(0, 0, 0, 0.03);
+                    border: 1px solid rgba(0, 0, 0, 0.04);
+                }
+
+                /* Botón para retroceder (Flecha elegante) */
+                .btn-volver {
+                    background: none;
+                    border: none;
+                    color: #94a3b8;
+                    font-size: 1.4rem;
+                    padding: 0;
+                    cursor: pointer;
+                    transition: color 0.3s ease;
+                }
+                .btn-volver:hover {
+                    color: #0f172a;
                 }
 
                 .form-label {
@@ -227,7 +239,7 @@ def registrar_rutas(app):
                     border: none;
                     text-transform: uppercase;
                     transition: filter 0.3s ease;
-                    margin-top: 10px;
+                    margin-top: 15px;
                     box-shadow: 0 8px 20px rgba(14, 165, 233, 0.2);
                 }
                 .btn-ingresar:hover { filter: brightness(1.1); }
@@ -239,11 +251,10 @@ def registrar_rutas(app):
                     .btn-panel { font-size: 0.9rem; padding: 12px 30px; }
                     #login-box { padding: 30px 25px; }
                     
-                    /* En celulares, la capa de color es casi blanca por defecto */
                     .color-layer {
                         -webkit-mask-image: none;
                         mask-image: none;
-                        opacity: 0.4;
+                        opacity: 0.5;
                     }
                 }
             </style>
@@ -269,7 +280,11 @@ def registrar_rutas(app):
                     </button>
 
                     <div id="login-box">
-                        <h4 class="mb-4 text-center" style="color: #0f172a; font-size: 1.6rem; letter-spacing: 2px;">INGRESO</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <button class="btn-volver" id="btnVolver" title="Volver"><i class="bi bi-arrow-left"></i></button>
+                            <h4 class="m-0 text-center flex-grow-1" style="color: #0f172a; font-size: 1.6rem; letter-spacing: 2px; transform: translateX(-10px);">INGRESO</h4>
+                        </div>
+                        
                         <div class="mb-3">
                             <label class="form-label">Usuario</label>
                             <input type="text" class="form-control" placeholder="Escribe tu usuario">
@@ -290,7 +305,7 @@ def registrar_rutas(app):
 
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
-                // --- MOTOR DEL MOUSE FLUIDO (ESPANTA LOS COLORES EN MAYOR RADIO) ---
+                // --- MOTOR DEL MOUSE FLUIDO ---
                 let curX = window.innerWidth / 2;
                 let curY = window.innerHeight / 2;
                 let tgX = curX;
@@ -314,7 +329,7 @@ def registrar_rutas(app):
                     animate();
                 }
 
-                // --- SECUENCIA DE ANIMACIÓN ---
+                // --- SECUENCIA DE ANIMACIÓN INICIAL ---
                 window.onload = function() {
                     setTimeout(() => { document.getElementById('logoImg').classList.add('fade-in'); }, 300);
                     setTimeout(() => { document.getElementById('logoImg').classList.add('move-up-logo'); }, 1200);
@@ -323,11 +338,21 @@ def registrar_rutas(app):
                     setTimeout(() => { document.getElementById('actionArea').classList.add('show'); }, 3500);
                 };
 
+                // --- LÓGICA DE INTERACCIÓN (DESGLOSAR Y RETROCEDER) ---
+                
+                // Abrir panel
                 $('#btnComenzar').click(function() {
                     $(this).slideUp(300);
-                    setTimeout(() => { $('#login-box').slideDown(500); }, 300);
+                    setTimeout(() => { $('#login-box').slideDown(400); }, 300);
+                });
+
+                // Cerrar panel (Retroceder)
+                $('#btnVolver').click(function(e) {
+                    e.preventDefault(); // Evita recargar la página por error
+                    $('#login-box').slideUp(300);
+                    setTimeout(() => { $('#btnComenzar').slideDown(400); }, 300);
                 });
             </script>
         </body>
         </html>
-        """)
+        """
