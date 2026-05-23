@@ -9,12 +9,11 @@ def registrar_rutas(app):
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>SAMU - Acceso al Sistema</title>
-            
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <title>SAMU</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
             
             <style>
+                /* Variables para el mouse */
                 :root {
                     --x: 50vw;
                     --y: 50vh;
@@ -32,7 +31,7 @@ def registrar_rutas(app):
                     background-color: #ffffff; 
                 }
 
-                /* --- CAPA DE COLORES INTERACTIVA --- */
+                /* --- CAPA DE COLORES Y MÁSCARA --- */
                 .color-layer {
                     position: fixed;
                     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -40,7 +39,6 @@ def registrar_rutas(app):
                     overflow: hidden;
                     background: #ffffff;
                     
-                    /* Máscara gigante para que el mouse deje el centro inmaculado */
                     -webkit-mask-image: radial-gradient(circle 35vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%);
                     mask-image: radial-gradient(circle 35vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,1) 90%);
                 }
@@ -132,33 +130,7 @@ def registrar_rutas(app):
                     transform: translateY(0);
                 }
 
-                /* =========================================
-                   EL SECRETO DE LA EXTREMA FLUIDEZ (GRID)
-                   ========================================= */
-                .fluid-container {
-                    display: grid;
-                    grid-template-rows: 0fr; /* Empieza cerrado */
-                    transition: grid-template-rows 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-                    width: 100%;
-                }
-                .fluid-container.open {
-                    grid-template-rows: 1fr; /* Se abre perfectamente sin importar el contenido */
-                }
-                .fluid-inner {
-                    overflow: hidden;
-                    width: 100%;
-                    display: flex;
-                    justify-content: center;
-                    opacity: 0;
-                    transform: translateY(-10px);
-                    transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-                }
-                .fluid-container.open > .fluid-inner {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-
-                /* --- BOTONES --- */
+                /* BOTONES Y MÓDULOS */
                 .btn-comenzar {
                     background: #0f172a;
                     color: #ffffff;
@@ -170,7 +142,7 @@ def registrar_rutas(app):
                     box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
                     transition: all 0.3s ease;
                     width: 90%;
-                    margin-bottom: 20px; /* Este margen se esconde fluidamente cuando se cierra */
+                    margin-bottom: 20px;
                     text-transform: uppercase;
                 }
                 .btn-comenzar:hover {
@@ -198,9 +170,15 @@ def registrar_rutas(app):
                     border-color: #94a3b8;
                 }
 
-                /* --- LOGIN ELEGANTE --- */
+                /* LOGIN LIMPIO */
+                #login-wrapper {
+                    display: none; 
+                    width: 100%;
+                }
+
                 #login-box {
                     width: 90%;
+                    margin: 0 auto 20px auto;
                     background: rgba(255, 255, 255, 0.95);
                     backdrop-filter: blur(25px);
                     -webkit-backdrop-filter: blur(25px);
@@ -208,7 +186,6 @@ def registrar_rutas(app):
                     border-radius: 24px;
                     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
                     text-align: left;
-                    margin-bottom: 20px;
                     border: 1px solid rgba(0, 0, 0, 0.04);
                 }
 
@@ -264,12 +241,31 @@ def registrar_rutas(app):
                 }
                 .btn-ingresar:hover { filter: brightness(1.1); }
 
+                /* =========================================
+                   AJUSTES REDUCIDOS PARA CELULAR
+                   ========================================= */
                 @media (max-width: 576px) {
-                    .logo-img { width: 160px !important; }
-                    .brand-samu { font-size: 3.8rem !important; }
-                    .btn-comenzar { font-size: 1.05rem; padding: 14px 30px; }
-                    .btn-panel { font-size: 0.9rem; padding: 12px 30px; }
-                    #login-box { padding: 30px 25px; }
+                    .logo-img { width: 130px !important; } /* Logo más chico */
+                    .brand-samu { font-size: 3.2rem !important; margin-top: 0 !important; } /* Letra más chica */
+                    
+                    .btn-comenzar { 
+                        font-size: 1rem; 
+                        padding: 12px 25px; 
+                        border-radius: 12px; 
+                        margin-bottom: 15px;
+                    }
+                    .btn-panel { 
+                        font-size: 0.85rem; 
+                        padding: 12px 25px; 
+                        border-radius: 12px;
+                    }
+                    
+                    #login-box { 
+                        padding: 25px 20px; 
+                        border-radius: 16px;
+                    }
+                    .form-control { font-size: 0.95rem; padding: 12px; }
+                    .btn-ingresar { font-size: 1rem; padding: 12px; }
                     
                     .color-layer {
                         -webkit-mask-image: none;
@@ -295,32 +291,26 @@ def registrar_rutas(app):
                 
                 <div class="action-area" id="actionArea">
                     
-                    <div class="fluid-container open" id="wrapComenzar">
-                        <div class="fluid-inner">
-                            <button class="btn-comenzar" id="btnComenzar">
-                                COMENZAR <i class="bi bi-arrow-right"></i>
-                            </button>
-                        </div>
-                    </div>
+                    <button class="btn-comenzar" id="btnComenzar">
+                        COMENZAR <i class="bi bi-arrow-right"></i>
+                    </button>
 
-                    <div class="fluid-container" id="wrapLogin">
-                        <div class="fluid-inner">
-                            <div id="login-box">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <button class="btn-volver" id="btnVolver" title="Volver"><i class="bi bi-arrow-left"></i></button>
-                                    <h4 class="m-0 text-center flex-grow-1" style="color: #0f172a; font-size: 1.6rem; letter-spacing: 2px; transform: translateX(-10px);">INGRESO</h4>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Usuario</label>
-                                    <input type="text" class="form-control" placeholder="Escribe tu usuario">
-                                </div>
-                                <div class="mb-4">
-                                    <label class="form-label">Contraseña</label>
-                                    <input type="password" class="form-control" placeholder="••••••••">
-                                </div>
-                                <button class="btn w-100 btn-ingresar">Entrar</button>
+                    <div id="login-wrapper">
+                        <div id="login-box">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <button class="btn-volver" id="btnVolver" title="Retroceder"><i class="bi bi-arrow-left"></i></button>
+                                <h4 class="m-0 text-center flex-grow-1" style="color: #0f172a; font-size: 1.5rem; letter-spacing: 2px; transform: translateX(-10px);">INGRESO</h4>
                             </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Usuario</label>
+                                <input type="text" class="form-control" placeholder="Ej: Administrador">
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" placeholder="••••••••">
+                            </div>
+                            <button class="btn w-100 btn-ingresar">Ingresar</button>
                         </div>
                     </div>
 
@@ -331,8 +321,9 @@ def registrar_rutas(app):
                 </div>
             </div>
 
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
-                // --- MOTOR DEL MOUSE FLUIDO ---
+                // --- MOTOR DEL MOUSE ---
                 let curX = window.innerWidth / 2;
                 let curY = window.innerHeight / 2;
                 let tgX = curX;
@@ -347,16 +338,14 @@ def registrar_rutas(app):
                     function animate() {
                         curX += (tgX - curX) * 0.05;
                         curY += (tgY - curY) * 0.05;
-                        
                         document.documentElement.style.setProperty('--x', Math.round(curX) + 'px');
                         document.documentElement.style.setProperty('--y', Math.round(curY) + 'px');
-                        
                         requestAnimationFrame(animate);
                     }
                     animate();
                 }
 
-                // --- SECUENCIA DE ANIMACIÓN INICIAL ---
+                // --- ANIMACIÓN INICIAL ---
                 window.onload = function() {
                     setTimeout(() => { document.getElementById('logoImg').classList.add('fade-in'); }, 300);
                     setTimeout(() => { document.getElementById('logoImg').classList.add('move-up-logo'); }, 1200);
@@ -365,34 +354,27 @@ def registrar_rutas(app):
                     setTimeout(() => { document.getElementById('actionArea').classList.add('show'); }, 3500);
                 };
 
-                // --- LÓGICA DE INTERCAMBIO FLUIDO (NATIVO, SIN JQUERY) ---
-                const wrapComenzar = document.getElementById('wrapComenzar');
-                const wrapLogin = document.getElementById('wrapLogin');
-                const btnComenzar = document.getElementById('btnComenzar');
-                const btnVolver = document.getElementById('btnVolver');
+                // --- TRANSICIÓN PERFECTA SIN RECORTES ---
+                const btnComenzar = $('#btnComenzar');
+                const loginWrapper = $('#login-wrapper');
 
-                // Al hacer clic en COMENZAR
-                btnComenzar.addEventListener('click', () => {
-                    // Cierra el botón comenzar suavemente
-                    wrapComenzar.classList.remove('open');
-                    
-                    // Abre el panel de login suavemente
-                    setTimeout(() => {
-                        wrapLogin.classList.add('open');
-                    }, 200); // Pequeño retraso para que no choquen visualmente
+                // Al hacer clic en Comenzar
+                btnComenzar.click(function() {
+                    // Primero desvanece el botón sin achicarlo (evita el recorte visual)
+                    $(this).fadeOut(200, function() {
+                        // Una vez oculto, desglosa el cuadro de login suavemente
+                        loginWrapper.slideDown(400);
+                    });
                 });
 
-                // Al hacer clic en Volver (Flecha atrás)
-                btnVolver.addEventListener('click', (e) => {
+                // Al hacer clic en Retroceder
+                $('#btnVolver').click(function(e) {
                     e.preventDefault();
-                    
-                    // Cierra el panel de login suavemente
-                    wrapLogin.classList.remove('open');
-                    
-                    // Abre el botón comenzar nuevamente
-                    setTimeout(() => {
-                        wrapComenzar.classList.add('open');
-                    }, 250); 
+                    // Primero recoge el cuadro de login
+                    loginWrapper.slideUp(350, function() {
+                        // Una vez recogido, hace reaparecer el botón
+                        btnComenzar.fadeIn(300);
+                    });
                 });
             </script>
         </body>
