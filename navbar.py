@@ -1,5 +1,5 @@
 # Módulo: navbar.py
-# Encargado de renderizar el Mega-Menú superior para cualquier vista de SAMU
+# Encargado de renderizar el Mega-Menú superior estilo Apple para SAMU
 
 def obtener_navbar(es_admin, nombre_usuario):
     admin_js = 'true' if es_admin else 'false'
@@ -10,61 +10,62 @@ def obtener_navbar(es_admin, nombre_usuario):
             --apple-bg: #fbfbfd;
             --apple-text: #1d1d1f;
             --apple-gray: #86868b;
+            --apple-light-gray: #f5f5f7;
             --nav-height: 48px;
         }
 
-        /* --- NAVBAR APPLE (GLASS PRINCIPAL) --- */
+        /* --- NAVBAR APPLE PRINCIPAL --- */
         .apple-nav {
             position: fixed; top: 0; width: 100%; height: var(--nav-height);
-            background: rgba(255, 255, 255, 0.8); backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
-            z-index: 1000; border-bottom: 1px solid rgba(0,0,0,0.05);
+            z-index: 1000;
             display: flex; justify-content: center;
         }
+        
         .nav-content { width: 100%; max-width: 1024px; display: flex; justify-content: space-between; align-items: center; height: 100%; padding: 0 20px; }
         .nav-brand { font-family: 'Bauhaus 93'; font-size: 1.3rem; text-decoration: none; color: #000; letter-spacing: 1px;}
         .nav-links { display: flex; gap: 30px; height: 100%; align-items: center; }
-        .nav-link-item { font-size: 12px; color: rgba(0,0,0,0.8); cursor: pointer; text-decoration: none; transition: opacity 0.2s; height: 100%; display: flex; align-items: center; font-weight: 500; }
-        .nav-link-item:hover { opacity: 0.6; }
+        .nav-link-item { font-size: 12px; color: rgba(0,0,0,0.8); cursor: pointer; text-decoration: none; transition: opacity 0.2s; height: 100%; display: flex; align-items: center; font-weight: 400; }
+        .nav-link-item:hover { color: #000; }
 
-        /* --- MEGA MENU DESPLEGABLE --- */
+        /* --- MEGA MENU DESPLEGABLE (BLANCO PURO, SIN SOMBRAS) --- */
         .mega-menu {
             position: fixed; top: var(--nav-height); left: 0; width: 100%;
-            background: rgba(255,255,255,0.98); backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            background: #ffffff; /* Blanco puro como Apple */
+            box-shadow: none; /* Cero sombras */
             display: grid; grid-template-rows: 0fr; opacity: 0;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 999;
         }
         
-        /* ---> DEGRADADO GRIS CLARO TRANSPARENTE EN LA PARTE INFERIOR <--- */
+        /* ---> DEGRADADO GRIS CLARO TRANSPARENTE EN LA BASE <--- */
         .mega-menu::after {
             content: "";
             position: absolute;
             bottom: 0; left: 0; width: 100%; 
-            height: 50px; /* Altura del degradado */
-            /* Inicia 100% transparente y termina en un gris claro al 60% de opacidad */
-            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(210, 210, 215, 0.6) 100%);
-            border-bottom: 1px solid rgba(200, 200, 205, 0.4);
+            height: 70px; /* Altura del difuminado */
+            /* De transparente a gris claro (f5f5f7) típico de Apple */
+            background: linear-gradient(to bottom, rgba(245, 245, 247, 0) 0%, rgba(245, 245, 247, 0.95) 100%);
             pointer-events: none; 
         }
 
         .mega-menu.active { grid-template-rows: 1fr; opacity: 1; }
         .mega-content { overflow: hidden; max-width: 1024px; margin: 0 auto; width: 100%; padding: 0 20px; }
-        .mega-grid { display: flex; gap: 80px; padding: 40px 0 60px 0; }
+        .mega-grid { display: flex; gap: 100px; padding: 40px 0 80px 0; }
         
-        .mega-col h5 { font-size: 12px; color: var(--apple-gray); font-weight: 500; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px;}
-        .mega-col a { display: block; font-size: 24px; font-weight: 600; color: #1d1d1f; text-decoration: none; margin-bottom: 10px; transition: color 0.2s; }
+        /* Estilos tipográficos idénticos a la captura */
+        .mega-col h5 { font-size: 12px; color: var(--apple-gray); font-weight: 400; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 0.5px;}
+        .mega-col a { display: block; font-size: 24px; font-weight: 600; color: var(--apple-text); text-decoration: none; margin-bottom: 14px; transition: color 0.2s; }
         .mega-col a:hover { color: #0066cc; }
-        .mega-sub-col a { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #1d1d1f; }
+        
+        .mega-sub-col a { font-size: 14px; font-weight: 500; margin-bottom: 12px; color: var(--apple-text); }
         .mega-sub-col a:hover { color: #0066cc; }
 
-        /* TOAST LOCK */
+        /* TOAST DE SEGURIDAD */
         #lockToast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: #1d1d1f; color: #fff; padding: 12px 25px; border-radius: 50px;
+            background: rgba(29, 29, 31, 0.9); backdrop-filter: blur(10px); color: #fff; padding: 12px 25px; border-radius: 50px;
             font-size: 13px; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; z-index: 2000;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
         #lockToast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     </style>
@@ -142,7 +143,7 @@ def obtener_navbar(es_admin, nombre_usuario):
                     ${data.main.map(m => `<a href="#" onclick="checkAcceso(event)">${m}</a>`).join('')}
                 </div>
                 <div class="mega-col mega-sub-col">
-                    <h5>Herramientas Analíticas</h5>
+                    <h5>Más herramientas</h5>
                     ${data.sub.map(s => `<a href="#" onclick="checkAcceso(event)">${s}</a>`).join('')}
                 </div>
             `;
