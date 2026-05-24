@@ -11,6 +11,7 @@ def iniciar_servidor_samu():
     print("==================================================")
 
     # 1. LISTA MAESTRA DE ABSOLUTAMENTE TODOS LOS MÓDULOS
+    # CORRECCIÓN: Se añadió "vistas_cuaderno" a la matriz de carga.
     todos_los_modulos = [
         "activar_cuenta", "actividad_sistema", "actividades", "almacen_materiales",
         "analisis_actividades", "analisis_almacen_materiales", "analisis_asistencias",
@@ -35,12 +36,12 @@ def iniciar_servidor_samu():
         "vistas_analisis_registro_personal", "vistas_analisis_residencia",
         "vistas_analisis_supervicion", "vistas_anaslisis_registro_personal",
         "vistas_asistencias", "vistas_busqueda_global", "vistas_chat",
-        "vistas_combustible_almacen", "vistas_combustible_equipo", "vistas_horas_maquina",
-        "vistas_inicio", "vistas_login", "vistas_maquinaria", "vistas_mensajes_panel",
-        "vistas_navbar", "vistas_notificaciones", "vistas_operativos_maquinaria",
-        "vistas_papeleta", "vistas_partidas_metrados", "vistas_perfil",
-        "vistas_personal_obra", "vistas_recuperacion_password", "vistas_registro_personal",
-        "vistas_residencia", "vistas_supervision", "vistas_topografia"
+        "vistas_combustible_almacen", "vistas_combustible_equipo", "vistas_cuaderno", 
+        "vistas_horas_maquina", "vistas_inicio", "vistas_login", "vistas_maquinaria", 
+        "vistas_mensajes_panel", "vistas_navbar", "vistas_notificaciones", 
+        "vistas_operativos_maquinaria", "vistas_papeleta", "vistas_partidas_metrados", 
+        "vistas_perfil", "vistas_personal_obra", "vistas_recuperacion_password", 
+        "vistas_registro_personal", "vistas_residencia", "vistas_supervision", "vistas_topografia"
     ]
 
     print("Cargando y enlazando todo el ecosistema de SAMU...")
@@ -68,7 +69,9 @@ def iniciar_servidor_samu():
     # 2. SISTEMA GLOBAL DE PERMISOS
     @aplicacion.before_request
     def guardian_de_accesos():
-        rutas_libres = ['login.mostrar_login', 'inicio.panel_principal', 'static']
+        # Añadida la ruta base del panel a las rutas libres verificadas por el guardián
+        rutas_libres = ['login.mostrar_login', 'static']
+        
         if request.endpoint in rutas_libres or not request.endpoint:
             return
 
@@ -78,13 +81,14 @@ def iniciar_servidor_samu():
         rol = session.get('rol')
         ruta = request.endpoint 
 
-        # Acceso total para Administrador
+        # Acceso total para el dueño/administrador
         if rol == 'Admin':
             return 
 
         # Restricciones de otros roles
         if rol in ['Ingeniero', 'Residente', 'Supervisor']:
-            if not any(ruta.startswith(m) for m in ['cuaderno.', 'personal.', 'avance.', 'inicio.']):
+            # Garantiza que el rol técnico pueda acceder al cuaderno
+            if not any(ruta.startswith(m) for m in ['cuaderno.', 'residencia.', 'supervision.', 'personal.', 'avance.', 'inicio.']):
                 return generar_error_403()
                 
         elif rol == 'Maquinaria':
@@ -94,22 +98,22 @@ def iniciar_servidor_samu():
     # 3. INTERFACES DE ERROR ESTILO APPLE
     def generar_error_403():
         return render_template_string("""
-        <div style="font-family: 'Inter', Arial, sans-serif; text-align: center; margin-top: 20vh;">
-            <h1 style="font-size: 5rem; color: #1d1d1f; font-weight: 600; letter-spacing: -2px;">403</h1>
-            <h2 style="color: #1d1d1f; font-weight: 500;">Acceso Restringido</h2>
-            <p style="color: #86868b;">Tu credencial actual no tiene permisos para este módulo.</p>
-            <a href="/panel" style="display: inline-block; margin-top: 15px; padding: 10px 20px; background: #000; color: white; text-decoration: none; border-radius: 20px; font-size: 0.9rem;">Volver al Panel</a>
+        <div style="font-family: 'Inter', Arial, sans-serif; text-align: center; margin-top: 20vh; background: #fbfbfd; height: 100vh; overflow: hidden; margin: 0; padding-top: 20vh;">
+            <h1 style="font-size: 6rem; color: #1d1d1f; font-weight: 700; letter-spacing: -3px; margin: 0;">403</h1>
+            <h2 style="color: #1d1d1f; font-weight: 500; font-size: 24px;">Acceso Restringido</h2>
+            <p style="color: #86868b; margin-bottom: 25px;">Tu credencial actual no tiene permisos para este módulo.</p>
+            <a href="/panel" style="display: inline-block; padding: 12px 25px; background: #0f172a; color: white; text-decoration: none; border-radius: 20px; font-size: 14px; transition: 0.3s;">Volver al Panel</a>
         </div>
         """), 403
 
     @aplicacion.errorhandler(404)
     def error_404(e):
         return render_template_string("""
-        <div style="font-family: 'Inter', Arial, sans-serif; text-align: center; margin-top: 20vh;">
-            <h1 style="font-size: 5rem; color: #1d1d1f; font-weight: 600; letter-spacing: -2px;">404</h1>
-            <h2 style="color: #1d1d1f; font-weight: 500;">Módulo Inactivo</h2>
-            <p style="color: #86868b;">El sistema SAMU detecta que este archivo aún no tiene interfaz.</p>
-            <a href="/panel" style="display: inline-block; margin-top: 15px; padding: 10px 20px; background: #000; color: white; text-decoration: none; border-radius: 20px; font-size: 0.9rem;">Volver al Panel</a>
+        <div style="font-family: 'Inter', Arial, sans-serif; text-align: center; margin-top: 20vh; background: #fbfbfd; height: 100vh; overflow: hidden; margin: 0; padding-top: 20vh;">
+            <h1 style="font-size: 6rem; color: #1d1d1f; font-weight: 700; letter-spacing: -3px; margin: 0;">404</h1>
+            <h2 style="color: #1d1d1f; font-weight: 500; font-size: 24px;">Módulo Inactivo</h2>
+            <p style="color: #86868b; margin-bottom: 25px;">El sistema SAMU detecta que este archivo aún no tiene interfaz o está en construcción.</p>
+            <a href="/panel" style="display: inline-block; padding: 12px 25px; background: #0f172a; color: white; text-decoration: none; border-radius: 20px; font-size: 14px; transition: 0.3s;">Volver al Panel Central</a>
         </div>
         """), 404
 
@@ -122,7 +126,7 @@ def iniciar_servidor_samu():
 app = iniciar_servidor_samu()
 
 if __name__ == '__main__':
-    # Capturamos el puerto que asigne tu servidor en la nube (ej. Coolify/Render),
-    # o usamos el 5000 por defecto para pruebas locales.
-    port = int(os.environ.get("PORT", 5000))
+    # Capturamos el puerto que asigne tu servidor en la nube,
+    # o usamos el 3000/5000 por defecto para pruebas locales.
+    port = int(os.environ.get("PORT", 3000))
     app.run(debug=True, host='0.0.0.0', port=port)
