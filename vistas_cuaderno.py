@@ -1,18 +1,18 @@
 # =========================================================
 # vistas_cuaderno.py
-# Módulo: Cuaderno de Obra Digital (Lobby + Residencia)
-# Sistema: SAMU
-# Proyecto: Carretera PU N-110: Asiruni — Rosaspata — Huayrapata
+# Módulo: Cuaderno de Obra Digital (Lobby + Autoapertura)
 # =========================================================
 
-from flask import Blueprint, render_template_string, session, redirect, url_for
+from flask import Blueprint, render_template_string, session, redirect, url_for, request
 from navbar import obtener_navbar
 
 cuaderno_bp = Blueprint('cuaderno', __name__)
 
+# Registramos las 3 rutas para que el cerebro (main.py) sepa manejarlas
 @cuaderno_bp.route('/cuaderno')
+@cuaderno_bp.route('/residencia')
+@cuaderno_bp.route('/supervision')
 def panel_cuaderno():
-    # Validación de seguridad
     if 'usuario_id' not in session:
         return redirect(url_for('login.mostrar_login'))
 
@@ -20,19 +20,18 @@ def panel_cuaderno():
     nombre_completo = session.get('nombre', 'Visitante')
     menu_superior = obtener_navbar(es_admin, nombre_completo)
 
-    # Datos estadísticos dinámicos (Simulando la base de datos)
-    estadisticas = {
-        "total_asientos": 87,
-        "dias_lluvia": 14,
-        "consultas_pendientes": 3,
-        "avance_porcentaje": 38.5
-    }
+    # Detectar por dónde entró el usuario para auto-expandir la ventana
+    ruta_actual = request.path
+    modo_auto = 'ninguno'
+    if '/residencia' in ruta_actual:
+        modo_auto = 'residencia'
+    elif '/supervision' in ruta_actual:
+        modo_auto = 'supervision'
 
-    # Historial para la línea de tiempo de Residencia
+    estadisticas = { "total_asientos": 87, "dias_lluvia": 14, "consultas_pendientes": 3, "avance_porcentaje": 38.5 }
     historial_asientos = [
         {"numero": 87, "fecha": "23/May/2026", "resumen": "Paralización en Frente 02 por falla en Excavadora CAT 336."},
-        {"numero": 86, "fecha": "22/May/2026", "resumen": "Colocación de subbase granular KM 12+400 al KM 13+100."},
-        {"numero": 85, "fecha": "21/May/2026", "resumen": "Consulta técnica sobre reubicación de alcantarilla TMC."}
+        {"numero": 86, "fecha": "22/May/2026", "resumen": "Colocación de subbase granular KM 12+400 al KM 13+100."}
     ]
 
     return render_template_string("""
@@ -47,99 +46,59 @@ def panel_cuaderno():
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Bauhaus+93&display=swap" rel="stylesheet">
         
         <style>
-            :root {
-                --apple-text: #1d1d1f;
-                --apple-gray: #86868b;
-                --glass-bg: rgba(255, 255, 255, 0.6);
-                --glass-border: rgba(255, 255, 255, 0.8);
-            }
-
-            body {
-                margin: 0; font-family: 'Inter', sans-serif; background-color: #fbfbfd;
-                color: var(--apple-text); overflow-x: hidden; min-height: 100vh;
-            }
-
-            /* --- FONDO DINÁMICO (AZUL MARINO Y ROSADO AL 20%) --- */
+            :root { --apple-text: #1d1d1f; --apple-gray: #86868b; --glass-bg: rgba(255, 255, 255, 0.6); --glass-border: rgba(255, 255, 255, 0.8); }
+            body { margin: 0; font-family: 'Inter', sans-serif; background-color: #fbfbfd; color: var(--apple-text); overflow-x: hidden; min-height: 100vh; }
             .dynamic-bg { position: fixed; inset: 0; z-index: -2; background: #fbfbfd; overflow: hidden;}
             .bg-blob { position: absolute; border-radius: 50%; filter: blur(120px); pointer-events: none; }
-            .blob-navy {
-                width: 55vw; height: 55vw; background: #0f172a; opacity: 0.20;
-                top: -10%; left: -10%; animation: movAzul 22s infinite ease-in-out;
-            }
-            .blob-pink {
-                width: 50vw; height: 50vw; background: #f9a8d4; opacity: 0.20;
-                bottom: -15%; right: -10%; animation: movRosa 26s infinite ease-in-out reverse;
-            }
+            .blob-navy { width: 55vw; height: 55vw; background: #0f172a; opacity: 0.20; top: -10%; left: -10%; animation: movAzul 22s infinite ease-in-out; }
+            .blob-pink { width: 50vw; height: 50vw; background: #f9a8d4; opacity: 0.20; bottom: -15%; right: -10%; animation: movRosa 26s infinite ease-in-out reverse; }
             @keyframes movAzul { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(8vw,6vh) scale(1.1); } }
             @keyframes movRosa { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-6vw,-8vh) scale(1.15); } }
 
-            /* --- CONTENEDORES DE VISTAS (TRANSICIONES) --- */
-            .view-section {
-                position: absolute; top: 0; left: 0; width: 100%; min-height: 100vh;
-                padding: 100px 20px 40px; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-            }
+            .view-section { position: absolute; top: 0; left: 0; width: 100%; min-height: 100vh; padding: 100px 20px 40px; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
             #dashboardView { opacity: 1; transform: scale(1); z-index: 10; }
             #workspaceView { opacity: 0; transform: translateY(50px) scale(0.95); z-index: 5; pointer-events: none; display: none; }
             
-            /* Clases activas para la transición "Tarjeta Extensible" */
             .view-hidden-up { opacity: 0 !important; transform: translateY(-50px) scale(0.95) !important; pointer-events: none; }
             .view-active { opacity: 1 !important; transform: translateY(0) scale(1) !important; pointer-events: auto !important; display: block !important; z-index: 20 !important;}
 
-            /* --- LOBBY ESTADÍSTICO --- */
             .main-container { max-width: 1000px; margin: 0 auto; }
             .project-title { text-align: center; margin-bottom: 40px; }
             .project-title h1 { font-size: 34px; font-weight: 700; letter-spacing: -1px; margin-bottom: 4px; }
             .project-title p { color: var(--apple-gray); font-size: 15px; margin: 0; }
-
             .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
-            .stat-card {
-                background: var(--glass-bg); border: 1px solid var(--glass-border);
-                backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-                padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-            }
+            .stat-card { background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
             .stat-card label { font-size: 11px; color: var(--apple-gray); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
             .stat-card .value { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; color: #000; margin-top: 5px; }
 
             .portals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-            .portal-card {
-                background: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.9);
-                backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-                border-radius: 30px; padding: 50px 40px; text-align: center; cursor: pointer;
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-            }
+            .portal-card { background: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.9); backdrop-filter: blur(30px); border-radius: 30px; padding: 50px 40px; text-align: center; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
             .portal-card:hover { transform: translateY(-5px) scale(1.02); background: #ffffff; border-color: #0066cc; box-shadow: 0 20px 40px rgba(0,102,204,0.1); }
             .portal-icon { font-size: 48px; color: #0066cc; margin-bottom: 20px; }
             .portal-title { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
             .portal-desc { font-size: 14px; color: var(--apple-gray); }
 
-            /* --- ESPACIO DE TRABAJO (SPLIT-VIEW) --- */
             .workspace-container { max-width: 1300px; margin: 0 auto; }
             .btn-back { background: none; border: none; font-size: 14px; font-weight: 600; color: #0066cc; margin-bottom: 20px; cursor: pointer; display: flex; align-items: center; gap: 8px;}
             .btn-back:hover { text-decoration: underline; }
-
             .workspace-split { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
             
-            .timeline-wrapper, .canvas-wrapper {
-                background: var(--glass-bg); border: 1px solid var(--glass-border);
-                backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-                border-radius: 24px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-            }
+            .timeline-wrapper, .canvas-wrapper { background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(25px); border-radius: 24px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
             .timeline-wrapper { max-height: calc(100vh - 180px); overflow-y: auto; }
-            .timeline-title { font-size: 12px; font-weight: 700; color: var(--apple-gray); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px; }
+            .timeline-title { font-size: 12px; font-weight: 700; color: var(--apple-gray); text-transform: uppercase; margin-bottom: 15px; }
             .timeline-item { background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.8); padding: 15px; border-radius: 16px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; }
             .timeline-item:hover { background: #fff; border-color: #cbd5e1; }
             .timeline-item strong { color: #0066cc; display: block; font-size: 13px; margin-bottom: 4px; }
             .timeline-item p { font-size: 12px; color: #334155; margin: 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-            .form-section-title { font-size: 13px; font-weight: 700; color: #000; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.08); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 25px;}
+            .form-section-title { font-size: 13px; font-weight: 700; color: #000; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.08); text-transform: uppercase; margin-top: 25px;}
             .form-label { font-size: 12px; font-weight: 600; color: var(--apple-gray); margin-bottom: 8px; }
             .form-select, .form-control { border-radius: 14px; border: 1px solid #e2e8f0; padding: 14px; font-size: 14px; background: rgba(255,255,255,0.7); transition: all 0.2s; }
             .form-select:focus, .form-control:focus { background: #ffffff; border-color: #0066cc; box-shadow: 0 0 0 4px rgba(0,102,204,0.1); outline: none; }
 
-            /* --- IPHONE SLIDER PARA FIRMAR --- */
             .slider-container { width: 100%; max-width: 450px; margin: 40px auto 10px auto; position: relative; }
             .slider-track { width: 100%; height: 60px; background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); border-radius: 30px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; user-select: none; }
-            .slider-text { font-size: 13px; font-weight: 600; color: #4b5563; letter-spacing: 0.5px; text-transform: uppercase; pointer-events: none; z-index: 1; }
+            .slider-text { font-size: 13px; font-weight: 600; color: #4b5563; text-transform: uppercase; pointer-events: none; z-index: 1; }
             .slider-handle { width: 52px; height: 52px; background: #000; color: #fff; border-radius: 50%; position: absolute; left: 4px; display: flex; align-items: center; justify-content: center; cursor: grab; z-index: 2; transition: left 0.1s ease-out; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
             .slider-handle:active { cursor: grabbing; background: #0066cc; }
             .slider-progress { position: absolute; left: 0; top: 0; height: 100%; background: rgba(0, 102, 204, 0.1); width: 0; pointer-events: none; }
@@ -149,10 +108,7 @@ def panel_cuaderno():
 
         {{ menu_superior | safe }}
 
-        <div class="dynamic-bg">
-            <div class="bg-blob blob-navy"></div>
-            <div class="bg-blob blob-pink"></div>
-        </div>
+        <div class="dynamic-bg"><div class="bg-blob blob-navy"></div><div class="bg-blob blob-pink"></div></div>
 
         <div class="view-section" id="dashboardView">
             <div class="main-container">
@@ -174,7 +130,6 @@ def panel_cuaderno():
                         <div class="portal-title">Residencia de Obra</div>
                         <div class="portal-desc">Aperturar asientos legales y registrar avances diarios.</div>
                     </div>
-                    
                     <div class="portal-card" onclick="abrirWorkspace('supervision')">
                         <div class="portal-icon"><i class="bi bi-shield-check"></i></div>
                         <div class="portal-title">Supervisión de Obra</div>
@@ -187,7 +142,7 @@ def panel_cuaderno():
         <div class="view-section" id="workspaceView">
             <div class="workspace-container">
                 <button class="btn-back" onclick="volverDashboard()">
-                    <i class="bi bi-arrow-left"></i> Volver al Dashboard
+                    <i class="bi bi-arrow-left"></i> Volver al Menú Central del Cuaderno
                 </button>
 
                 <div class="workspace-split">
@@ -234,7 +189,6 @@ def panel_cuaderno():
                             </div>
 
                             <div class="form-section-title" style="color: #dc2626;">3. Firma Inmutable</div>
-                            
                             <div class="slider-container">
                                 <div class="slider-track" id="sliderTrack">
                                     <div class="slider-progress" id="sliderProgress"></div>
@@ -249,13 +203,39 @@ def panel_cuaderno():
         </div>
 
         <script>
-            // --- NAVEGACIÓN INNOVADORA (TARJETAS EXTENSIBLES) ---
             const dashboardView = document.getElementById('dashboardView');
             const workspaceView = document.getElementById('workspaceView');
             const etiquetaModo = document.getElementById('etiquetaModo');
+            
+            // Lógica de Auto-Apertura
+            const modoAuto = "{{ modo_auto }}";
+            
+            if (modoAuto !== 'ninguno') {
+                // Configura la transición instantánea para saltar el lobby
+                dashboardView.style.transition = 'none';
+                workspaceView.style.transition = 'none';
+                
+                dashboardView.classList.add('view-hidden-up');
+                workspaceView.style.display = 'block';
+                workspaceView.classList.add('view-active');
+                
+                if (modoAuto === 'residencia') {
+                    etiquetaModo.textContent = 'Residencia de Obra';
+                    etiquetaModo.className = 'badge bg-primary py-2 px-3';
+                } else {
+                    etiquetaModo.textContent = 'Supervisión de Obra';
+                    etiquetaModo.className = 'badge bg-success py-2 px-3';
+                }
+                
+                // Restaura las transiciones suaves después del renderizado inicial
+                setTimeout(() => {
+                    dashboardView.style.transition = 'all 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+                    workspaceView.style.transition = 'all 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+                    calcularLimites();
+                }, 100);
+            }
 
             function abrirWorkspace(modo) {
-                // Actualiza la etiqueta según el botón clickeado
                 if (modo === 'residencia') {
                     etiquetaModo.textContent = 'Residencia de Obra';
                     etiquetaModo.className = 'badge bg-primary py-2 px-3';
@@ -264,17 +244,19 @@ def panel_cuaderno():
                     etiquetaModo.className = 'badge bg-success py-2 px-3';
                 }
 
-                // Animación de transición cruzada
                 dashboardView.classList.add('view-hidden-up');
-                workspaceView.style.display = 'block'; // Fuerza render para cálculos del slider
+                workspaceView.style.display = 'block'; 
                 
                 setTimeout(() => {
                     workspaceView.classList.add('view-active');
-                    calcularLimites(); // Inicializa el candado deslizable
+                    calcularLimites(); 
                 }, 50);
             }
 
             function volverDashboard() {
+                // Al volver, cambiamos la URL en el navegador para no recargar en bucle
+                window.history.pushState({}, '', '/cuaderno');
+                
                 workspaceView.classList.remove('view-active');
                 setTimeout(() => {
                     workspaceView.style.display = 'none';
@@ -282,71 +264,41 @@ def panel_cuaderno():
                 }, 400);
             }
 
-            // --- MOTOR DEL SLIDER IPHONE (CANDADO LEGAL) ---
-            const handle = document.getElementById('sliderHandle');
-            const track = document.getElementById('sliderTrack');
-            const progress = document.getElementById('sliderProgress');
-            const text = document.getElementById('sliderText');
-            
-            let isDragging = false;
-            let startX = 0;
-            let maxSlide = 0;
+            // Motor Slider iPhone
+            const handle = document.getElementById('sliderHandle'), track = document.getElementById('sliderTrack');
+            const progress = document.getElementById('sliderProgress'), text = document.getElementById('sliderText');
+            let isDragging = false, startX = 0, maxSlide = 0;
 
             function calcularLimites() { maxSlide = track.clientWidth - handle.clientWidth - 8; }
             window.addEventListener('resize', calcularLimites);
 
-            handle.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                startX = e.clientX - handle.offsetLeft;
-                calcularLimites();
-            });
-
+            handle.addEventListener('mousedown', (e) => { isDragging = true; startX = e.clientX - handle.offsetLeft; calcularLimites(); });
             document.addEventListener('mousemove', (e) => {
                 if (!isDragging) return;
                 let left = e.clientX - startX;
-                
                 if (left < 4) left = 4;
                 if (left > maxSlide) left = maxSlide;
-
-                handle.style.left = left + 'px';
-                progress.style.width = (left + 26) + 'px';
-
-                if (left >= maxSlide - 2) {
-                    isDragging = false;
-                    sellarAsientoLegal();
-                }
+                handle.style.left = left + 'px'; progress.style.width = (left + 26) + 'px';
+                if (left >= maxSlide - 2) { isDragging = false; sellarAsientoLegal(); }
             });
-
             document.addEventListener('mouseup', () => {
                 if (!isDragging) return;
                 isDragging = false;
-                handle.style.transition = 'left 0.3s ease';
-                progress.style.transition = 'width 0.3s ease';
-                handle.style.left = '4px';
-                progress.style.width = '0px';
-                setTimeout(() => {
-                    handle.style.transition = 'none';
-                    progress.style.transition = 'none';
-                }, 300);
+                handle.style.transition = 'left 0.3s ease'; progress.style.transition = 'width 0.3s ease';
+                handle.style.left = '4px'; progress.style.width = '0px';
+                setTimeout(() => { handle.style.transition = 'none'; progress.style.transition = 'none'; }, 300);
             });
 
             function sellarAsientoLegal() {
-                handle.style.left = maxSlide + 'px';
-                progress.style.width = '100%';
-                handle.style.background = '#00875a';
-                handle.innerHTML = '<i class="bi bi-check-lg" style="color:#fff;"></i>';
-                text.textContent = "ASIENTO FIRMADO";
-                text.style.color = "#00875a";
+                handle.style.left = maxSlide + 'px'; progress.style.width = '100%'; handle.style.background = '#00875a';
+                handle.innerHTML = '<i class="bi bi-check-lg" style="color:#fff;"></i>'; text.textContent = "ASIENTO FIRMADO"; text.style.color = "#00875a";
                 
                 setTimeout(() => {
-                    alert("Documento sellado bajo las normativas del OSCE e ingresado al sistema.");
+                    alert("Documento sellado e ingresado al sistema.");
                     volverDashboard();
-                    
-                    // Resetear el slider para la próxima vez
                     setTimeout(() => {
                         handle.style.transition = 'none'; progress.style.transition = 'none';
-                        handle.style.left = '4px'; progress.style.width = '0px';
-                        handle.style.background = '#000';
+                        handle.style.left = '4px'; progress.style.width = '0px'; handle.style.background = '#000';
                         handle.innerHTML = '<i class="bi bi-chevron-right" style="color:#fff; font-size: 1.2rem;"></i>';
                         text.textContent = "Deslizar para Firmar Asiento"; text.style.color = "#4b5563";
                     }, 600);
@@ -355,4 +307,4 @@ def panel_cuaderno():
         </script>
     </body>
     </html>
-    """, estadisticas=estadisticas, historial_asientos=historial_asientos, menu_superior=menu_superior)
+    """, estadisticas=estadisticas, historial_asientos=historial_asientos, menu_superior=menu_superior, modo_auto=modo_auto)
