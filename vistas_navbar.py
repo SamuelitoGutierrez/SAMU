@@ -54,11 +54,10 @@ HTML_NAVBAR = """
         position: fixed;
         top: var(--nav-height);
         left: 0; right: 0; bottom: 0;
-        /* Degradado gris claro a transparente (referencia a tu código anterior) */
         background: linear-gradient(180deg, rgba(245, 245, 247, 0.85) 0%, rgba(245, 245, 247, 0) 100%);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        z-index: 998; /* Un nivel por debajo del menú blanco */
+        z-index: 998; 
         opacity: 0;
         visibility: hidden;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -79,7 +78,7 @@ HTML_NAVBAR = """
     #lockToast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 </style>
 
-<nav class="apple-nav">
+<nav class="apple-nav" id="appleNav">
     <div class="nav-content">
         <a href="/panel" class="nav-brand">SAMU</a>
         <div class="nav-links">
@@ -90,15 +89,15 @@ HTML_NAVBAR = """
             <span class="nav-link-item" onmouseover="openMenu('avance')">Avance de Obra</span>
             <span class="nav-link-item" onmouseover="openMenu('sistema')">Sistema</span>
         </div>
-        <div style="font-size: 12px; color: #86868b; display: flex; align-items: center; font-weight: 500;">
-            {NOMBRE_USUARIO} <i class="bi bi-person-circle ms-2" style="font-size: 1.3rem; color: #1d1d1f;"></i>
+        <div style="font-size: 12px; display: flex; align-items: center; font-weight: 500;">
+            {HTML_USUARIO}
         </div>
     </div>
 </nav>
 
 <div class="nav-fade-overlay" id="navFadeOverlay"></div>
 
-<div class="mega-menu" id="megaMenu" onmouseleave="closeMenu()">
+<div class="mega-menu" id="megaMenu">
     <div class="mega-content">
         <div class="mega-grid" id="menuGrid">
             </div>
@@ -143,6 +142,9 @@ HTML_NAVBAR = """
     };
 
     let timeoutMenu;
+    const megaMenu = document.getElementById('megaMenu');
+    const appleNav = document.getElementById('appleNav');
+    const navFadeOverlay = document.getElementById('navFadeOverlay');
 
     function openMenu(cat) {
         clearTimeout(timeoutMenu);
@@ -158,22 +160,28 @@ HTML_NAVBAR = """
                 ${data.sub.map(s => `<a href="#" onclick="checkAcceso(event)">${s}</a>`).join('')}
             </div>
         `;
-        // Activamos el menú blanco y la cortina gris transparente
-        document.getElementById('megaMenu').classList.add('active');
-        document.getElementById('navFadeOverlay').classList.add('active');
+        megaMenu.classList.add('active');
+        navFadeOverlay.classList.add('active');
     }
 
     function closeMenu() {
         timeoutMenu = setTimeout(() => {
-            // Ocultamos ambos elementos
-            document.getElementById('megaMenu').classList.remove('active');
-            document.getElementById('navFadeOverlay').classList.remove('active');
+            megaMenu.classList.remove('active');
+            navFadeOverlay.classList.remove('active');
         }, 150);
     }
 
-    // Gestionamos el cierre cuando el mouse sale de la barra de navegación superior
-    document.querySelector('.apple-nav').addEventListener('mouseleave', closeMenu);
-    document.querySelector('.apple-nav').addEventListener('mouseenter', () => clearTimeout(timeoutMenu));
+    function cancelClose() {
+        clearTimeout(timeoutMenu);
+    }
+
+    // --- CORRECCIÓN CLAVE PARA EL MOUSE ---
+    // Detectamos la salida y entrada tanto en la barra como en el menú.
+    appleNav.addEventListener('mouseleave', closeMenu);
+    appleNav.addEventListener('mouseenter', cancelClose);
+    
+    megaMenu.addEventListener('mouseleave', closeMenu);
+    megaMenu.addEventListener('mouseenter', cancelClose);
 
     function checkAcceso(e) {
         e.preventDefault();
