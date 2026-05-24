@@ -158,10 +158,11 @@ HTML_NAVBAR = """
         display: none; 
         background: none; 
         border: none; 
-        font-size: 24px; 
+        font-size: 28px; 
         color: #1d1d1f; 
         cursor: pointer; 
         padding: 0; 
+        transition: transform 0.2s;
     }
     
     .user-info-desktop { 
@@ -172,6 +173,7 @@ HTML_NAVBAR = """
         color: #1d1d1f; 
     }
     
+    /* Panel del Menú Móvil */
     .mobile-dropdown {
         position: fixed; 
         top: var(--nav-height); 
@@ -187,7 +189,7 @@ HTML_NAVBAR = """
         visibility: hidden;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
         overflow-y: auto; 
-        padding: 30px 20px;
+        padding: 30px 20px 80px 20px;
     }
     
     .mobile-dropdown.open { 
@@ -196,31 +198,42 @@ HTML_NAVBAR = """
         visibility: visible; 
     }
     
+    /* Estilos de los links en móvil */
     .mobile-category { 
-        margin-bottom: 30px; 
-        border-bottom: 1px solid rgba(0,0,0,0.05); 
-        padding-bottom: 15px; 
+        margin-bottom: 25px; 
     }
     
-    .mobile-category h5 { 
-        font-size: 12px; 
-        color: var(--apple-gray); 
-        font-weight: 600; 
-        text-transform: uppercase; 
-        margin-bottom: 15px; 
+    .mobile-main-link {
+        display: block;
+        font-size: 22px;
+        font-weight: 700;
+        color: #1d1d1f;
+        text-decoration: none;
+        border-bottom: 2px solid rgba(0,0,0,0.05);
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
     }
     
-    .mobile-category a { 
-        display: block; 
-        font-size: 18px; 
-        font-weight: 600; 
-        color: #1d1d1f; 
-        text-decoration: none; 
-        margin-bottom: 15px; 
+    .mobile-main-link:hover {
+        color: #0066cc;
     }
     
-    .mobile-category a:hover { 
-        color: #0066cc; 
+    .mobile-sub-item {
+        display: block;
+        font-size: 16px;
+        font-weight: 500;
+        color: #4b5563;
+        text-decoration: none;
+        margin-bottom: 15px;
+        padding-left: 15px;
+        border-left: 2px solid transparent;
+        transition: all 0.2s;
+    }
+    
+    .mobile-sub-item:hover {
+        color: #0066cc;
+        border-left: 2px solid #0066cc;
     }
 
     /* --- ALERTAS DEL SISTEMA --- */
@@ -231,7 +244,7 @@ HTML_NAVBAR = """
         transform: translateX(-50%) translateY(100px); 
         background: #1d1d1f; 
         color: #fff; 
-        padding: 12px 25px; 
+        padding: 14px 28px; 
         border-radius: 50px; 
         font-size: 13px; 
         font-weight: 500; 
@@ -239,6 +252,7 @@ HTML_NAVBAR = """
         opacity: 0; 
         z-index: 2000; 
         white-space: nowrap;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
     
     #lockToast.show { 
@@ -282,7 +296,7 @@ HTML_NAVBAR = """
 </div>
 
 <div class="mobile-dropdown" id="mobileDropdown">
-    <div style="font-size: 14px; font-weight: 600; color: #0066cc; margin-bottom: 30px; text-align: center;">
+    <div style="font-size: 14px; font-weight: 600; color: #0066cc; margin-bottom: 30px; text-align: center; background: rgba(0,102,204,0.05); padding: 15px; border-radius: 16px;">
         <i class="bi bi-person-circle me-1"></i> {HTML_USUARIO}
     </div>
     <div id="mobileContent"></div>
@@ -292,50 +306,48 @@ HTML_NAVBAR = """
 
 <script>
     const esAdmin = {ADMIN_JS};
+    
+    // Matriz de Datos: Hemos agregado navLabel y navUrl para que el celular sepa cuáles son las opciones principales.
     const menuData = {
         cuaderno: { 
+            navLabel: "Cuaderno de Obra", navUrl: "/cuaderno",
             title: "Módulos de Registro", 
-            main: [
-                { label: "Residencia", url: "/residencia" }, 
-                { label: "Supervisión", url: "/supervision" }
-            ], 
-            sub: [
-                { label: "Análisis General", url: "#" }
-            ] 
+            main: [{ label: "Residencia", url: "/residencia" }, { label: "Supervisión", url: "/supervision" }], 
+            sub: [{ label: "Análisis General", url: "#" }] 
         },
         personal: { 
+            navLabel: "Control del Personal", navUrl: "#",
             title: "Gestión Humana", 
-            main: [
-                { label: "Personal en Obra", url: "#" }, 
-                { label: "Asistencias", url: "#" }
-            ], 
+            main: [{ label: "Personal en Obra", url: "#" }, { label: "Asistencias", url: "#" }], 
             sub: [] 
         },
         equipo: { 
+            navLabel: "Equipo Mecánico", navUrl: "#",
             title: "Control de Flota", 
-            main: [
-                { label: "Maquinaria Operativa", url: "#" }, 
-                { label: "Horas Máquina", url: "#" }
-            ], 
+            main: [{ label: "Maquinaria Operativa", url: "#" }, { label: "Horas Máquina", url: "#" }], 
             sub: [] 
         },
         almacen: { 
+            navLabel: "Almacén", navUrl: "#",
             title: "Inventario", 
-            main: [
-                { label: "Materiales y Stock", url: "#" }, 
-                { label: "Combustible", url: "#" }
-            ], 
+            main: [{ label: "Materiales y Stock", url: "#" }, { label: "Combustible", url: "#" }], 
             sub: [] 
         },
         avance: { 
+            navLabel: "Avance de Obra", navUrl: "#",
             title: "Ejecución Técnica", 
-            main: [
-                { label: "Partidas y Metrados", url: "#" }
-            ], 
+            main: [{ label: "Partidas y Metrados", url: "#" }], 
             sub: [] 
+        },
+        sistema: {
+            navLabel: "Sistema", navUrl: "#",
+            title: "Administración",
+            main: [{ label: "Usuarios y Permisos", url: "#" }],
+            sub: []
         }
     };
 
+    // --- LÓGICA DE ESCRITORIO ---
     let timeoutMenu;
     const megaMenu = document.getElementById('megaMenu');
     const navFadeOverlay = document.getElementById('navFadeOverlay');
@@ -367,44 +379,58 @@ HTML_NAVBAR = """
         }, 150); 
     }
 
-    function cancelClose() { 
-        clearTimeout(timeoutMenu); 
-    }
+    function cancelClose() { clearTimeout(timeoutMenu); }
 
     document.getElementById('appleNav').addEventListener('mouseleave', closeMenu);
     document.getElementById('appleNav').addEventListener('mouseenter', cancelClose);
     megaMenu.addEventListener('mouseleave', closeMenu); 
     megaMenu.addEventListener('mouseenter', cancelClose);
 
-    // --- LÓGICA MÓVIL ---
+    // --- LÓGICA MÓVIL CORREGIDA ---
     const mobileDropdown = document.getElementById('mobileDropdown');
     const mobileIcon = document.getElementById('mobileIcon');
     let isMobileMenuOpen = false;
 
+    // Generamos el HTML móvil asegurándonos de incluir el Título Principal (ej. Cuaderno de Obra)
     const mobileContent = document.getElementById('mobileContent');
     let mobileHTML = '';
     Object.values(menuData).forEach(seccion => {
-        mobileHTML += `<div class="mobile-category"><h5>${seccion.title}</h5>`;
+        // Título Principal Clicable
+        mobileHTML += `
+        <div class="mobile-category">
+            <a href="${seccion.navUrl}" class="mobile-main-link" onclick="checkAcceso(event, '${seccion.navUrl}')">
+                ${seccion.navLabel}
+            </a>
+            <div style="padding-left: 10px;">
+                <h6 style="font-size: 10px; color: var(--apple-gray); text-transform: uppercase; margin: 15px 0 10px 5px; font-weight: 700;">
+                    ${seccion.title}
+                </h6>
+        `;
+        // Opciones Internas
         seccion.main.forEach(link => { 
-            mobileHTML += `<a href="${link.url}" onclick="checkAcceso(event, '${link.url}')">${link.label}</a>`; 
+            mobileHTML += `<a href="${link.url}" class="mobile-sub-item" onclick="checkAcceso(event, '${link.url}')">${link.label}</a>`; 
         });
-        mobileHTML += `</div>`;
+        mobileHTML += `</div></div>`;
     });
     mobileContent.innerHTML = mobileHTML;
 
     function toggleMobileMenu() {
         isMobileMenuOpen = !isMobileMenuOpen;
+        const btn = document.getElementById('btnMobileToggle');
         if(isMobileMenuOpen) {
             mobileDropdown.classList.add('open');
             mobileIcon.classList.replace('bi-list', 'bi-x-lg');
+            btn.style.transform = "rotate(90deg)";
             document.body.style.overflow = 'hidden'; 
         } else {
             mobileDropdown.classList.remove('open');
             mobileIcon.classList.replace('bi-x-lg', 'bi-list');
+            btn.style.transform = "rotate(0deg)";
             document.body.style.overflow = '';
         }
     }
 
+    // --- SEGURIDAD ---
     function checkAcceso(e, url) {
         if (!esAdmin || url === '#') {
             e.preventDefault();
@@ -413,6 +439,7 @@ HTML_NAVBAR = """
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         } else if(window.innerWidth <= 991) {
+            // Si la URL es válida y estamos en celular, cerramos el menú suavemente al navegar
             toggleMobileMenu(); 
         }
     }
