@@ -1,6 +1,6 @@
 # =========================================================
 # vistas_navbar.py
-# Diseño visual idéntico a Apple.com (Mega-menú limpio)
+# Diseño visual idéntico a Apple.com (Mega-menú blanco sólido + Overlay)
 # =========================================================
 
 HTML_NAVBAR = """
@@ -19,6 +19,7 @@ HTML_NAVBAR = """
         -webkit-backdrop-filter: saturate(180%) blur(20px);
         z-index: 1000;
         display: flex; justify-content: center;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
     }
     
     .nav-content { width: 100%; max-width: 1024px; display: flex; justify-content: space-between; align-items: center; height: 100%; padding: 0 20px; }
@@ -27,28 +28,19 @@ HTML_NAVBAR = """
     .nav-link-item { font-size: 12px; color: rgba(0,0,0,0.8); cursor: pointer; text-decoration: none; transition: opacity 0.2s; height: 100%; display: flex; align-items: center; font-weight: 400; }
     .nav-link-item:hover { color: #000; }
 
-    /* --- MEGA MENU DESPLEGABLE (ESTILO APPLE) --- */
+    /* --- MEGA MENU DESPLEGABLE (BLANCO SÓLIDO) --- */
     .mega-menu {
         position: fixed; top: var(--nav-height); left: 0; width: 100%;
-        
-        /* El secreto del degradado: Inicia blanco sólido y termina en gris claro (f5f5f7) transparente */
-        background: linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 65%, rgba(245,245,247,0.4) 100%);
-        backdrop-filter: blur(25px);
-        -webkit-backdrop-filter: blur(25px);
-        
-        /* Cero bordes, cero sombras */
+        background: #ffffff; /* BLANCO PURO SÓLIDO COMO APPLE */
         box-shadow: none; 
-        border: none; 
-        
+        border-bottom: 1px solid rgba(0,0,0,0.05); 
         display: grid; grid-template-rows: 0fr; opacity: 0;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 999;
     }
 
     .mega-menu.active { grid-template-rows: 1fr; opacity: 1; }
     .mega-content { overflow: hidden; max-width: 1024px; margin: 0 auto; width: 100%; padding: 0 20px; }
-    
-    /* Ampliamos el padding inferior para que el degradado respire */
-    .mega-grid { display: flex; gap: 100px; padding: 45px 0 100px 0; }
+    .mega-grid { display: flex; gap: 100px; padding: 45px 0 50px 0; }
     
     .mega-col h5 { font-size: 12px; color: var(--apple-gray); font-weight: 400; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 0.5px;}
     .mega-col a { display: block; font-size: 24px; font-weight: 600; color: var(--apple-text); text-decoration: none; margin-bottom: 14px; transition: color 0.2s; }
@@ -56,6 +48,27 @@ HTML_NAVBAR = """
     
     .mega-sub-col a { font-size: 14px; font-weight: 500; margin-bottom: 12px; color: var(--apple-text); }
     .mega-sub-col a:hover { color: #0066cc; }
+
+    /* --- CORTINA DE DEGRADADO GRIS TRANSPARENTE (OVERLAY) --- */
+    .nav-fade-overlay {
+        position: fixed;
+        top: var(--nav-height);
+        left: 0; right: 0; bottom: 0;
+        /* Degradado gris claro a transparente (referencia a tu código anterior) */
+        background: linear-gradient(180deg, rgba(245, 245, 247, 0.85) 0%, rgba(245, 245, 247, 0) 100%);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 998; /* Un nivel por debajo del menú blanco */
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+    }
+
+    .nav-fade-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
 
     /* TOAST DE SEGURIDAD */
     #lockToast {
@@ -82,6 +95,8 @@ HTML_NAVBAR = """
         </div>
     </div>
 </nav>
+
+<div class="nav-fade-overlay" id="navFadeOverlay"></div>
 
 <div class="mega-menu" id="megaMenu" onmouseleave="closeMenu()">
     <div class="mega-content">
@@ -143,15 +158,20 @@ HTML_NAVBAR = """
                 ${data.sub.map(s => `<a href="#" onclick="checkAcceso(event)">${s}</a>`).join('')}
             </div>
         `;
+        // Activamos el menú blanco y la cortina gris transparente
         document.getElementById('megaMenu').classList.add('active');
+        document.getElementById('navFadeOverlay').classList.add('active');
     }
 
     function closeMenu() {
         timeoutMenu = setTimeout(() => {
+            // Ocultamos ambos elementos
             document.getElementById('megaMenu').classList.remove('active');
+            document.getElementById('navFadeOverlay').classList.remove('active');
         }, 150);
     }
 
+    // Gestionamos el cierre cuando el mouse sale de la barra de navegación superior
     document.querySelector('.apple-nav').addEventListener('mouseleave', closeMenu);
     document.querySelector('.apple-nav').addEventListener('mouseenter', () => clearTimeout(timeoutMenu));
 
