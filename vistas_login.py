@@ -13,8 +13,10 @@ def mostrar_login():
         # --- VALIDACIÓN DE TU CUENTA MAESTRA ---
         if usuario == 'SAMU' and password == '716285':
             session['usuario_id'] = 1
-            session['nombre'] = usuario  # <-- CORREGIDO: Ahora muestra dinámicamente el nombre del usuario
+            # AQUI ESTÁ LA CORRECCIÓN: Guardamos tu nombre real
+            session['nombre'] = 'Samuel Gutierrez' 
             session['rol'] = 'Admin' 
+            
             # Redirige al panel principal liberado
             return redirect(url_for('inicio.panel_principal'))
         else:
