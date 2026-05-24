@@ -1,6 +1,6 @@
 # =========================================================
 # vistas_navbar.py
-# Plantilla Visual del Menú SAMU (Estilo Apple)
+# Plantilla Visual del Menú SAMU (Estilo Apple) - Completo
 # =========================================================
 
 HTML_NAVBAR = """
@@ -24,7 +24,7 @@ HTML_NAVBAR = """
     .nav-brand { font-family: 'Bauhaus 93', sans-serif; font-size: 1.4rem; text-decoration: none; color: #000; letter-spacing: 1px;}
     .nav-links { display: flex; gap: 28px; height: 100%; align-items: center; }
     
-    /* LOS BOTONES AHORA SON ENLACES CLICABLES REALES */
+    /* ENLACES CLICABLES REALES */
     .nav-link-item { 
         font-size: 12px; color: rgba(0,0,0,0.8); cursor: pointer; 
         text-decoration: none; transition: color 0.2s; height: 100%; 
@@ -60,7 +60,7 @@ HTML_NAVBAR = """
     }
     .nav-fade-overlay.active { opacity: 1; visibility: visible; }
 
-    /* Alerta de Permisos */
+    /* Alerta de Permisos y Construcción */
     #lockToast {
         position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
         background: #1d1d1f; color: #fff; padding: 12px 25px; border-radius: 50px;
@@ -96,12 +96,12 @@ HTML_NAVBAR = """
     </div>
 </div>
 
-<div id="lockToast"><i class="bi bi-shield-lock-fill me-2" style="color: #f9a8d4;"></i> Acceso restringido. Nivel de permiso insuficiente.</div>
+<div id="lockToast"><i class="bi bi-shield-lock-fill me-2" style="color: #f9a8d4;"></i> Notificación del Sistema</div>
 
 <script>
     const esAdmin = {ADMIN_JS};
     
-    // Todas las opciones del Cuaderno apuntan ahora al Lobby Central (/cuaderno)
+    // MENÚ COMPLETO RESTAURADO AL 100%
     const menuData = {
         cuaderno: {
             title: "Módulos de Registro",
@@ -115,11 +115,66 @@ HTML_NAVBAR = """
                 { label: "Exportar Partes Diarios", url: "#" }
             ]
         },
-        personal: { title: "Gestión Humana", main: [{label: "Registro de Personal", url: "#"}], sub: [] },
-        equipo: { title: "Control de Flota", main: [{label: "Maquinaria", url: "#"}], sub: [] },
-        almacen: { title: "Inventario", main: [{label: "Materiales", url: "#"}], sub: [] },
-        avance: { title: "Ejecución Técnica", main: [{label: "Partidas y Metrados", url: "#"}], sub: [] },
-        sistema: { title: "Administración", main: [{label: "Usuarios", url: "#"}], sub: [] }
+        personal: {
+            title: "Gestión Humana",
+            main: [
+                { label: "Registro de Personal", url: "#" },
+                { label: "Personal en Obra", url: "#" },
+                { label: "Asistencias", url: "#" }
+            ],
+            sub: [
+                { label: "Sistema de Papeletas", url: "#" },
+                { label: "Análisis de Asistencias", url: "#" },
+                { label: "Reporte de Tareos", url: "#" }
+            ]
+        },
+        equipo: {
+            title: "Control de Flota",
+            main: [
+                { label: "Maquinaria y Vehículos", url: "#" },
+                { label: "Operativos", url: "#" },
+                { label: "Horas Máquina", url: "#" }
+            ],
+            sub: [
+                { label: "Combustible a Equipo", url: "#" },
+                { label: "Análisis Horas Máquina", url: "#" },
+                { label: "Rendimiento por KM", url: "#" }
+            ]
+        },
+        almacen: {
+            title: "Inventario",
+            main: [
+                { label: "Materiales Generales", url: "#" },
+                { label: "Combustible Principal", url: "#" }
+            ],
+            sub: [
+                { label: "Análisis de Stock", url: "#" },
+                { label: "Ingresos y Salidas", url: "#" }
+            ]
+        },
+        avance: {
+            title: "Ejecución Técnica",
+            main: [
+                { label: "Partidas y Metrados", url: "#" },
+                { label: "Actividades Diarias", url: "#" },
+                { label: "Topografía", url: "#" }
+            ],
+            sub: [
+                { label: "Análisis de Metrados", url: "#" },
+                { label: "Curva S del Proyecto", url: "#" }
+            ]
+        },
+        sistema: {
+            title: "Administración",
+            main: [
+                { label: "Gestión de Usuarios", url: "#" },
+                { label: "Roles y Permisos", url: "#" }
+            ],
+            sub: [
+                { label: "Actividad del Sistema", url: "#" },
+                { label: "Configuración Global", url: "#" }
+            ]
+        }
     };
 
     let timeoutMenu;
@@ -140,7 +195,7 @@ HTML_NAVBAR = """
             </div>
             <div class="mega-col mega-sub-col">
                 <h5>Más herramientas</h5>
-                ${data.sub.map(s => `<a href="${s.url}" onclick="checkAcceso(event, '${m.url}')">${s.label}</a>`).join('')}
+                ${data.sub.map(s => `<a href="${s.url}" onclick="checkAcceso(event, '${s.url}')">${s.label}</a>`).join('')}
             </div>
         `;
         megaMenu.classList.add('active');
@@ -162,7 +217,6 @@ HTML_NAVBAR = """
     megaMenu.addEventListener('mouseenter', cancelClose);
 
     function checkAcceso(e, url) {
-        // Bloquea el clic si no es admin O si la URL es "#" (en construcción)
         if (!esAdmin || url === '#') {
             e.preventDefault();
             const toast = document.getElementById('lockToast');
