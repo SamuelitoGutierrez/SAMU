@@ -3,15 +3,14 @@ import importlib
 from flask import Flask, session, request, redirect, url_for, render_template_string, Blueprint
 
 def iniciar_servidor_samu():
-    app = Flask(__name__)
-    app.secret_key = 'samu_2026_highway_super_secret_key'
+    aplicacion = Flask(__name__)
+    aplicacion.secret_key = 'samu_2026_highway_super_secret_key'
 
     print("==================================================")
     print(" INICIANDO CEREBRO GLOBAL SAMU 2026 ")
     print("==================================================")
 
-    # 1. LISTA MAESTRA DE ABSOLUTAMENTE TODOS LOS MÓDULOS DEL ECOSISTEMA
-    # Depurada, sin duplicados y excluyendo 'main' para evitar bucles.
+    # 1. LISTA MAESTRA DE MÓDULOS
     todos_los_modulos = [
         "activar_cuenta", "actividad_sistema", "actividades", "almacen_materiales",
         "analisis_actividades", "analisis_almacen_materiales", "analisis_asistencias",
@@ -47,51 +46,41 @@ def iniciar_servidor_samu():
     print("Cargando y enlazando todo el ecosistema de SAMU...")
     for nombre_modulo in todos_los_modulos:
         try:
-            # Importa el archivo (lo carga en la memoria RAM)
             modulo = importlib.import_module(nombre_modulo)
-            
-            # Revisa si es una Vista (Blueprint) para enlazarlo a internet
             es_vista = False
             for atributo_nombre in dir(modulo):
                 atributo = getattr(modulo, atributo_nombre)
                 if isinstance(atributo, Blueprint):
-                    app.register_blueprint(atributo)
+                    aplicacion.register_blueprint(atributo)
                     es_vista = True
                     print(f" [VISTA OK] Conectado: {nombre_modulo}.py")
             
-            # Si no es vista, es un módulo de lógica interna (ej: maquinaria.py)
             if not es_vista:
                 print(f" [LÓGICA OK] Cargado en memoria: {nombre_modulo}.py")
                 
         except ModuleNotFoundError:
-            # Si el archivo aún no tiene código o no se ha creado físicamente, sigue adelante sin crashear
             pass
         except Exception as e:
             print(f" [!] Alerta en {nombre_modulo}.py: {str(e)}")
 
     print("==================================================")
 
-    # 2. SISTEMA GLOBAL DE PERMISOS (TU GUARDIA DE SEGURIDAD ABSOLUTO)
-    @app.before_request
+    # 2. SISTEMA GLOBAL DE PERMISOS
+    @aplicacion.before_request
     def guardian_de_accesos():
-        # A. Rutas públicas (Login, panel visual y estáticos como el logo)
         rutas_libres = ['login.mostrar_login', 'inicio.panel_principal', 'static']
         if request.endpoint in rutas_libres or not request.endpoint:
             return
 
-        # B. Bloqueo si no hay sesión iniciada
         if 'usuario_id' not in session:
             return redirect(url_for('login.mostrar_login'))
 
-        # C. MATRIZ DE PERMISOS
         rol = session.get('rol')
         ruta = request.endpoint 
 
-        # ---> PERMISO ABSOLUTO PARA SAMU (ADMIN) <---
         if rol == 'Admin':
-            return # Pase libre a los 92 archivos
+            return 
 
-        # Restricciones de otros roles
         if rol in ['Ingeniero', 'Residente', 'Supervisor']:
             if not any(ruta.startswith(m) for m in ['cuaderno.', 'personal.', 'avance.', 'inicio.']):
                 return generar_error_403()
@@ -100,7 +89,7 @@ def iniciar_servidor_samu():
             if not any(ruta.startswith(m) for m in ['mecanico.', 'inicio.']):
                 return generar_error_403()
 
-    # 3. INTERFACES DE ERROR DE ALTA GAMA (ESTILO APPLE)
+    # 3. INTERFACES DE ERROR
     def generar_error_403():
         return render_template_string("""
         <div style="font-family: 'Inter', Arial, sans-serif; text-align: center; margin-top: 20vh;">
@@ -111,7 +100,7 @@ def iniciar_servidor_samu():
         </div>
         """), 403
 
-    @app.errorhandler(404)
+    @aplicacion.errorhandler(404)
     def error_404(e):
         return render_template_string("""
         <div style="font-family: 'Inter', Arial, sans-serif; text-align: center; margin-top: 20vh;">
@@ -122,8 +111,13 @@ def iniciar_servidor_samu():
         </div>
         """), 404
 
-    return app
+    return aplicacion
+
+# --- ¡ESTA ES LA CLAVE PARA QUE EL SERVIDOR NO SE CAIGA (502) ---
+# Declaramos 'app' de forma global para que el servidor en la nube lo reconozca
+app = iniciar_servidor_samu()
 
 if __name__ == '__main__':
-    app = iniciar_servidor_samu()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Usamos el puerto dinámico del servidor, o 5000 por defecto
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
