@@ -10,11 +10,10 @@ def mostrar_login():
         usuario = request.form.get('usuario', '').strip()
         password = request.form.get('password', '').strip()
 
-        # --- VALIDACIÓN DE TU CUENTA MAESTRA ---
+        # --- VALIDACIÓN DE TU CUENTA MAESTRA DE DUEÑO ---
         if usuario == 'SAMU' and password == '716285':
             session['usuario_id'] = 1
-            # AQUI ESTÁ LA CORRECCIÓN: Guardamos tu nombre real
-            session['nombre'] = 'Samuel Gutierrez' 
+            session['nombre'] = 'Samuel Gutierrez'  # <-- Tu nombre y apellido para la cabecera
             session['rol'] = 'Admin' 
             
             # Redirige al panel principal liberado
