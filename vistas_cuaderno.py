@@ -1,10 +1,11 @@
 # =========================================================
 # vistas_cuaderno.py
-# Módulo: Cuaderno de Obra Digital - Completo y Responsivo
+# Módulo: Cuaderno de Obra Digital - Completo, Extenso y Responsivo
 # =========================================================
 
 from flask import Blueprint, render_template_string, session, redirect, url_for, request
 from navbar import obtener_navbar
+from datetime import datetime
 
 cuaderno_bp = Blueprint('cuaderno', __name__)
 
@@ -26,6 +27,7 @@ def panel_cuaderno():
     elif '/supervision' in ruta_actual: 
         modo_auto = 'supervision'
 
+    fecha_hoy = datetime.now().strftime("%d/%m/%Y")
     estadisticas = { 
         "total_asientos": 87, 
         "dias_lluvia": 14, 
@@ -277,39 +279,41 @@ def panel_cuaderno():
                 backdrop-filter: blur(20px); 
                 -webkit-backdrop-filter: blur(20px); 
                 border-radius: 20px; 
-                padding: 20px; 
+                padding: 25px; 
             }
+
+            /* --- ESTILOS DEL FORMULARIO EXTENSO --- */
+            .form-section { margin-bottom: 30px; }
+            .form-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid rgba(0,102,204,0.1); }
+            .section-number { background: #0066cc; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+            .section-title { font-size: 14px; font-weight: 700; color: #1d1d1f; margin: 0; text-transform: uppercase; }
             
-            .form-section-title { 
-                font-size: 12px; 
-                font-weight: 700; 
-                color: #000; 
-                margin-bottom: 12px; 
-                padding-bottom: 6px; 
-                border-bottom: 1px solid rgba(0,0,0,0.08); 
-                text-transform: uppercase; 
-                margin-top: 20px;
-            }
+            .sub-box { background: rgba(248, 250, 252, 0.6); border: 1px solid #e2e8f0; border-radius: 14px; padding: 15px; margin-bottom: 15px; }
             
             .form-label { 
-                font-size: 12px; 
+                font-size: 11px; 
                 font-weight: 600; 
                 color: var(--apple-gray); 
                 margin-bottom: 6px; 
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
             }
             
             .form-select, .form-control { 
                 border-radius: 12px; 
                 padding: 12px; 
                 font-size: 14px; 
-                background: rgba(255,255,255,0.8); 
+                background: rgba(255,255,255,0.9); 
                 border: 1px solid #e2e8f0; 
+                color: #1d1d1f;
             }
+            .form-control:focus, .form-select:focus { background: #ffffff; border-color: #0066cc; box-shadow: 0 0 0 4px rgba(0,102,204,0.1); outline: none; }
 
             /* --- SLIDER RESPONSIVO --- */
             .slider-container { 
                 width: 100%; 
-                margin: 30px auto 10px auto; 
+                max-width: 400px;
+                margin: 40px auto 10px auto; 
                 position: relative; 
             }
             
@@ -366,8 +370,8 @@ def panel_cuaderno():
             @media (max-width: 991px) { 
                 .stats-grid { grid-template-columns: repeat(2, 1fr); }
                 .workspace-split { grid-template-columns: 1fr; }
-                .timeline-wrapper { max-height: 200px; order: 2; overflow-y: auto;} 
-                .canvas-wrapper { order: 1; } 
+                .timeline-wrapper { max-height: 250px; order: 2; overflow-y: auto; margin-top: 20px;} 
+                .canvas-wrapper { order: 1; padding: 20px; } 
             }
             
             @media (max-width: 576px) { 
@@ -377,6 +381,7 @@ def panel_cuaderno():
                 .project-title h1 { font-size: 24px; }
                 .portal-card { padding: 30px 20px; }
                 .slider-text { font-size: 10px; } 
+                .sub-box { padding: 12px; }
             }
         </style>
     </head>
@@ -438,48 +443,99 @@ def panel_cuaderno():
 
                 <div class="workspace-split">
                     <div class="timeline-wrapper">
-                        <div class="timeline-title">Historial Rápido</div>
+                        <div class="form-section-title" style="margin-top:0;">Historial Rápido</div>
                         {% for asiento in historial_asientos %}
-                        <div class="timeline-item">
-                            <strong>N° {{ asiento.numero }} - {{ asiento.fecha }}</strong>
-                            <p>{{ asiento.resumen }}</p>
+                        <div class="timeline-item" style="background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.8); padding: 12px; border-radius: 12px; margin-bottom: 10px;">
+                            <strong style="color:#0066cc; font-size:12px;">N° {{ asiento.numero }} - {{ asiento.fecha }}</strong>
+                            <p style="font-size:11px; margin:0;">{{ asiento.resumen }}</p>
                         </div>
                         {% endfor %}
                     </div>
 
                     <div class="canvas-wrapper">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h3 class="m-0" style="font-weight: 700; font-size: 1.2rem;">Asiento N° {{ estadisticas.total_asientos + 1 }}</h3>
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2" style="border-bottom: 1px dashed #cbd5e1;">
+                            <div>
+                                <h3 class="m-0" style="font-weight: 700; font-size: 1.4rem; color: #0066cc;">Asiento N° {{ estadisticas.total_asientos + 1 }}</h3>
+                                <p style="font-size:12px; color:var(--apple-gray); margin:0;">Fecha: {{ fecha_hoy }}</p>
+                            </div>
                             <span class="badge bg-dark py-2 px-3" style="font-size: 11px;" id="etiquetaModo">Residencia</span>
                         </div>
                         
                         <form id="formLegalObra" onsubmit="event.preventDefault();">
-                            <div class="form-section-title">1. Clima y Operatividad</div>
-                            <div class="row g-2 mb-3"> 
-                                <div class="col-sm-6">
-                                    <select class="form-select" required>
-                                        <option value="soleado">Soleado / Despejado</option>
-                                        <option value="lluvia">Lluvia Intensa</option>
-                                    </select>
-                                </div>
-                                <div class="col-sm-6">
-                                    <select class="form-select" required>
-                                        <option value="normal">Trabajo Normal (100%)</option>
-                                        <option value="parcial">Paralización Parcial</option>
-                                    </select>
-                                </div>
-                            </div>
                             
-                            <div class="form-section-title">2. Trabajos y Metrados</div>
-                            <div class="mb-3">
-                                <textarea class="form-control" rows="4" placeholder="Progresivas, frentes activos..." required></textarea>
+                            <div class="form-section">
+                                <div class="form-section-header">
+                                    <div class="section-number">1</div><h3 class="section-title">Condiciones Climáticas</h3>
+                                </div>
+                                <div class="sub-box row g-3">
+                                    <div class="col-md-4 col-sm-6">
+                                        <label class="form-label">Mañana (07:00 - 12:00)</label>
+                                        <select class="form-select"><option>Soleado</option><option>Nublado</option><option>Lluvia</option></select>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <label class="form-label">Tarde (13:00 - 18:00)</label>
+                                        <select class="form-select"><option>Soleado</option><option>Nublado</option><option>Lluvia</option></select>
+                                    </div>
+                                    <div class="col-md-4 col-sm-12">
+                                        <label class="form-label">Impacto Operativo</label>
+                                        <select class="form-select"><option>Trabajo Normal</option><option>Paralización Parcial</option><option>Paralización Total</option></select>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="slider-container">
-                                <div class="slider-track" id="sliderTrack">
-                                    <div class="slider-progress" id="sliderProgress"></div>
-                                    <div class="slider-text" id="sliderText">Deslizar para Firmar</div>
-                                    <div class="slider-handle" id="sliderHandle"><i class="bi bi-chevron-right"></i></div>
+                            <div class="form-section">
+                                <div class="form-section-header">
+                                    <div class="section-number">2</div><h3 class="section-title">Personal del Contratista</h3>
+                                </div>
+                                <div class="sub-box row g-3">
+                                    <div class="col-4"><label class="form-label">Técnicos</label><input type="number" class="form-control" placeholder="0"></div>
+                                    <div class="col-4"><label class="form-label">Oficiales</label><input type="number" class="form-control" placeholder="0"></div>
+                                    <div class="col-4"><label class="form-label">Peones</label><input type="number" class="form-control" placeholder="0"></div>
+                                    <div class="col-12">
+                                        <label class="form-label">Personal Clave Presente</label>
+                                        <input type="text" class="form-control" placeholder="Ej: Residente, Especialista en Suelos...">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <div class="form-section-header">
+                                    <div class="section-number">3</div><h3 class="section-title">Equipo Mecánico Mayor</h3>
+                                </div>
+                                <div class="sub-box">
+                                    <label class="form-label">Relación de Maquinaria Operativa / Inoperativa</label>
+                                    <textarea class="form-control" rows="3" placeholder="Ej: 02 Excavadoras operativas, 04 Volquetes..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <div class="form-section-header">
+                                    <div class="section-number">4</div><h3 class="section-title">Ejecución y Metrados</h3>
+                                </div>
+                                <div class="sub-box">
+                                    <label class="form-label">Descripción Técnica (Indicar Progresivas)</label>
+                                    <textarea class="form-control" rows="4" placeholder="Detalle las actividades en los frentes de la vía PU N-110..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <div class="form-section-header" style="border-bottom-color: rgba(220,38,38,0.2);">
+                                    <div class="section-number" style="background:#dc2626;">5</div><h3 class="section-title" style="color:#dc2626;">Ocurrencias y Requerimientos</h3>
+                                </div>
+                                <div class="sub-box" style="border-color: rgba(220, 38, 38, 0.2); background: rgba(254, 242, 242, 0.4);">
+                                    <label class="form-label" style="color: #dc2626;">Consultas, Atrasos, Solicitudes a Supervisión</label>
+                                    <textarea class="form-control" rows="4" placeholder="Redacte aquí ocurrencias, problemas, justificación de paralizaciones..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <p style="font-size: 11px; color: var(--apple-gray); margin-bottom: 5px;">Se guardará con la firma digital de <b>{{ nombre_completo }}</b>.</p>
+                                <div class="slider-container">
+                                    <div class="slider-track" id="sliderTrack">
+                                        <div class="slider-progress" id="sliderProgress"></div>
+                                        <div class="slider-text" id="sliderText">Deslizar para Firmar</div>
+                                        <div class="slider-handle" id="sliderHandle"><i class="bi bi-chevron-right"></i></div>
+                                    </div>
                                 </div>
                             </div>
                         </form>
@@ -604,7 +660,7 @@ def panel_cuaderno():
                 text.style.color = "#00875a";
                 
                 setTimeout(() => {
-                    alert("Documento sellado e ingresado."); 
+                    alert("Documento sellado e ingresado al sistema."); 
                     volverDashboard();
                     setTimeout(() => {
                         handle.style.transition = 'none'; 
@@ -621,4 +677,4 @@ def panel_cuaderno():
         </script>
     </body>
     </html>
-    """, estadisticas=estadisticas, historial_asientos=historial_asientos, menu_superior=menu_superior, modo_auto=modo_auto)
+    """, estadisticas=estadisticas, historial_asientos=historial_asientos, menu_superior=menu_superior, modo_auto=modo_auto, fecha_hoy=fecha_hoy)
