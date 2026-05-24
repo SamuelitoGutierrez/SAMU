@@ -13,7 +13,7 @@ def mostrar_login():
         # --- VALIDACIÓN DE TU CUENTA MAESTRA ---
         if usuario == 'SAMU' and password == '716285':
             session['usuario_id'] = 1
-            session['nombre'] = 'SAMU - Dirección'
+            session['nombre'] = usuario  # <-- CORREGIDO: Ahora muestra dinámicamente el nombre del usuario
             session['rol'] = 'Admin' 
             # Redirige al panel principal liberado
             return redirect(url_for('inicio.panel_principal'))
@@ -59,13 +59,11 @@ def mostrar_login():
             .action-area { width: 100%; opacity: 0; visibility: hidden; transform: translateY(20px); transition: all 1s ease; display: flex; flex-direction: column; align-items: center; margin-top: 15px; }
             .action-area.show { opacity: 1; visibility: visible; transform: translateY(0); }
             
-            /* Botones fluidos */
             .btn-comenzar { background: #0f172a; color: #ffffff; padding: 16px 40px; border-radius: 16px; border: none; font-size: 1.2rem; letter-spacing: 2px; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15); transition: all 0.3s ease; width: 90%; text-transform: uppercase; cursor: pointer; }
             .btn-comenzar:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(15, 23, 42, 0.25); background: #1e293b; }
             .btn-panel { background-color: transparent; color: #64748b; border: 2px solid #cbd5e1; padding: 14px 40px; border-radius: 16px; font-size: 1rem; letter-spacing: 1.5px; width: 90%; transition: all 0.3s ease; text-transform: uppercase; margin-top: 5px; cursor: pointer; display: block; text-align: center; text-decoration: none;}
             .btn-panel:hover { background-color: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
             
-            /* Contenedor del form */
             #login-box { width: 90%; margin: 0 auto; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); padding: 35px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06); text-align: left; border: 1px solid rgba(0, 0, 0, 0.04); }
             .btn-volver { background: none; border: none; color: #94a3b8; font-size: 1.4rem; padding: 0; cursor: pointer; transition: color 0.3s ease; }
             .btn-volver:hover { color: #0f172a; }
@@ -147,7 +145,6 @@ def mostrar_login():
         </div>
 
         <script>
-            // Motor de cursor
             let curX = window.innerWidth / 2, curY = window.innerHeight / 2, tgX = curX, tgY = curY;
             if (window.matchMedia("(pointer: fine)").matches) {
                 window.addEventListener('mousemove', (e) => { tgX = e.clientX; tgY = e.clientY; });
@@ -160,7 +157,6 @@ def mostrar_login():
                 animateCursor();
             }
 
-            // Animación inicial
             window.onload = function() {
                 setTimeout(() => { document.getElementById('logoImg').classList.add('fade-in'); }, 300);
                 setTimeout(() => { document.getElementById('logoImg').classList.add('move-up-logo'); }, 1200);
@@ -169,7 +165,6 @@ def mostrar_login():
                 setTimeout(() => { document.getElementById('actionArea').classList.add('show'); }, 3500);
             };
 
-            // Fluidez sin recortes
             const btnWrap = document.getElementById('btnComenzarWrapper');
             const loginWrap = document.getElementById('loginWrapper');
 
