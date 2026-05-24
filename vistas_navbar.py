@@ -391,7 +391,7 @@ HTML_NAVBAR = """
     const mobileIcon = document.getElementById('mobileIcon');
     let isMobileMenuOpen = false;
 
-    // Generamos el HTML móvil asegurándonos de incluir el Título Principal (ej. Cuaderno de Obra)
+    // Generamos el HTML móvil asegurándonos de incluir el Título Principal
     const mobileContent = document.getElementById('mobileContent');
     let mobileHTML = '';
     Object.values(menuData).forEach(seccion => {
@@ -439,7 +439,7 @@ HTML_NAVBAR = """
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         } else if(window.innerWidth <= 991) {
-            // Si la URL es válida y estamos en celular, cerramos el menú suavemente al navegar
+            // Cierra el menú suavemente al navegar en celular
             toggleMobileMenu(); 
         }
     }
