@@ -10,7 +10,6 @@ def obtener_navbar(es_admin, nombre_usuario):
             --apple-bg: #fbfbfd;
             --apple-text: #1d1d1f;
             --apple-gray: #86868b;
-            --apple-light-gray: #f5f5f7;
             --nav-height: 48px;
         }
 
@@ -29,31 +28,30 @@ def obtener_navbar(es_admin, nombre_usuario):
         .nav-link-item { font-size: 12px; color: rgba(0,0,0,0.8); cursor: pointer; text-decoration: none; transition: opacity 0.2s; height: 100%; display: flex; align-items: center; font-weight: 400; }
         .nav-link-item:hover { color: #000; }
 
-        /* --- MEGA MENU DESPLEGABLE (BLANCO PURO, SIN SOMBRAS) --- */
+        /* --- MEGA MENU DESPLEGABLE --- */
         .mega-menu {
             position: fixed; top: var(--nav-height); left: 0; width: 100%;
-            background: #ffffff; /* Blanco puro como Apple */
-            box-shadow: none; /* Cero sombras */
+            /* Blanco con un ligero toque translúcido para el efecto cristal */
+            background: rgba(255, 255, 255, 0.97); 
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            box-shadow: none; border: none; /* Cero sombras, diseño plano */
             display: grid; grid-template-rows: 0fr; opacity: 0;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 999;
-        }
-        
-        /* ---> DEGRADADO GRIS CLARO TRANSPARENTE EN LA BASE <--- */
-        .mega-menu::after {
-            content: "";
-            position: absolute;
-            bottom: 0; left: 0; width: 100%; 
-            height: 70px; /* Altura del difuminado */
-            /* De transparente a gris claro (f5f5f7) típico de Apple */
-            background: linear-gradient(to bottom, rgba(245, 245, 247, 0) 0%, rgba(245, 245, 247, 0.95) 100%);
-            pointer-events: none; 
+            
+            /* ---> AQUÍ ESTÁ LA CORRECCIÓN: MÁSCARA DE DESVANECIMIENTO <--- 
+               Esto "borra" los últimos 90px del menú, haciéndolo 100% transparente hacia abajo */
+            -webkit-mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 90px), transparent 100%);
+            mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 90px), transparent 100%);
         }
 
         .mega-menu.active { grid-template-rows: 1fr; opacity: 1; }
         .mega-content { overflow: hidden; max-width: 1024px; margin: 0 auto; width: 100%; padding: 0 20px; }
-        .mega-grid { display: flex; gap: 100px; padding: 40px 0 80px 0; }
         
-        /* Estilos tipográficos idénticos a la captura */
+        /* El padding bottom de 90px asegura que el texto no se corte donde empieza el desvanecimiento */
+        .mega-grid { display: flex; gap: 100px; padding: 45px 0 90px 0; }
+        
+        /* Tipografía estilo Apple */
         .mega-col h5 { font-size: 12px; color: var(--apple-gray); font-weight: 400; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 0.5px;}
         .mega-col a { display: block; font-size: 24px; font-weight: 600; color: var(--apple-text); text-decoration: none; margin-bottom: 14px; transition: color 0.2s; }
         .mega-col a:hover { color: #0066cc; }
