@@ -1,6 +1,6 @@
 # =========================================================
 # vistas_navbar.py
-# Plantilla Visual del Menú SAMU (Estilo Apple) - Completo
+# Plantilla Visual del Menú SAMU (Estilo Apple) - Corregido
 # =========================================================
 
 HTML_NAVBAR = """
@@ -24,7 +24,6 @@ HTML_NAVBAR = """
     .nav-brand { font-family: 'Bauhaus 93', sans-serif; font-size: 1.4rem; text-decoration: none; color: #000; letter-spacing: 1px;}
     .nav-links { display: flex; gap: 28px; height: 100%; align-items: center; }
     
-    /* ENLACES CLICABLES REALES */
     .nav-link-item { 
         font-size: 12px; color: rgba(0,0,0,0.8); cursor: pointer; 
         text-decoration: none; transition: color 0.2s; height: 100%; 
@@ -32,7 +31,6 @@ HTML_NAVBAR = """
     }
     .nav-link-item:hover { color: #0066cc; }
 
-    /* Mega Menú Blanco */
     .mega-menu {
         position: fixed; top: var(--nav-height); left: 0; width: 100%;
         background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(25px);
@@ -52,7 +50,6 @@ HTML_NAVBAR = """
     .mega-sub-col a { font-size: 13px; font-weight: 500; margin-bottom: 10px; color: var(--apple-text); letter-spacing: 0px;}
     .mega-sub-col a:hover { color: #0066cc; }
 
-    /* Cortina de fondo oscuro (Overlay) */
     .nav-fade-overlay {
         position: fixed; top: var(--nav-height); left: 0; right: 0; bottom: 0;
         background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
@@ -60,7 +57,6 @@ HTML_NAVBAR = """
     }
     .nav-fade-overlay.active { opacity: 1; visibility: visible; }
 
-    /* Alerta de Permisos y Construcción */
     #lockToast {
         position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
         background: #1d1d1f; color: #fff; padding: 12px 25px; border-radius: 50px;
@@ -82,32 +78,28 @@ HTML_NAVBAR = """
             <a href="#" class="nav-link-item" onmouseover="openMenu('sistema')">Sistema</a>
         </div>
         
-        <div style="font-size: 12px; display: flex; align-items: center; font-weight: 500; color: #1d1d1f;">
-            {HTML_USUARIO} <i class="bi bi-person-circle ms-2" style="font-size: 1.2rem; color: #0066cc;"></i>
+        <div style="font-size: 13px; display: flex; align-items: center; font-weight: 500; color: #1d1d1f;">
+            {HTML_USUARIO}
         </div>
     </div>
 </nav>
 
 <div class="nav-fade-overlay" id="navFadeOverlay"></div>
-
 <div class="mega-menu" id="megaMenu">
-    <div class="mega-content">
-        <div class="mega-grid" id="menuGrid"></div>
-    </div>
+    <div class="mega-content"><div class="mega-grid" id="menuGrid"></div></div>
 </div>
-
 <div id="lockToast"><i class="bi bi-shield-lock-fill me-2" style="color: #f9a8d4;"></i> Notificación del Sistema</div>
 
 <script>
     const esAdmin = {ADMIN_JS};
     
-    // MENÚ COMPLETO RESTAURADO AL 100%
     const menuData = {
         cuaderno: {
             title: "Módulos de Registro",
             main: [
-                { label: "Residencia", url: "/cuaderno" },
-                { label: "Supervisión", url: "/cuaderno" }
+                // CORRECCIÓN: Ahora apuntan a rutas específicas
+                { label: "Residencia", url: "/residencia" },
+                { label: "Supervisión", url: "/supervision" }
             ],
             sub: [
                 { label: "Análisis de Residencia", url: "#" },
@@ -117,63 +109,28 @@ HTML_NAVBAR = """
         },
         personal: {
             title: "Gestión Humana",
-            main: [
-                { label: "Registro de Personal", url: "#" },
-                { label: "Personal en Obra", url: "#" },
-                { label: "Asistencias", url: "#" }
-            ],
-            sub: [
-                { label: "Sistema de Papeletas", url: "#" },
-                { label: "Análisis de Asistencias", url: "#" },
-                { label: "Reporte de Tareos", url: "#" }
-            ]
+            main: [{ label: "Registro de Personal", url: "#" }, { label: "Personal en Obra", url: "#" }, { label: "Asistencias", url: "#" }],
+            sub: [{ label: "Sistema de Papeletas", url: "#" }, { label: "Análisis de Asistencias", url: "#" }, { label: "Reporte de Tareos", url: "#" }]
         },
         equipo: {
             title: "Control de Flota",
-            main: [
-                { label: "Maquinaria y Vehículos", url: "#" },
-                { label: "Operativos", url: "#" },
-                { label: "Horas Máquina", url: "#" }
-            ],
-            sub: [
-                { label: "Combustible a Equipo", url: "#" },
-                { label: "Análisis Horas Máquina", url: "#" },
-                { label: "Rendimiento por KM", url: "#" }
-            ]
+            main: [{ label: "Maquinaria y Vehículos", url: "#" }, { label: "Operativos", url: "#" }, { label: "Horas Máquina", url: "#" }],
+            sub: [{ label: "Combustible a Equipo", url: "#" }, { label: "Análisis Horas Máquina", url: "#" }, { label: "Rendimiento por KM", url: "#" }]
         },
         almacen: {
             title: "Inventario",
-            main: [
-                { label: "Materiales Generales", url: "#" },
-                { label: "Combustible Principal", url: "#" }
-            ],
-            sub: [
-                { label: "Análisis de Stock", url: "#" },
-                { label: "Ingresos y Salidas", url: "#" }
-            ]
+            main: [{ label: "Materiales Generales", url: "#" }, { label: "Combustible Principal", url: "#" }],
+            sub: [{ label: "Análisis de Stock", url: "#" }, { label: "Ingresos y Salidas", url: "#" }]
         },
         avance: {
             title: "Ejecución Técnica",
-            main: [
-                { label: "Partidas y Metrados", url: "#" },
-                { label: "Actividades Diarias", url: "#" },
-                { label: "Topografía", url: "#" }
-            ],
-            sub: [
-                { label: "Análisis de Metrados", url: "#" },
-                { label: "Curva S del Proyecto", url: "#" }
-            ]
+            main: [{ label: "Partidas y Metrados", url: "#" }, { label: "Actividades Diarias", url: "#" }, { label: "Topografía", url: "#" }],
+            sub: [{ label: "Análisis de Metrados", url: "#" }, { label: "Curva S del Proyecto", url: "#" }]
         },
         sistema: {
             title: "Administración",
-            main: [
-                { label: "Gestión de Usuarios", url: "#" },
-                { label: "Roles y Permisos", url: "#" }
-            ],
-            sub: [
-                { label: "Actividad del Sistema", url: "#" },
-                { label: "Configuración Global", url: "#" }
-            ]
+            main: [{ label: "Gestión de Usuarios", url: "#" }, { label: "Roles y Permisos", url: "#" }],
+            sub: [{ label: "Actividad del Sistema", url: "#" }, { label: "Configuración Global", url: "#" }]
         }
     };
 
