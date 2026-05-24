@@ -10,7 +10,7 @@ def iniciar_servidor_samu():
     print(" INICIANDO CEREBRO GLOBAL SAMU 2026 ")
     print("==================================================")
 
-    # 1. LISTA MAESTRA DE MÓDULOS
+    # 1. LISTA MAESTRA DE ABSOLUTAMENTE TODOS LOS MÓDULOS
     todos_los_modulos = [
         "activar_cuenta", "actividad_sistema", "actividades", "almacen_materiales",
         "analisis_actividades", "analisis_almacen_materiales", "analisis_asistencias",
@@ -59,7 +59,7 @@ def iniciar_servidor_samu():
                 print(f" [LÓGICA OK] Cargado en memoria: {nombre_modulo}.py")
                 
         except ModuleNotFoundError:
-            pass
+            pass # Si el archivo no existe aún, sigue adelante sin romper el servidor
         except Exception as e:
             print(f" [!] Alerta en {nombre_modulo}.py: {str(e)}")
 
@@ -78,9 +78,11 @@ def iniciar_servidor_samu():
         rol = session.get('rol')
         ruta = request.endpoint 
 
+        # Acceso total para Administrador
         if rol == 'Admin':
             return 
 
+        # Restricciones de otros roles
         if rol in ['Ingeniero', 'Residente', 'Supervisor']:
             if not any(ruta.startswith(m) for m in ['cuaderno.', 'personal.', 'avance.', 'inicio.']):
                 return generar_error_403()
@@ -89,7 +91,7 @@ def iniciar_servidor_samu():
             if not any(ruta.startswith(m) for m in ['mecanico.', 'inicio.']):
                 return generar_error_403()
 
-    # 3. INTERFACES DE ERROR
+    # 3. INTERFACES DE ERROR ESTILO APPLE
     def generar_error_403():
         return render_template_string("""
         <div style="font-family: 'Inter', Arial, sans-serif; text-align: center; margin-top: 20vh;">
@@ -113,11 +115,14 @@ def iniciar_servidor_samu():
 
     return aplicacion
 
-# --- ¡ESTA ES LA CLAVE PARA QUE EL SERVIDOR NO SE CAIGA (502) ---
-# Declaramos 'app' de forma global para que el servidor en la nube lo reconozca
+# ==============================================================================
+# DECLARACIÓN GLOBAL (LA CLAVE PARA EL DESPLIEGUE EN LA NUBE Y EVITAR EL 502)
+# ==============================================================================
+# La variable 'app' TIENE que estar expuesta en la raíz del archivo para WSGI
 app = iniciar_servidor_samu()
 
 if __name__ == '__main__':
-    # Usamos el puerto dinámico del servidor, o 5000 por defecto
+    # Capturamos el puerto que asigne tu servidor en la nube (ej. Coolify/Render),
+    # o usamos el 5000 por defecto para pruebas locales.
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
