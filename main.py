@@ -11,7 +11,6 @@ def iniciar_servidor_samu():
     print("==================================================")
 
     # 1. LISTA MAESTRA DE ABSOLUTAMENTE TODOS LOS MÓDULOS
-    # CORRECCIÓN: Se añadió "vistas_cuaderno" a la matriz de carga.
     todos_los_modulos = [
         "activar_cuenta", "actividad_sistema", "actividades", "almacen_materiales",
         "analisis_actividades", "analisis_almacen_materiales", "analisis_asistencias",
@@ -87,7 +86,7 @@ def iniciar_servidor_samu():
 
         # Restricciones de otros roles
         if rol in ['Ingeniero', 'Residente', 'Supervisor']:
-            # Garantiza que el rol técnico pueda acceder al cuaderno
+            # Garantiza que el rol técnico pueda acceder al cuaderno y sus módulos
             if not any(ruta.startswith(m) for m in ['cuaderno.', 'residencia.', 'supervision.', 'personal.', 'avance.', 'inicio.']):
                 return generar_error_403()
                 
