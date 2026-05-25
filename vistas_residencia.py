@@ -1,6 +1,6 @@
 # =========================================================
 # vistas_residencia.py
-# Módulo: Cuaderno de Obra - Modal Inicial y RealTime UX
+# Módulo: Cuaderno de Obra - Sincronización RealTime Corregida
 # =========================================================
 
 from flask import Blueprint, render_template_string, session, redirect, url_for
@@ -36,11 +36,9 @@ def redaccion_asiento_residente():
             :root { --apple-text: #1d1d1f; --celeste-obra: #0263a0; --nav-height: 52px; }
             body { font-family: 'Inter', sans-serif; color: var(--apple-text); overflow-x: hidden; padding-bottom: 90px; margin: 0; background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(2,99,160,0.08) 40%, rgba(135,206,235,0.12) 70%, rgba(249,168,212,0.12) 100%); background-attachment: fixed; }
             
-            /* Animaciones Float */
             @keyframes floatInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
             @keyframes floatOutDown { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(30px); } }
             
-            /* Stepper */
             .stepper-container { position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); z-index: 900; padding: 12px 20px; overflow-x: auto; white-space: nowrap; display: flex; gap: 12px; scroll-behavior: smooth; -ms-overflow-style: none; scrollbar-width: none; }
             .stepper-container::-webkit-scrollbar { display: none; }
             .step-btn { border: 1px solid #cbd5e1; border-radius: 30px; padding: 10px 20px; font-size: 12px; font-weight: 600; color: #475569; background: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.3s; }
@@ -48,7 +46,6 @@ def redaccion_asiento_residente():
             .step-btn.omitted { background: #64748b !important; color: white !important; border-color: #475569 !important; }
             #globalTooltip { position: fixed; background: #ffffff; color: #1e293b; padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 700; white-space: nowrap; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.15); pointer-events: none; z-index: 999999; opacity: 0; transition: opacity 0.15s ease; }
 
-            /* Layout */
             .split-layout { display: flex; gap: 40px; max-width: 1500px; margin: 140px auto 0 auto; padding: 0 20px; align-items: flex-start; filter: blur(5px); pointer-events: none; transition: filter 0.5s;}
             .split-layout.unlocked { filter: blur(0); pointer-events: all; }
             .form-column { flex: 1; max-width: 600px; }
@@ -63,7 +60,6 @@ def redaccion_asiento_residente():
             .form-control, .form-select { border-radius: 12px; border: 1px solid #cbd5e1; padding: 12px 14px; font-size: 14px; background: rgba(255,255,255,0.9); font-weight: 500;}
             .form-control:focus, .form-select:focus { border-color: #0066cc; box-shadow: 0 0 0 4px rgba(0,102,204,0.15); }
 
-            /* Relojes y Avatares UI */
             .time-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; transition: all 0.3s; cursor: pointer;}
             .time-card.active { border-color: var(--celeste-obra); background: #f0f9ff; }
             .clock-icon { font-size: 28px; color: #94a3b8; transition: color 0.3s; }
@@ -77,9 +73,6 @@ def redaccion_asiento_residente():
             .elegant-card input { border: none; background: transparent; text-align: center; font-weight: 800; font-size: 20px; width: 100%; color: #000; padding: 0;}
             .elegant-card input:focus { outline: none; }
 
-            /* ==========================================
-               CUADERNO FÍSICO (Alineación y Rayado)
-               ========================================== */
             .papel-fisico { background: #fdfdfa; width: 100%; min-height: 980px; padding: 45px 50px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; font-family: Arial, sans-serif; color: #000; position: relative;}
             .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; } 
             .p-title-box { text-align: center; flex: 1; margin-left: 60px;}
@@ -101,7 +94,6 @@ def redaccion_asiento_residente():
             .p-footer { display: flex; justify-content: space-between; margin-top: 50px; font-size: 12px; font-weight: bold; color: #000;}
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
 
-            /* Barra Controles Inferiores */
             .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border-top: 1px solid rgba(0,0,0,0.08); padding: 15px 30px; z-index: 900; display: flex; justify-content: space-between; align-items: center; transition: opacity 0.5s; opacity: 0; pointer-events: none;}
             .bottom-bar.unlocked { opacity: 1; pointer-events: all; }
             .slider-track { width: 100%; max-width: 400px; height: 60px; background: rgba(0,0,0,0.05); border-radius: 30px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0 auto; border: 1px solid rgba(0,0,0,0.05);}
@@ -274,14 +266,13 @@ def redaccion_asiento_residente():
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         
         <script>
-            // VARIABLES GLOBALES (Inyectadas desde el Modal Inicial)
+            // VARIABLES GLOBALES
             let g_numAsiento = "";
             let g_fechaAsiento = "";
             let currentStep = 1;
             const totalSteps = 11;
             let isAnimating = false;
 
-            // Al cargar la página, obligamos a llenar el Modal Inicial
             document.addEventListener("DOMContentLoaded", function() {
                 const myModal = new bootstrap.Modal(document.getElementById('modalConfigInicial'));
                 myModal.show();
@@ -306,7 +297,6 @@ def redaccion_asiento_residente():
                 document.getElementById('lbl_fecha_asiento').innerText = g_fechaAsiento;
                 document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento;
                 
-                // Desbloqueamos UI
                 bootstrap.Modal.getInstance(document.getElementById('modalConfigInicial')).hide();
                 document.getElementById('mainLayout').classList.add('unlocked');
                 document.getElementById('stepperBar').style.opacity = '1';
@@ -316,7 +306,6 @@ def redaccion_asiento_residente():
                 sincronizarDatos();
             }
 
-            // TOOLTIP Y NAVEGACIÓN
             const gTooltip = document.getElementById('globalTooltip');
             document.querySelectorAll('.step-btn').forEach(btn => {
                 btn.addEventListener('mousemove', (e) => { gTooltip.innerText = btn.getAttribute('data-tooltip'); gTooltip.style.left = (e.clientX + 15) + 'px'; gTooltip.style.top = (e.clientY + 15) + 'px'; gTooltip.style.opacity = '1'; });
@@ -357,7 +346,7 @@ def redaccion_asiento_residente():
                         if(window.innerWidth <= 1024) document.querySelector('.preview-column').style.display = 'none';
                     }
                     
-                    isAnimating = false; // Liberar candado
+                    isAnimating = false;
                     try { sincronizarDatos(); } catch(e){ console.error(e); }
                 }, 300); 
             }
@@ -380,7 +369,6 @@ def redaccion_asiento_residente():
                 sincronizarDatos();
             }
 
-            // MOTOR DE PARTIDAS
             let partidasList = [];
             function agregarPartidaRapida() {
                 const inputBuscador = document.getElementById('buscadorPartidas');
@@ -420,14 +408,11 @@ def redaccion_asiento_residente():
                 `).join('');
             }
 
-            // ==========================================================
-            // MOTOR EN TIEMPO REAL: REESCRITO ANTI-ERRORES
-            // ==========================================================
+            // MOTOR EN TIEMPO REAL: REESCRITO ANTI-ERRORES CON VARIABLES GLOBALES
             function sincronizarDatos() {
                 try {
-                    if(!g_numAsiento) return; // Evita correr si no hay asiento
+                    if(!g_numAsiento) return;
                     
-                    // Termómetros
                     for (let i = 1; i <= 10; i++) {
                         const inputs = document.querySelectorAll(`.req-step${i}`);
                         if (inputs.length === 0) continue;
@@ -443,7 +428,6 @@ def redaccion_asiento_residente():
 
                     let as_str = g_numAsiento.padStart(4, '0');
                     
-                    // CABECERA PERFECTAMENTE CENTRADA Y FECHA A LA DERECHA
                     let textoPapel = `<div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom: 5px;">
                         <div style="flex:1; text-align:center; font-weight:bold; padding-left:110px; font-size:18px;">ASIENTO N° ${as_str} DEL RESIDENTE DE OBRA</div>
                         <div style="font-weight:bold; text-align:right; white-space:nowrap; font-size:18px;">${g_fechaAsiento}</div>
@@ -482,7 +466,6 @@ def redaccion_asiento_residente():
                         if(val) textoPapel += `${campo.titulo}:<br>${val.replace(/\\n/g, '<br>')}<br>`;
                     });
 
-                    // INYECCIÓN Y CÁLCULO DE FOLIOS
                     const outContainer = document.getElementById('out_general');
                     outContainer.innerHTML = textoPapel;
                     
