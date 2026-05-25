@@ -1,6 +1,6 @@
 # =========================================================
 # vistas_residencia.py
-# Módulo: Llenado de Cuaderno de Obra - Versión Completa y Unificada
+# Módulo: Llenado de Cuaderno de Obra - Float UX + Excel Import
 # =========================================================
 
 from flask import Blueprint, render_template_string, session, redirect, url_for
@@ -19,8 +19,6 @@ def redaccion_asiento_residente():
     menu_superior = obtener_navbar(es_admin, nombre_completo)
 
     numero_asiento = "0088"
-    
-    # Generar fecha en formato: LUNES, 25/05/2026
     dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]
     fecha_dt = datetime.now()
     nombre_dia = dias[fecha_dt.weekday()]
@@ -40,22 +38,24 @@ def redaccion_asiento_residente():
         <style>
             :root { --apple-text: #1d1d1f; --celeste-obra: #0263a0; --nav-height: 52px; }
             
-            /* Fondo Degradado 20% (Azul, Celeste, Rosado sobre Blanco) */
             body { 
                 font-family: 'Inter', sans-serif; color: var(--apple-text); overflow-x: hidden; padding-bottom: 90px; margin: 0;
                 background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(2,99,160,0.1) 40%, rgba(135,206,235,0.15) 70%, rgba(249,168,212,0.15) 100%);
                 background-attachment: fixed;
             }
             
-            /* Animación Deslizante (Slide) */
-            @keyframes slideInRight { 
-                from { opacity: 0; transform: translateX(40px); } 
-                to { opacity: 1; transform: translateX(0); } 
+            /* ==========================================
+               ANIMACIONES "FLOAT" (ENTRADA Y SALIDA)
+               ========================================== */
+            @keyframes floatUp { 
+                from { opacity: 0; transform: translateY(40px); } 
+                to { opacity: 1; transform: translateY(0); } 
+            }
+            @keyframes floatDown { 
+                from { opacity: 1; transform: translateY(0); } 
+                to { opacity: 0; transform: translateY(40px); } 
             }
             
-            /* ==========================================
-               STEPPER SUPERIOR (BARRA DE NAVEGACIÓN)
-               ========================================== */
             .stepper-container { position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); z-index: 900; padding: 12px 20px; overflow-x: auto; white-space: nowrap; display: flex; gap: 12px; scroll-behavior: smooth; -ms-overflow-style: none; scrollbar-width: none; }
             .stepper-container::-webkit-scrollbar { display: none; }
             
@@ -65,15 +65,14 @@ def redaccion_asiento_residente():
 
             #globalTooltip { position: fixed; background: #ffffff; color: #1e293b; padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 700; white-space: nowrap; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.15); pointer-events: none; z-index: 999999; opacity: 0; transition: opacity 0.15s ease; }
 
-            /* ==========================================
-               LAYOUT: FORMULARIO Y VISTA PREVIA
-               ========================================== */
             .split-layout { display: flex; gap: 40px; max-width: 1500px; margin: 140px auto 0 auto; padding: 0 20px; align-items: flex-start; }
             .form-column { flex: 1; max-width: 600px; }
             .preview-column { flex: 1; position: sticky; top: 140px; height: calc(100vh - 240px); overflow-y: auto; }
             
-            .step-view { display: none; animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,1);}
-            .step-view.active { display: block; }
+            /* Clases de Control de Animación */
+            .step-view { display: none; opacity: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(25px); padding: 30px; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,1);}
+            .step-view.active { display: block; animation: floatUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+            .step-view.exit { display: block; animation: floatDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
             
             .step-title { font-size: 22px; font-weight: 800; margin-bottom: 25px; color: #0f172a; letter-spacing: -0.5px;}
             .form-label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;}
@@ -93,7 +92,7 @@ def redaccion_asiento_residente():
             .casco-card input:focus { outline: none; }
 
             /* ==========================================
-               CUADERNO FÍSICO (Ajustes de Encabezado y Línea)
+               CUADERNO FÍSICO 
                ========================================== */
             .papel-fisico { background: #fdfdfa; width: 100%; min-height: 950px; padding: 40px 50px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; font-family: Arial, sans-serif; color: #000; position: relative;}
             
@@ -103,7 +102,6 @@ def redaccion_asiento_residente():
             .p-num { font-size: 22px; font-weight: bold; margin-top: 5px; color: #000;}
             .p-sello { width: 90px; height: 90px; border: 2px dashed #94a3b8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #94a3b8; text-align: center; padding: 5px; opacity: 0.5; margin-top: -20px;}
             
-            /* Línea negra gruesa y menos espaciado */
             .p-meta { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 3px solid #000; }
             .p-row { display: flex; align-items: flex-end; margin-bottom: 6px; }
             .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; color: #000; white-space: nowrap; }
@@ -113,17 +111,14 @@ def redaccion_asiento_residente():
             
             .p-body-lines { background-image: repeating-linear-gradient(transparent, transparent 23px, #94a3b8 24px); line-height: 24px; min-height: 650px; padding-top: 5px; position: relative; margin-top: 10px;}
             
-            /* Tamaño 16px (visual equivale a 14px normal) y texto normal (no mayúsculas forzadas) */
             .lapicero { font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 16px; line-height: 24px; padding-left: 5px; font-weight: 700; }
             .lapicero-muted { font-family: 'Caveat', cursive; color: #64748b; font-size: 16px; padding-left: 20px; font-weight: 600;}
             .p-van { position: absolute; bottom: 0; right: 10px; font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 18px; font-weight: 700;}
             .p-footer { display: flex; justify-content: space-between; margin-top: 60px; font-size: 12px; font-weight: bold; color: #000;}
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
 
-            /* ==========================================
-               BARRA INFERIOR (Volver izq / Controles der)
-               ========================================== */
-            .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); border-top: 1px solid rgba(0,0,0,0.08); padding: 15px 30px; z-index: 900; display: flex; justify-content: space-between; align-items: center; }
+            /* Barra Inferior (Reordenada) */
+            .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border-top: 1px solid rgba(0,0,0,0.08); padding: 15px 30px; z-index: 900; display: flex; justify-content: space-between; align-items: center; }
             
             .slider-track { width: 100%; max-width: 400px; height: 60px; background: rgba(0,0,0,0.05); border-radius: 30px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0 auto; border: 1px solid rgba(0,0,0,0.05);}
             .slider-text { font-size: 13px; font-weight: 800; color: #64748b; text-transform: uppercase; z-index: 1; pointer-events: none;}
@@ -165,24 +160,8 @@ def redaccion_asiento_residente():
                     <div class="step-view active" id="step1">
                         <div class="step-title">1.- Jornal de Trabajo</div>
                         <div class="row g-3">
-                            <div class="col-sm-6">
-                                <div class="time-card active" id="card_m" onclick="document.getElementById('v_jornal_m').focus()">
-                                    <div class="clock-icon"><i class="bi bi-sunrise-fill"></i></div>
-                                    <div class="w-100">
-                                        <label class="form-label mb-1">Mañana (Inicio - Fin)</label>
-                                        <input type="text" class="form-control border-0 p-0 req-step1" id="v_jornal_m" value="07:00 - 12:00" onfocus="activarReloj('m')">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="time-card" id="card_t" onclick="document.getElementById('v_jornal_t').focus()">
-                                    <div class="clock-icon"><i class="bi bi-sunset-fill"></i></div>
-                                    <div class="w-100">
-                                        <label class="form-label mb-1">Tarde (Inicio - Fin)</label>
-                                        <input type="text" class="form-control border-0 p-0 req-step1" id="v_jornal_t" value="13:00 - 17:00" onfocus="activarReloj('t')">
-                                    </div>
-                                </div>
-                            </div>
+                            <div class="col-sm-6"><div class="time-card active" id="card_m" onclick="document.getElementById('v_jornal_m').focus()"><div class="clock-icon"><i class="bi bi-sunrise-fill"></i></div><div class="w-100"><label class="form-label mb-1">Mañana (Inicio - Fin)</label><input type="text" class="form-control border-0 p-0 req-step1" id="v_jornal_m" value="07:00 - 12:00" onfocus="activarReloj('m')"></div></div></div>
+                            <div class="col-sm-6"><div class="time-card" id="card_t" onclick="document.getElementById('v_jornal_t').focus()"><div class="clock-icon"><i class="bi bi-sunset-fill"></i></div><div class="w-100"><label class="form-label mb-1">Tarde (Inicio - Fin)</label><input type="text" class="form-control border-0 p-0 req-step1" id="v_jornal_t" value="13:00 - 17:00" onfocus="activarReloj('t')"></div></div></div>
                         </div>
                     </div>
 
@@ -199,8 +178,14 @@ def redaccion_asiento_residente():
                     </div>
 
                     <div class="step-view" id="step3">
-                        <div class="step-title">3.- Partidas Ejecutadas</div>
-                        <p class="text-muted small mb-3">Escribe la partida y presiona <b>Enter</b> para agregarla rápido a la lista.</p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="step-title mb-0">3.- Partidas Ejecutadas</div>
+                            <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="abrirModalMasivo()">
+                                <i class="bi bi-file-earmark-excel"></i> Pegado Masivo
+                            </button>
+                        </div>
+                        <p class="text-muted small mb-3">Escribe y presiona <b>Enter</b> para agregar, o usa el Pegado Masivo desde Excel.</p>
+                        
                         <div class="input-group mb-3 shadow-sm">
                             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-primary"></i></span>
                             <input type="text" class="form-control border-start-0 ps-0" id="buscadorPartidas" placeholder="Ej: Conformación de base..." onkeydown="if(event.key==='Enter'){event.preventDefault(); agregarPartidaRapida();}">
@@ -222,23 +207,16 @@ def redaccion_asiento_residente():
                     <div class="step-view" id="step11">
                         <div class="step-title text-success text-center mb-4"><i class="bi bi-shield-check"></i> Listo para Firmar</div>
                         <p class="text-center text-muted small mb-5">Verifica la hoja de cuaderno generada a la derecha. Al deslizar el candado, los datos quedarán inmutables.</p>
-                        <div class="slider-track" id="sliderTrack">
-                            <div class="slider-progress" id="sliderProgress"></div>
-                            <div class="slider-text" id="sliderText">Deslizar para Firmar</div>
-                            <div class="slider-handle" id="sliderHandle"><i class="bi bi-lock-fill" style="font-size: 1.2rem;"></i></div>
-                        </div>
+                        <div class="slider-track" id="sliderTrack"><div class="slider-progress" id="sliderProgress"></div><div class="slider-text" id="sliderText">Deslizar para Firmar</div><div class="slider-handle" id="sliderHandle"><i class="bi bi-lock-fill" style="font-size: 1.2rem;"></i></div></div>
                     </div>
                 </form>
             </div>
 
             <div class="preview-column">
                 <div class="papel-fisico" id="papelOficial">
-                    
                     <div class="p-header-top">
                         <div style="width: 90px;"></div>
-                        <div class="p-title-box">
-                            <h1>CUADERNO DE OBRA</h1>
-                        </div>
+                        <div class="p-title-box"><h1>CUADERNO DE OBRA</h1></div>
                         <div style="text-align: right; width: 110px;">
                             <div class="p-num">Nº <span style="font-size: 26px; margin-left:5px;">{{ numero_asiento }}</span></div>
                             <div class="p-sello">Sello Juzgado<br>Paz Letrado</div>
@@ -247,14 +225,8 @@ def redaccion_asiento_residente():
                     
                     <div class="p-meta">
                         <div class="d-flex w-100 mb-1">
-                            <div class="d-flex" style="flex: 0.5;">
-                                <span class="p-label">Fecha:</span>
-                                <div class="p-line"><span class="lapicero-meta">{{ fecha_hoy }}</span></div>
-                            </div>
-                            <div class="d-flex" style="flex: 0.5; margin-left: 15px;">
-                                <span class="p-label">Modalidad:</span>
-                                <div class="p-line"><span class="lapicero-meta">Administración Directa</span></div>
-                            </div>
+                            <div class="d-flex" style="flex: 0.5;"><span class="p-label">Fecha:</span><div class="p-line"><span class="lapicero-meta">{{ fecha_hoy }}</span></div></div>
+                            <div class="d-flex" style="flex: 0.5; margin-left: 15px;"><span class="p-label">Modalidad:</span><div class="p-line"><span class="lapicero-meta">Administración Directa</span></div></div>
                         </div>
                         <div class="p-row"><span class="p-label">Obra:</span><div class="p-line"><span class="lapicero-meta">Mejoramiento de la Carretera Asiruni - Rosaspata</span></div></div>
                         <div class="p-row"><span class="p-label">Proyecto:</span><div class="p-line"><span class="lapicero-meta">Tramo I</span></div></div>
@@ -263,10 +235,8 @@ def redaccion_asiento_residente():
                     </div>
 
                     <div class="p-body-lines">
-                        <div class="lapicero-muted" style="margin-bottom: 0px;">... Viene del ASIENTO Nº 0087 DEL RESIDENTE DE OBRA </div>
-                        
+                        <div class="lapicero-muted" style="margin-bottom: 0px;">... viene del asiento nº 0087 del residente de obra </div>
                         <div class="lapicero" id="out_general"></div>
-                        
                         <div class="p-van" id="indicadorVan" style="display:none;">... Van</div>
                     </div>
 
@@ -275,15 +245,33 @@ def redaccion_asiento_residente():
                         <div class="p-sig">ING. RESIDENTE</div>
                         <div class="p-sig">ING. SUPERVISOR</div>
                     </div>
-
                 </div>
             </div>
 
         </div>
 
+        <div class="modal fade" id="modalExcel" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius: 20px;">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold text-success"><i class="bi bi-file-earmark-spreadsheet"></i> Pegado Masivo (Excel)</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-2">Copia las filas desde tu Excel (<b>Descripción | Metrado</b>) y presiona <code>Ctrl + V</code> aquí abajo:</p>
+                        <textarea id="textoExcelMasivo" class="form-control" rows="8" placeholder="Pega aquí las filas copiadas..."></textarea>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success rounded-pill px-4 fw-bold" onclick="procesarExcelMasivo()">Importar Datos</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="bottom-bar shadow-lg">
             <div>
-                <a href="/cuaderno" class="btn btn-light border fw-bold rounded-pill px-4 text-dark shadow-sm"><i class="bi bi-arrow-left"></i> Volver al Lobby</a>
+                <button type="button" id="btnAtras" class="btn btn-light border fw-bold rounded-pill px-4 text-dark shadow-sm d-none" onclick="anteriorPaso()"><i class="bi bi-arrow-left"></i> Anterior</button>
             </div>
             <div class="d-flex gap-2 align-items-center">
                 <div id="indicadorGuardado" class="small text-muted fw-semibold d-none d-sm-block me-2"><i class="bi bi-cloud-arrow-up"></i> Autoguardado</div>
@@ -292,46 +280,69 @@ def redaccion_asiento_residente():
             </div>
         </div>
 
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
         <script>
             let currentStep = 1;
             const totalSteps = 11;
+            let isAnimating = false; // Control de colisión de animaciones
 
-            // 1. Tooltip Elegante
             const gTooltip = document.getElementById('globalTooltip');
             document.querySelectorAll('.step-btn').forEach(btn => {
                 btn.addEventListener('mousemove', (e) => {
                     gTooltip.innerText = btn.getAttribute('data-tooltip');
-                    gTooltip.style.left = (e.clientX + 15) + 'px';
-                    gTooltip.style.top = (e.clientY + 15) + 'px';
+                    gTooltip.style.left = (e.clientX + 15) + 'px'; gTooltip.style.top = (e.clientY + 15) + 'px';
                     gTooltip.style.opacity = '1';
                 });
                 btn.addEventListener('mouseleave', () => { gTooltip.style.opacity = '0'; });
             });
             
-            // 2. Navegación (Animación SlideIn controlada CSS)
+            // ==========================================
+            // NAVEGACIÓN Y ANIMACIONES FLOAT
+            // ==========================================
             function jumpToStep(stepIndex) {
+                if (isAnimating || currentStep === stepIndex) return;
+                isAnimating = true;
+
                 document.getElementById('indicadorGuardado').innerHTML = '<i class="bi bi-check2-all text-success"></i> Guardado';
                 setTimeout(() => { document.getElementById('indicadorGuardado').innerHTML = '<i class="bi bi-cloud-arrow-up"></i> Autoguardado'; }, 2000);
 
-                document.getElementById(`step${currentStep}`).classList.remove('active');
+                // Animación de salida (Float Down)
+                const currentView = document.getElementById(`step${currentStep}`);
+                currentView.classList.remove('active');
+                currentView.classList.add('exit');
                 document.getElementById(`btnStep${currentStep}`).classList.remove('active');
                 
-                currentStep = stepIndex;
-                document.getElementById(`step${currentStep}`).classList.add('active');
-                document.getElementById(`btnStep${currentStep}`).classList.add('active');
-                document.getElementById('stepperBar').scrollLeft = document.getElementById(`btnStep${currentStep}`).offsetLeft - 50;
+                setTimeout(() => {
+                    currentView.classList.remove('exit'); // Limpia clase de salida
+                    
+                    // Entrada del nuevo (Float Up)
+                    currentStep = stepIndex;
+                    const nextView = document.getElementById(`step${currentStep}`);
+                    nextView.classList.add('active');
+                    
+                    document.getElementById(`btnStep${currentStep}`).classList.add('active');
+                    document.getElementById('stepperBar').scrollLeft = document.getElementById(`btnStep${currentStep}`).offsetLeft - 50;
 
-                if (currentStep === 11) {
-                    document.querySelector('.bottom-bar').style.display = 'none';
-                    document.querySelector('.preview-column').style.display = 'block';
-                } else {
-                    document.querySelector('.bottom-bar').style.display = 'flex';
-                    if(window.innerWidth <= 1024) document.querySelector('.preview-column').style.display = 'none';
-                }
-                sincronizarDatos();
+                    // Mostrar/Ocultar botón "Anterior"
+                    const btnAtras = document.getElementById('btnAtras');
+                    if (currentStep > 1) btnAtras.classList.remove('d-none');
+                    else btnAtras.classList.add('d-none');
+
+                    if (currentStep === 11) {
+                        document.querySelector('.bottom-bar').style.display = 'none';
+                        document.querySelector('.preview-column').style.display = 'block';
+                    } else {
+                        document.querySelector('.bottom-bar').style.display = 'flex';
+                        if(window.innerWidth <= 1024) document.querySelector('.preview-column').style.display = 'none';
+                    }
+                    sincronizarDatos();
+                    isAnimating = false; // Libera animación
+                }, 300); // 300ms coincide con la duración de floatDown
             }
 
             function siguientePaso() { if(currentStep < totalSteps) jumpToStep(currentStep + 1); }
+            function anteriorPaso() { if(currentStep > 1) jumpToStep(currentStep - 1); }
             
             function omitirPaso() {
                 document.querySelectorAll(`.req-step${currentStep}`).forEach(inp => { if (inp.tagName === 'TEXTAREA' || inp.type === 'text') inp.value = "Sin novedad en la jornada."; });
@@ -340,37 +351,67 @@ def redaccion_asiento_residente():
             }
 
             function activarReloj(turno) {
-                document.getElementById('card_m').classList.remove('active');
-                document.getElementById('card_t').classList.remove('active');
+                document.getElementById('card_m').classList.remove('active'); document.getElementById('card_t').classList.remove('active');
                 document.getElementById('card_'+turno).classList.add('active');
             }
 
             // ==========================================
-            // LÓGICA DE PARTIDAS (MÉTODO ENTER)
+            // LÓGICA DE PARTIDAS (MASIVO EXCEL Y ENTER)
             // ==========================================
             let partidasList = [];
+            
             function agregarPartidaRapida() {
                 const inputBuscador = document.getElementById('buscadorPartidas');
                 const desc = inputBuscador.value.trim();
                 if(desc === '') return;
-
                 partidasList.push({ descripcion: desc, metrado: '' });
-                inputBuscador.value = ''; // Limpia el input
+                inputBuscador.value = ''; 
                 renderizarListaPartidas();
-                document.getElementById('v_partidas').value = "lleno"; // Para activar termómetro
+                document.getElementById('v_partidas').value = "lleno"; 
                 sincronizarDatos();
             }
 
-            function actualizarMetrado(index, valor) {
-                partidasList[index].metrado = valor;
-                sincronizarDatos();
+            // Funciones del Modal Excel
+            function abrirModalMasivo() {
+                document.getElementById('textoExcelMasivo').value = '';
+                new bootstrap.Modal(document.getElementById('modalExcel')).show();
             }
+
+            function procesarExcelMasivo() {
+                const rawData = document.getElementById('textoExcelMasivo').value;
+                if(!rawData.trim()) return;
+
+                const rows = rawData.split('\\n');
+                let count = 0;
+
+                rows.forEach(row => {
+                    if(!row.trim()) return;
+                    const cols = row.split('\\t'); // Separa por tabulación de Excel
+                    
+                    let desc = cols[0].trim();
+                    let met = cols.length > 1 ? cols[1].trim() : '';
+                    
+                    if(desc) {
+                        partidasList.push({ descripcion: desc, metrado: met });
+                        count++;
+                    }
+                });
+
+                if(count > 0) {
+                    renderizarListaPartidas();
+                    document.getElementById('v_partidas').value = "lleno";
+                    sincronizarDatos();
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('modalExcel')).hide();
+            }
+
+            function actualizarMetrado(index, valor) { partidasList[index].metrado = valor; sincronizarDatos(); }
 
             function eliminarPartida(index) {
                 partidasList.splice(index, 1);
                 if(partidasList.length === 0) document.getElementById('v_partidas').value = "";
-                renderizarListaPartidas();
-                sincronizarDatos();
+                renderizarListaPartidas(); sincronizarDatos();
             }
 
             function renderizarListaPartidas() {
@@ -406,20 +447,15 @@ def redaccion_asiento_residente():
                 idsCascos.forEach(id => {
                     const val = document.getElementById('v_'+id).value;
                     const card = document.getElementById('c_'+id);
-                    if(val > 0) card.classList.add('active');
-                    else card.classList.remove('active');
+                    if(val > 0) card.classList.add('active'); else card.classList.remove('active');
                 });
 
-                // Texto Normal (No forzado a mayúsculas) y Alineado
                 let numAsiento = "{{ numero_asiento }}";
                 let fechaLarga = "{{ fecha_hoy }}";
                 let textoPapel = `&nbsp;&nbsp;Asiento N° ${numAsiento} del Residente de Obra &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${fechaLarga}<br>`;
 
-                const vJ1 = document.getElementById('v_jornal_m').value;
-                const vJ2 = document.getElementById('v_jornal_t').value;
-                if(vJ1 || vJ2) {
-                    textoPapel += `1.- Jornal de trabajo<br>Mañana: ${vJ1} ; Tarde: ${vJ2}<br>`;
-                }
+                const vJ1 = document.getElementById('v_jornal_m').value; const vJ2 = document.getElementById('v_jornal_t').value;
+                if(vJ1 || vJ2) textoPapel += `1.- Jornal de trabajo<br>Mañana: ${vJ1} ; Tarde: ${vJ2}<br>`;
                 
                 const vOper = (document.getElementById('v_oper').value || '0').padStart(2, '0');
                 const vOfic = (document.getElementById('v_ofic').value || '0').padStart(2, '0');
@@ -430,31 +466,23 @@ def redaccion_asiento_residente():
 
                 textoPapel += `2.- Personal de obra:<br>`;
                 textoPapel += `${vOper} operarios &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${vOfic} oficiales &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${vPeon} peones &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${vMeca} mecánicos<br>`;
-                textoPapel += `${vCtrl} controladores de maq. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${vOpe} operadores de maq.<br>`;
+                textoPapel += `${vCtrl} controladores maq. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${vOpe} operadores maq.<br>`;
 
-                // Partidas por Enter
                 if(partidasList.length > 0) {
                     textoPapel += `3.- Partidas ejecutadas<br>`;
-                    partidasList.forEach(p => {
-                        textoPapel += `- ${p.descripcion} &nbsp;&nbsp;&nbsp; (Metrado: ${p.metrado || '0'})<br>`;
-                    });
+                    partidasList.forEach(p => { textoPapel += `- ${p.descripcion} &nbsp;&nbsp;&nbsp; (Metrado: ${p.metrado || '0'})<br>`; });
                 }
 
                 const camposText = [
-                    {id: 'mayor_m', titulo: '4.- Partidas de mayor metrado'},
-                    {id: 'sub_p', titulo: '5.- Sub partidas ejecutadas'},
-                    {id: 'activ', titulo: '6.- Actividades ejecutadas'},
-                    {id: 'almacen', titulo: '7.- Movimiento de almacén'},
-                    {id: 'maquina', titulo: '8.- Maquinarias y equipos'},
-                    {id: 'herram', titulo: '9.- Herramientas manuales'},
+                    {id: 'mayor_m', titulo: '4.- Partidas de mayor metrado'}, {id: 'sub_p', titulo: '5.- Sub partidas ejecutadas'},
+                    {id: 'activ', titulo: '6.- Actividades ejecutadas'}, {id: 'almacen', titulo: '7.- Movimiento de almacén'},
+                    {id: 'maquina', titulo: '8.- Maquinarias y equipos'}, {id: 'herram', titulo: '9.- Herramientas manuales'},
                     {id: 'ocurrencia', titulo: '10.- Ocurrencias y otros'}
                 ];
 
                 camposText.forEach(campo => {
                     const val = document.getElementById('v_' + campo.id).value;
-                    if(val) {
-                        textoPapel += `${campo.titulo}<br>${val.replace(/\\n/g, '<br>')}<br>`;
-                    }
+                    if(val) textoPapel += `${campo.titulo}<br>${val.replace(/\\n/g, '<br>')}<br>`;
                 });
 
                 document.getElementById('out_general').innerHTML = textoPapel;
@@ -464,7 +492,6 @@ def redaccion_asiento_residente():
                 else document.getElementById('indicadorVan').style.display = 'none';
             }
 
-            // 5. Slider de Firma
             const handle = document.getElementById('sliderHandle'); const track = document.getElementById('sliderTrack'); const progress = document.getElementById('sliderProgress');
             let isDragging = false, startX = 0, maxSlide = 0;
             function calcLimits() { maxSlide = track.clientWidth - handle.clientWidth - 8; }
@@ -472,17 +499,12 @@ def redaccion_asiento_residente():
 
             function startDrag(e) { isDragging = true; startX = (e.clientX || e.touches[0].clientX) - handle.offsetLeft; calcLimits(); }
             function onDrag(e) {
-                if (!isDragging) return;
-                let left = (e.clientX || e.touches[0].clientX) - startX;
+                if (!isDragging) return; let left = (e.clientX || e.touches[0].clientX) - startX;
                 if (left < 4) left = 4; if (left > maxSlide) left = maxSlide;
                 handle.style.left = left + 'px'; progress.style.width = (left + 23) + 'px';
                 if (left >= maxSlide - 2) { isDragging = false; firmar(); }
             }
-            function stopDrag() {
-                if (!isDragging) return; isDragging = false;
-                handle.style.left = '4px'; progress.style.width = '0px';
-            }
-
+            function stopDrag() { if (!isDragging) return; isDragging = false; handle.style.left = '4px'; progress.style.width = '0px'; }
             handle.addEventListener('mousedown', startDrag); document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', stopDrag);
             handle.addEventListener('touchstart', startDrag, {passive: true}); document.addEventListener('touchmove', onDrag, {passive: false}); document.addEventListener('touchend', stopDrag);
 
