@@ -1,6 +1,6 @@
 # =========================================================
 # vistas_residencia.py
-# Arquitectura Modular: Formularios por Pasos + Live Preview
+# Arquitectura Modular: Formularios por Pasos + Live Preview Físico
 # =========================================================
 
 from flask import Blueprint, render_template_string, session, redirect, url_for
@@ -10,7 +10,7 @@ from datetime import datetime
 residencia_bp = Blueprint('residencia', __name__)
 
 # ==============================================================================
-# BLOQUE 1: ESTILOS CSS (DISEÑO, COLORES Y FORMATO DEL CUADERNO FÍSICO)
+# BLOQUE 1: ESTILOS CSS (DISEÑO, COLORES Y FORMATO EXACTO DEL CUADERNO FÍSICO)
 # ==============================================================================
 BLOQUE_1_CSS = """
 <style>
@@ -55,7 +55,7 @@ BLOQUE_1_CSS = """
 
     /* Layout Pantalla Dividida */
     .split-layout { display: flex; gap: 40px; max-width: 1500px; margin: 140px auto 0 auto; padding: 0 20px; align-items: flex-start; }
-    .form-column { flex: 1; max-width: 650px; }
+    .form-column { flex: 1; max-width: 600px; }
     .preview-column { flex: 1; position: sticky; top: 140px; height: calc(100vh - 240px); overflow-y: auto; }
     
     /* Formularios */
@@ -71,7 +71,7 @@ BLOQUE_1_CSS = """
        DISEÑO EXACTO DEL CUADERNO DE OBRA FÍSICO (SEGÚN FOTO)
        ========================================================================= */
     .papel-fisico {
-        background: #fdfdfa; width: 100%; min-height: 800px; padding: 40px 50px;
+        background: #fdfdfa; width: 100%; min-height: 900px; padding: 40px 50px;
         box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
         font-family: Arial, sans-serif; color: #000; position: relative;
     }
@@ -79,28 +79,38 @@ BLOQUE_1_CSS = """
     /* Cabecera del Papel */
     .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
     .p-title-box { text-align: center; flex: 1; }
-    .p-title-box h1 { font-size: 26px; font-weight: bold; text-decoration: underline; letter-spacing: 1px; margin: 0; }
-    .p-num { font-size: 22px; font-weight: bold; margin-top: 5px;}
-    .p-sello { width: 80px; height: 80px; border: 2px dashed #94a3b8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #94a3b8; text-align: center; padding: 5px; opacity: 0.5;}
+    .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1px; margin: 0; color: #000;}
+    .p-num { font-size: 24px; font-weight: bold; margin-top: 5px; color: #000;}
+    .p-sello { width: 90px; height: 90px; border: 2px dashed #94a3b8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #94a3b8; text-align: center; padding: 5px; opacity: 0.5; margin-top: -20px;}
     
-    /* Datos Meta (Obra, Proyecto, etc) */
-    .p-meta { font-size: 13px; font-weight: bold; line-height: 1.8; margin-bottom: 20px; }
-    .p-row { display: flex; align-items: flex-end; margin-bottom: 5px; }
-    .p-label { white-space: nowrap; margin-right: 5px; }
-    .p-line { flex: 1; border-bottom: 1px solid #000; height: 18px; }
+    /* Datos Meta Alineados (La magia de alinear en la línea) */
+    .p-meta { margin-bottom: 20px; }
+    .p-row { display: flex; align-items: flex-end; margin-bottom: 12px; }
+    .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; color: #000; white-space: nowrap; }
+    .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 22px; }
+    
+    /* Tinta de Lapicero Celeste Oscuro */
+    .lapicero-meta { 
+        position: absolute; bottom: -2px; left: 15px; 
+        font-family: 'Caveat', cursive; color: #0263a0; 
+        font-size: 24px; line-height: 0.8; white-space: nowrap; 
+    }
     
     /* Cuerpo Rayado (El texto que escribes) */
     .p-body-lines {
-        background-image: repeating-linear-gradient(transparent, transparent 27px, #475569 28px);
-        line-height: 28px; min-height: 500px; padding-top: 5px;
+        background-image: repeating-linear-gradient(transparent, transparent 27px, #94a3b8 28px);
+        line-height: 28px; min-height: 650px; padding-top: 4px; position: relative;
     }
     
-    /* Fuente de Lapicero (Azul, tipo manuscrita) */
-    .lapicero { font-family: 'Caveat', cursive; color: #0000CD; font-size: 20px; padding-left: 10px; }
-    .lapicero-meta { font-family: 'Caveat', cursive; color: #0000CD; font-size: 18px; font-weight: 500; }
+    /* Fuente de Lapicero General */
+    .lapicero { font-family: 'Caveat', cursive; color: #0263a0; font-size: 22px; padding-left: 10px; margin-top: -4px;}
+    .lapicero-muted { font-family: 'Caveat', cursive; color: #64748b; font-size: 20px; padding-left: 20px; }
     
+    /* Etiqueta de PAGINACIÓN */
+    .p-van { position: absolute; bottom: 0; right: 10px; font-family: 'Caveat', cursive; color: #0263a0; font-size: 20px; }
+
     /* Firmas Footer */
-    .p-footer { display: flex; justify-content: space-between; margin-top: 60px; font-size: 11px; font-weight: bold; }
+    .p-footer { display: flex; justify-content: space-between; margin-top: 60px; font-size: 12px; font-weight: bold; color: #000;}
     .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
 
     /* Barra Inferior del Sistema */
@@ -123,7 +133,7 @@ BLOQUE_1_CSS = """
 # ==============================================================================
 BLOQUE_2_STEPPER = """
 <div class="stepper-container" id="stepperBar">
-    <button class="step-btn active" id="btnStep1" onclick="jumpToStep(1)" data-tooltip="Faltan datos">1. Clima</button>
+    <button class="step-btn active" id="btnStep1" onclick="jumpToStep(1)" data-tooltip="Faltan datos">1. Jornal</button>
     <button class="step-btn" id="btnStep2" onclick="jumpToStep(2)" data-tooltip="Faltan datos">2. Personal</button>
     <button class="step-btn" id="btnStep3" onclick="jumpToStep(3)" data-tooltip="Faltan datos">3. Partidas</button>
     <button class="step-btn" id="btnStep4" onclick="jumpToStep(4)" data-tooltip="Faltan datos">4. Mayor Metrado</button>
@@ -145,16 +155,15 @@ BLOQUE_3_FORMULARIO = """
 <div class="form-column">
     <div class="d-flex justify-content-between mb-3 px-2">
         <h6 class="text-primary fw-bold mb-0">Asiento N° {{ numero_asiento }}</h6>
-        <span class="text-muted small fw-bold">{{ fecha_hoy }}</span>
+        <span class="text-muted small fw-bold">{{ fecha_hoy_texto_largo }}</span>
     </div>
 
     <form id="formResidencia" oninput="sincronizarDatos()">
         <div class="step-view active" id="step1">
-            <div class="step-title">1. Condiciones del Entorno</div>
+            <div class="step-title">1. Jornal de Trabajo</div>
             <div class="row g-3">
-                <div class="col-sm-6"><label class="form-label">Mañana (07:00 - 12:00)</label><select class="form-select req-step1" id="v_clima_m"><option value="">Seleccione...</option><option value="Soleado">Soleado</option><option value="Lluvioso">Lluvioso</option></select></div>
-                <div class="col-sm-6"><label class="form-label">Tarde (13:00 - 18:00)</label><select class="form-select req-step1" id="v_clima_t"><option value="">Seleccione...</option><option value="Soleado">Soleado</option><option value="Lluvioso">Lluvioso</option></select></div>
-                <div class="col-12"><label class="form-label">Impacto Operativo</label><select class="form-select req-step1" id="v_impacto"><option value="">Seleccione...</option><option value="Trabajo Normal al 100%">Trabajo al 100%</option><option value="Restricción Parcial por Clima">Restricción Parcial</option></select></div>
+                <div class="col-sm-6"><label class="form-label">Mañana</label><input type="text" class="form-control req-step1" id="v_jornal_m" value="07:00 - 12:00"></div>
+                <div class="col-sm-6"><label class="form-label">Tarde</label><input type="text" class="form-control req-step1" id="v_jornal_t" value="13:00 - 17:00"></div>
             </div>
         </div>
 
@@ -164,6 +173,9 @@ BLOQUE_3_FORMULARIO = """
                 <div class="col-4"><label class="form-label">Operarios</label><input type="number" class="form-control req-step2" id="v_oper" placeholder="0"></div>
                 <div class="col-4"><label class="form-label">Oficiales</label><input type="number" class="form-control req-step2" id="v_ofic" placeholder="0"></div>
                 <div class="col-4"><label class="form-label">Peones</label><input type="number" class="form-control req-step2" id="v_peon" placeholder="0"></div>
+                <div class="col-4"><label class="form-label">Mecánicos</label><input type="number" class="form-control req-step2" id="v_meca" placeholder="0"></div>
+                <div class="col-4"><label class="form-label">Controladores</label><input type="number" class="form-control req-step2" id="v_ctrl" placeholder="0"></div>
+                <div class="col-4"><label class="form-label">Operadores</label><input type="number" class="form-control req-step2" id="v_ope_maq" placeholder="0"></div>
             </div>
         </div>
 
@@ -197,31 +209,40 @@ BLOQUE_4_CUADERNO_FISICO = """
     <div class="papel-fisico" id="papelOficial">
         
         <div class="p-header-top">
-            <div style="width: 80px;"></div> <div class="p-title-box">
+            <div style="width: 80px;"></div>
+            <div class="p-title-box">
                 <h1>CUADERNO DE OBRA</h1>
             </div>
-            <div style="text-align: right; width: 100px;">
-                <div class="p-num">Nº {{ numero_asiento }}</div>
-                <div class="p-sello">Sello Juzgado</div>
+            <div style="text-align: right; width: 110px;">
+                <div class="p-num">Nº <span style="font-size: 32px; margin-left:5px;">{{ numero_asiento }}</span></div>
+                <div class="p-sello">Sello Juzgado<br>Paz Letrado</div>
             </div>
         </div>
         
         <div class="p-meta">
-            <div class="d-flex w-100 mb-1">
-                <div class="d-flex" style="flex: 1;"><span class="p-label">Fecha:</span><div class="p-line"><span class="lapicero-meta">{{ fecha_hoy }}</span></div></div>
-                <div class="d-flex" style="flex: 1; margin-left: 15px;"><span class="p-label">Modalidad:</span><div class="p-line"><span class="lapicero-meta">Adm. Directa</span></div></div>
+            <div class="d-flex w-100 mb-2">
+                <div class="d-flex" style="flex: 0.5;">
+                    <span class="p-label">Fecha:</span>
+                    <div class="p-line"><span class="lapicero-meta">{{ fecha_hoy_texto_largo }}</span></div>
+                </div>
+                <div class="d-flex" style="flex: 0.5; margin-left: 20px;">
+                    <span class="p-label">Modalidad:</span>
+                    <div class="p-line"><span class="lapicero-meta">ADMINISTRACIÓN DIRECTA</span></div>
+                </div>
             </div>
-            <div class="p-row"><span class="p-label">Obra:</span><div class="p-line"><span class="lapicero-meta">Mejoramiento de la Carretera PU N-110</span></div></div>
-            <div class="p-row"><span class="p-label">Proyecto:</span><div class="p-line"><span class="lapicero-meta">Asiruni—Rosaspata—Huayrapata</span></div></div>
-            <div class="p-row"><span class="p-label">Programa:</span><div class="p-line"></div></div>
-            <div class="p-row"><span class="p-label">Entidad Ejecutora:</span><div class="p-line"><span class="lapicero-meta">Gobierno Regional Puno</span></div></div>
+            <div class="p-row"><span class="p-label">Obra:</span><div class="p-line"><span class="lapicero-meta">MEJORAMIENTO DE LA CARRETERA ASIRUNI - ROSASPATA</span></div></div>
+            <div class="p-row"><span class="p-label">Proyecto:</span><div class="p-line"><span class="lapicero-meta">TRAMO I</span></div></div>
+            <div class="p-row"><span class="p-label">Programa:</span><div class="p-line"><span class="lapicero-meta">-</span></div></div>
+            <div class="p-row"><span class="p-label">Entidad Ejecutora:</span><div class="p-line"><span class="lapicero-meta">GOBIERNO REGIONAL PUNO</span></div></div>
         </div>
 
         <div class="p-body-lines">
-            <div class="lapicero text-muted" style="font-size: 16px;">... viene del ASIENTO Nº 87 DEL RESIDENTE DE OBRA </div>
+            <div class="lapicero-muted" style="margin-bottom: 5px;">... Viene del ASIENTO Nº 87 DEL RESIDENTE DE OBRA </div>
             
             <div class="lapicero" id="out_general">
                 </div>
+            
+            <div class="p-van" id="indicadorVan" style="display:none;">... Van</div>
         </div>
 
         <div class="p-footer">
@@ -235,7 +256,7 @@ BLOQUE_4_CUADERNO_FISICO = """
 """
 
 # ==============================================================================
-# BLOQUE 5: JAVASCRIPT (LÓGICA DEL TOOLTIP, STEPPER Y LIVE PREVIEW)
+# BLOQUE 5: JAVASCRIPT (LÓGICA DEL TEXTO FORMATO EXACTO Y TERMÓMETRO)
 # ==============================================================================
 BLOQUE_5_JS = """
 <div class="bottom-bar shadow-lg">
@@ -248,7 +269,7 @@ BLOQUE_5_JS = """
     let currentStep = 1;
     const totalSteps = 11;
 
-    // 1. Lógica del Tooltip Global (Nunca se corta)
+    // 1. Tooltip Flotante Global (Elegante)
     const gTooltip = document.getElementById('globalTooltip');
     document.querySelectorAll('.step-btn').forEach(btn => {
         btn.addEventListener('mousemove', (e) => {
@@ -260,7 +281,7 @@ BLOQUE_5_JS = """
         btn.addEventListener('mouseleave', () => { gTooltip.style.opacity = '0'; });
     });
     
-    // 2. Navegación entre pasos
+    // 2. Navegación
     function jumpToStep(stepIndex) {
         document.getElementById('indicadorGuardado').innerHTML = '<i class="bi bi-check2-all text-success"></i> Guardado';
         setTimeout(() => { document.getElementById('indicadorGuardado').innerHTML = '<i class="bi bi-cloud-arrow-up"></i> Autoguardado'; }, 2000);
@@ -293,17 +314,14 @@ BLOQUE_5_JS = """
         sincronizarDatos(); siguientePaso();
     }
 
-    // 3. Sincronización Termómetro y Hoja de Papel Física
+    // 3. GENERADOR DE TEXTO EXACTO PARA EL CUADERNO
     function sincronizarDatos() {
-        let textoPapel = "";
-
+        // Colores del Stepper
         for (let i = 1; i <= 10; i++) {
             const inputs = document.querySelectorAll(`.req-step${i}`);
             if (inputs.length === 0) continue;
-
             let llenos = 0;
             inputs.forEach(inp => { if (inp.value.trim() !== '' && inp.value.trim() !== '0') llenos++; });
-
             let btn = document.getElementById(`btnStep${i}`);
             let porcentaje = Math.round((llenos / inputs.length) * 100);
             
@@ -315,20 +333,58 @@ BLOQUE_5_JS = """
             }
         }
 
-        // Compilar texto para la hoja física
-        const vClimaM = document.getElementById('v_clima_m').value;
-        if(vClimaM) textoPapel += `<b>1. CLIMA:</b> Mañana: ${vClimaM} | Tarde: ${document.getElementById('v_clima_t').value}<br>`;
+        // ==========================================
+        // ENSAMBLAJE DE TEXTO (FORMATO SOLICITADO)
+        // ==========================================
+        let numAsiento = "{{ numero_asiento }}";
+        let fechaLarga = "{{ fecha_hoy_texto_largo }}";
         
-        const vOper = document.getElementById('v_oper').value;
-        if(vOper) textoPapel += `<b>2. PERSONAL:</b> Operarios: ${vOper}, Oficiales: ${document.getElementById('v_ofic').value}, Peones: ${document.getElementById('v_peon').value}<br>`;
+        // Cabecera Principal del Asiento
+        let textoPapel = `<div style="display:flex; justify-content:space-between; padding-right:15px; margin-bottom: 5px;">
+            <span><b>ASIENTO No ${numAsiento} DEL RESIDENTE DE OBRA</b></span>
+            <span><b>${fechaLarga}</b></span>
+        </div>`;
 
+        // 1. Jornal
+        const vJornalM = document.getElementById('v_jornal_m').value;
+        const vJornalT = document.getElementById('v_jornal_t').value;
+        if(vJornalM || vJornalT) {
+            textoPapel += `<b>1.- JORNAL DE TRABAJO</b><br>`;
+            textoPapel += `MAÑANA: ${vJornalM} ; TARDE: ${vJornalT}<br>`;
+        }
+        
+        // 2. Personal (con relleno de ceros a la izquierda para que se vea profesional)
+        const vOper = (document.getElementById('v_oper').value || '0').padStart(2, '0');
+        const vOfic = (document.getElementById('v_ofic').value || '0').padStart(2, '0');
+        const vPeon = (document.getElementById('v_peon').value || '0').padStart(2, '0');
+        const vMeca = (document.getElementById('v_meca').value || '0').padStart(2, '0');
+        const vCtrl = (document.getElementById('v_ctrl').value || '0').padStart(2, '0');
+        const vOpe = (document.getElementById('v_ope_maq').value || '0').padStart(2, '0');
+
+        textoPapel += `<b>2.- PERSONAL DE OBRA:</b><br>`;
+        textoPapel += `&nbsp;&nbsp;${vOper} OPERARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${vOfic} OFICIALES &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${vPeon} PEONES &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${vMeca} MECANICOS<br>`;
+        textoPapel += `&nbsp;&nbsp;${vCtrl} CONTROLADORES DE MAQUINARIA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${vOpe} OPERADORES DE MAQUINARIA<br>`;
+
+        // Partidas y los demás textos largos
         const vPartidas = document.getElementById('v_partidas').value;
-        if(vPartidas) textoPapel += `<b>3. PARTIDAS:</b> ${vPartidas.replace(/\\n/g, '<br>')}<br>`;
+        if(vPartidas) textoPapel += `<b>3.- PARTIDAS EJECUTADAS</b><br>${vPartidas.replace(/\\n/g, '<br>')}<br>`;
         
-        const vOcurrencia = document.getElementById('v_ocurrencia').value;
-        if(vOcurrencia) textoPapel += `<b>10. OCURRENCIAS:</b> ${vOcurrencia.replace(/\\n/g, '<br>')}<br>`;
+        const vMayor = document.getElementById('v_mayor_m').value;
+        if(vMayor) textoPapel += `<b>4.- PARTIDAS DE MAYOR METRADO</b><br>${vMayor.replace(/\\n/g, '<br>')}<br>`;
 
+        const vOcurrencia = document.getElementById('v_ocurrencia').value;
+        if(vOcurrencia) textoPapel += `<b>10.- OCURRENCIAS Y CONOCIMIENTOS</b><br>${vOcurrencia.replace(/\\n/g, '<br>')}<br>`;
+
+        // Insertar en la hoja
         document.getElementById('out_general').innerHTML = textoPapel;
+        
+        // Lógica visual del "Van..." si el texto es muy largo
+        const bodyLines = document.querySelector('.p-body-lines');
+        if (bodyLines.scrollHeight > 650) {
+            document.getElementById('indicadorVan').style.display = 'block';
+        } else {
+            document.getElementById('indicadorVan').style.display = 'none';
+        }
     }
 
     // 4. Slider de Firma
@@ -364,7 +420,7 @@ BLOQUE_5_JS = """
 """
 
 # ==============================================================================
-# RENDERIZADO FINAL (Ensamblaje del ecosistema)
+# RENDERIZADO FINAL Y LÓGICA DE FECHA
 # ==============================================================================
 @residencia_bp.route('/residencia')
 def redaccion_asiento_residente():
@@ -376,14 +432,20 @@ def redaccion_asiento_residente():
     menu_superior = obtener_navbar(es_admin, nombre_completo)
 
     numero_asiento = 88
-    fecha_hoy = datetime.now().strftime("%d/%m/%Y")
+    
+    # Lógica para la fecha con el nombre del día en mayúsculas (Ej: LUNES, 25/05/2026)
+    dias_semana = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]
+    fecha_dt = datetime.now()
+    nombre_dia = dias_semana[fecha_dt.weekday()]
+    fecha_str = fecha_dt.strftime("%d/%m/%Y")
+    fecha_hoy_texto_largo = f"{nombre_dia}, {fecha_str}"
 
     html_completo = f"""
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>SAMU — Asiento de Residencia N° {numero_asiento}</title>
+        <title>SAMU — Asiento N° {numero_asiento}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -393,22 +455,17 @@ def redaccion_asiento_residente():
     <body>
         {{{{ menu_superior | safe }}}}
         <div class="dynamic-bg"><div class="bg-blob blob-navy"></div><div class="bg-blob blob-pink"></div></div>
-        
         {BLOQUE_2_STEPPER}
-
         <div class="split-layout">
             {BLOQUE_3_FORMULARIO}
             {BLOQUE_4_CUADERNO_FISICO}
         </div>
-
         {BLOQUE_5_JS}
     </body>
     </html>
     """
     
-    # Renderizamos pasando las variables que Flask necesita inyectar
     return render_template_string(html_completo, 
                                   menu_superior=menu_superior, 
                                   numero_asiento=numero_asiento, 
-                                  fecha_hoy=fecha_hoy,
-                                  nombre_completo=nombre_completo)
+                                  fecha_hoy_texto_largo=fecha_hoy_texto_largo)
