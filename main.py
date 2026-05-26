@@ -12,6 +12,12 @@ def iniciar_servidor_samu():
 
     # 1. LISTA MAESTRA DE ABSOLUTAMENTE TODOS LOS MÓDULOS
     todos_los_modulos = [
+        # --- Módulos Modulares del Cuaderno de Obra ---
+        "mod_01_jornal", "mod_02_personal", "mod_03_partidas", "mod_04_mayor_metrado",
+        "mod_05_sub_partidas", "mod_06_actividades", "mod_07_almacen", "mod_08_maquinaria",
+        "mod_09_herramientas", "mod_10_ocurrencias",
+        
+        # --- Módulos Originales del Sistema ---
         "activar_cuenta", "actividad_sistema", "actividades", "almacen_materiales",
         "analisis_actividades", "analisis_almacen_materiales", "analisis_asistencias",
         "analisis_combustible_almacen", "analisis_combustible_equipo", "analisis_horas_maquina",
@@ -86,8 +92,8 @@ def iniciar_servidor_samu():
 
         # Restricciones de otros roles
         if rol in ['Ingeniero', 'Residente', 'Supervisor']:
-            # Garantiza que el rol técnico pueda acceder al cuaderno y sus módulos
-            if not any(ruta.startswith(m) for m in ['cuaderno.', 'residencia.', 'supervision.', 'personal.', 'avance.', 'inicio.']):
+            # Se ha añadido 'mod_' para dar permisos a los nuevos micromódulos del cuaderno
+            if not any(ruta.startswith(m) for m in ['cuaderno.', 'residencia.', 'supervision.', 'personal.', 'avance.', 'inicio.', 'mod_']):
                 return generar_error_403()
                 
         elif rol == 'Maquinaria':
