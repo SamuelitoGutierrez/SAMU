@@ -1,13 +1,8 @@
 # =========================================================
 # mod_01_jornal.py
-# Componente: 1.- Jornal de Trabajo
+# Módulo: 1.- Jornal de Trabajo
 # =========================================================
 
-from flask import Blueprint
-
-mod_01_bp = Blueprint('mod_01_jornal', __name__)
-
-# Exponemos el bloque HTML limpio para que el chasis lo ensamble
 JORNAL_HTML = """
 <div class="step-view active" id="step1">
     <div class="step-title">1.- Jornal de Trabajo</div>
