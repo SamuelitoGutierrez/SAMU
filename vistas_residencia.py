@@ -1,37 +1,38 @@
 # =========================================================
 # vistas_residencia.py
-# Módulo Maestro: Ensamblador del Cuaderno de Obra
+# Módulo Maestro: Ensamblador Final del Cuaderno de Obra
 # =========================================================
 
 from flask import Blueprint, render_template_string, session, redirect, url_for
 from navbar import obtener_navbar
 from datetime import datetime
 
+# ==============================================================================
 # IMPORTACIÓN DINÁMICA DE LOS MÓDULOS
+# ==============================================================================
 try: from mod_01_jornal import JORNAL_HTML
-except ImportError: JORNAL_HTML = "<div class='step-view active' id='step1'><p>Error mod_01</p></div>"
+except: JORNAL_HTML = "<div class='step-view active' id='step1'><p>Error: mod_01_jornal.py</p></div>"
 
 try: from mod_02_personal import PERSONAL_HTML
-except ImportError: PERSONAL_HTML = "<div class='step-view' id='step2'><p>Error mod_02</p></div>"
+except: PERSONAL_HTML = "<div class='step-view' id='step2'><p>Error: mod_02_personal.py</p></div>"
 
 try: from mod_03_partidas import PARTIDAS_HTML
-except ImportError: PARTIDAS_HTML = "<div class='step-view' id='step3'><p>Error mod_03</p></div>"
+except: PARTIDAS_HTML = "<div class='step-view' id='step3'><p>Error: mod_03_partidas.py</p></div>"
 
 try: from mod_04_mayor_metrado import MAYOR_METRADO_HTML
-except ImportError: MAYOR_METRADO_HTML = "<div class='step-view' id='step4'><p>Error mod_04</p></div>"
+except: MAYOR_METRADO_HTML = "<div class='step-view' id='step4'><p>Error: mod_04_mayor_metrado.py</p></div>"
 
 try: from mod_05_sub_partidas import SUB_PARTIDAS_HTML
-except ImportError: SUB_PARTIDAS_HTML = "<div class='step-view' id='step5'><p>Error mod_05</p></div>"
+except: SUB_PARTIDAS_HTML = "<div class='step-view' id='step5'><p>Error: mod_05_sub_partidas.py</p></div>"
 
 try: from mod_06_actividades import ACTIVIDADES_HTML
-except ImportError: ACTIVIDADES_HTML = "<div class='step-view' id='step6'><p>Error mod_06</p></div>"
+except: ACTIVIDADES_HTML = "<div class='step-view' id='step6'><p>Error: mod_06_actividades.py</p></div>"
 
-# (7, 8, 9, 10 temporales hasta que los programemos)
+# Textareas transitorios para 7, 8, 9, 10
 ALMACEN_HTML = "<div class='step-view' id='step7'><div class='step-title'>7.- Almacén</div><textarea class='form-control req-step7' id='v_almacen' rows='5' oninput='sincronizarDatos()'></textarea></div>"
 MAQUINARIA_HTML = "<div class='step-view' id='step8'><div class='step-title'>8.- Maquinaria</div><textarea class='form-control req-step8' id='v_maquina' rows='5' oninput='sincronizarDatos()'></textarea></div>"
 HERRAMIENTAS_HTML = "<div class='step-view' id='step9'><div class='step-title'>9.- Herramientas</div><textarea class='form-control req-step9' id='v_herram' rows='4' oninput='sincronizarDatos()'></textarea></div>"
 OCURRENCIAS_HTML = "<div class='step-view' id='step10'><div class='step-title text-danger'>10.- Ocurrencias</div><textarea class='form-control border-danger req-step10' id='v_ocurrencia' rows='6' oninput='sincronizarDatos()'></textarea></div>"
-
 
 residencia_bp = Blueprint('residencia', __name__)
 
@@ -65,15 +66,18 @@ def redaccion_asiento_residente():
             
             .stepper-container {{ position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); z-index: 900; padding: 15px 20px; overflow-x: auto; white-space: nowrap; display: flex; align-items: center; gap: 8px; opacity: 0; pointer-events: none; transition: opacity 0.5s; }}
             .stepper-container::-webkit-scrollbar {{ display: none; }}
+            
             .step-btn {{ border: 1px solid #cbd5e1; border-radius: 30px; padding: 10px 20px; font-size: 12px; font-weight: 600; color: #475569; background: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-origin: center; }}
             .step-btn.active {{ background: #ffffff !important; color: #000000 !important; font-weight: 800 !important; transform: scale(1.15) !important; box-shadow: 0 10px 25px rgba(0,0,0,0.12); border-color: #000000 !important; margin: 0 10px; }}
-            
-            #globalTooltip {{ position: fixed; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); color: #ffffff; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: 0 10px 25px rgba(0,0,0,0.2); pointer-events: none; z-index: 999999; opacity: 0; transform: translateY(10px); transition: opacity 0.2s ease, transform 0.2s ease; }}
+            .step-btn.omitted {{ background: #64748b !important; color: white !important; border-color: #475569 !important; }}
+
+            #globalTooltip {{ position: fixed; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); color: #ffffff; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); pointer-events: none; z-index: 999999; opacity: 0; transform: translateY(10px); transition: opacity 0.2s ease, transform 0.2s ease; }}
             #globalTooltip.visible {{ opacity: 1; transform: translateY(0); }}
 
             .elegant-alert {{ position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 50px; padding: 12px 25px; display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,1); z-index: 9999999; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; pointer-events: none; }}
             .elegant-alert.show {{ transform: translateX(-50%) translateY(0); opacity: 1; }}
-            
+            .alert-icon {{ font-size: 20px; }} .alert-text {{ font-size: 14px; font-weight: 700; color: #1e293b; }}
+
             .split-layout {{ display: flex; gap: 40px; max-width: 1500px; margin: 140px auto 0 auto; padding: 0 20px; align-items: flex-start; filter: blur(5px); pointer-events: none; transition: filter 0.5s; }}
             .split-layout.unlocked {{ filter: blur(0); pointer-events: all; }}
             .form-column {{ flex: 1; max-width: 600px; }}
@@ -86,19 +90,7 @@ def redaccion_asiento_residente():
             .form-control {{ border-radius: 12px; border: 1px solid #cbd5e1; padding: 12px 14px; font-size: 14px; }}
             .form-control:focus {{ border-color: #0066cc; box-shadow: 0 0 0 4px rgba(0,102,204,0.15); }}
 
-            /* Tarjetas M1 y M2 */
-            .time-card {{ background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: all 0.3s;}}
-            .time-card.active {{ border-color: var(--celeste-obra); background: #f0f9ff; }}
-            .time-card .clock-icon {{ font-size: 28px; color: #94a3b8; }}
-            .time-card.active .clock-icon {{ color: var(--celeste-obra); }}
-
-            .elegant-card {{ background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px 12px; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; }}
-            .elegant-card.active {{ border-color: var(--celeste-obra); background: rgba(2, 99, 160, 0.03); }}
-            .elegant-card .p-icon {{ font-size: 26px; color: #94a3b8; transition: all 0.3s; margin-bottom: 4px; }}
-            .elegant-card.active .p-icon {{ color: var(--celeste-obra); transform: scale(1.1); }}
-            .elegant-card input {{ border: none; background: transparent; text-align: center; font-weight: 800; font-size: 20px; width: 100%; outline: none; }}
-
-            /* CUADERNO FÍSICO (Alineación y Letra de 22px) */
+            /* CUADERNO FÍSICO */
             .papel-fisico {{ background: #fdfdfa; width: 100%; min-height: 980px; padding: 45px 50px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; font-family: Arial, sans-serif; color: #000; position: relative;}}
             .p-header-top {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }} 
             .p-title-box {{ text-align: center; flex: 1; margin-left: 60px;}}
@@ -148,7 +140,7 @@ def redaccion_asiento_residente():
                     <div class="modal-body p-4 bg-white" id="zonaPegadoModal">
                         <div class="excel-paste-zone" id="pasteHint" style="border: 2px dashed #cbd5e1; border-radius: 12px; padding: 10px; background: #f8fafc; text-align: center; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-bottom: 15px;">
                             <i class="bi bi-clipboard-check fs-4 d-block mb-1"></i>
-                            Copie las 3 columnas desde Excel y presione <b>Ctrl + V</b> aquí.
+                            Copie las 3 columnas desde Excel (ITEM | PARTIDA | UNIDAD) y presione <b>Ctrl + V</b> aquí.
                         </div>
                         <div class="table-responsive" style="max-height: 40vh; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px;">
                             <table class="table table-hover mb-0">
@@ -161,7 +153,7 @@ def redaccion_asiento_residente():
                                         <td><input type="text" id="man_item" placeholder="Ej: 01.01" class="form-control form-control-sm border-0 shadow-none bg-white"></td>
                                         <td><input type="text" id="man_desc" placeholder="Nombre de la partida..." class="form-control form-control-sm border-0 shadow-none bg-white"></td>
                                         <td><input type="text" id="man_und" placeholder="M3" class="form-control form-control-sm border-0 shadow-none bg-white text-center"></td>
-                                        <td class="text-center"><button class="btn btn-sm btn-dark rounded-pill" onclick="agregarPartidaGlobal()"><i class="bi bi-plus-lg"></i></button></td>
+                                        <td class="text-center"><button type="button" class="btn btn-sm btn-dark rounded-pill" onclick="agregarPartidaGlobal()"><i class="bi bi-plus-lg"></i></button></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -176,17 +168,17 @@ def redaccion_asiento_residente():
         </div>
 
         <div class="stepper-container" id="stepperBar">
-            <button class="step-btn active" id="btnStep1" onclick="jumpToStep(1)">1. Jornal</button>
-            <button class="step-btn" id="btnStep2" onclick="jumpToStep(2)">2. Personal</button>
-            <button class="step-btn" id="btnStep3" onclick="jumpToStep(3)">3. Partidas</button>
-            <button class="step-btn" id="btnStep4" onclick="jumpToStep(4)">4. Mayor Metrado</button>
-            <button class="step-btn" id="btnStep5" onclick="jumpToStep(5)">5. Sub Partidas</button>
-            <button class="step-btn" id="btnStep6" onclick="jumpToStep(6)">6. Actividades</button>
-            <button class="step-btn" id="btnStep7" onclick="jumpToStep(7)">7. Almacén</button>
-            <button class="step-btn" id="btnStep8" onclick="jumpToStep(8)">8. Maquinaria</button>
-            <button class="step-btn" id="btnStep9" onclick="jumpToStep(9)">9. Herramientas</button>
-            <button class="step-btn" id="btnStep10" onclick="jumpToStep(10)">10. Ocurrencias</button>
-            <button class="step-btn border-dark text-dark fw-bold" id="btnStep11" onclick="jumpToStep(11)"><i class="bi bi-shield-lock-fill"></i> Firma Final</button>
+            <button type="button" class="step-btn active" id="btnStep1" onclick="jumpToStep(1)">1. Jornal</button>
+            <button type="button" class="step-btn" id="btnStep2" onclick="jumpToStep(2)">2. Personal</button>
+            <button type="button" class="step-btn" id="btnStep3" onclick="jumpToStep(3)">3. Partidas</button>
+            <button type="button" class="step-btn" id="btnStep4" onclick="jumpToStep(4)">4. Mayor Metrado</button>
+            <button type="button" class="step-btn" id="btnStep5" onclick="jumpToStep(5)">5. Sub Partidas</button>
+            <button type="button" class="step-btn" id="btnStep6" onclick="jumpToStep(6)">6. Actividades</button>
+            <button type="button" class="step-btn" id="btnStep7" onclick="jumpToStep(7)">7. Almacén</button>
+            <button type="button" class="step-btn" id="btnStep8" onclick="jumpToStep(8)">8. Maquinaria</button>
+            <button type="button" class="step-btn" id="btnStep9" onclick="jumpToStep(9)">9. Herramientas</button>
+            <button type="button" class="step-btn" id="btnStep10" onclick="jumpToStep(10)">10. Ocurrencias</button>
+            <button type="button" class="step-btn border-dark text-dark fw-bold" id="btnStep11" onclick="jumpToStep(11)"><i class="bi bi-shield-lock-fill"></i> Firma Final</button>
         </div>
         <div id="globalTooltip"></div>
 
@@ -206,7 +198,7 @@ def redaccion_asiento_residente():
                     
                     <div class="step-view" id="step11">
                         <div class="step-title text-success text-center mb-4"><i class="bi bi-shield-check"></i> Sellar Folio</div>
-                        <p class="text-center text-muted small mb-5">Verifica la hoja de cuaderno. Al deslizar el candado, los datos quedarán inmutables.</p>
+                        <p class="text-center text-muted small mb-5">Verifica la hoja de cuaderno generada a la derecha. Al deslizar el candado, los datos quedarán inmutables.</p>
                         <div class="slider-track" id="sliderTrack" style="width: 100%; max-width: 400px; height: 60px; background: rgba(0,0,0,0.05); border-radius: 30px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0 auto; border: 1px solid rgba(0,0,0,0.05);"><div class="slider-progress" id="sliderProgress" style="position: absolute; left: 0; top: 0; height: 100%; background: rgba(0, 102, 204, 0.1); width: 0; pointer-events: none;"></div><div class="slider-text" id="sliderText" style="font-size: 13px; font-weight: 800; color: #64748b; text-transform: uppercase; z-index: 1; pointer-events: none;">Deslizar para Firmar</div><div class="slider-handle" id="sliderHandle" style="width: 52px; height: 52px; background: #000; color: #fff; border-radius: 50%; position: absolute; left: 4px; display: flex; align-items: center; justify-content: center; z-index: 2; cursor: grab;"><i class="bi bi-lock-fill" style="font-size: 1.2rem;"></i></div></div>
                     </div>
                 </form>
@@ -251,12 +243,12 @@ def redaccion_asiento_residente():
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         
         <script>
-            // CONFIGURACIÓN BASE Y ALERTAS
             let g_numAsiento = ""; let g_fechaAsiento = "";
             let currentStep = 1; const totalSteps = 11; let isAnimating = false;
             
-            // EL CATÁLOGO MAESTRO (Accesible para todos los módulos)
+            // INICIALIZACIÓN DE LISTAS GLOBALES
             window.catalogoMaestro = [];
+            window.m3_lista = []; window.m4_lista = []; window.m5_lista = []; window.m6_lista = [];
 
             function mostrarAlerta(mensaje, tipo="error") {{
                 const alerta = document.getElementById('elegantAlert'); const icono = document.getElementById('alertIcon');
@@ -290,7 +282,7 @@ def redaccion_asiento_residente():
             function eliminarCatalogo(index) {{ window.catalogoMaestro.splice(index, 1); renderizarTablaCatalogoGlobal(); }}
             function renderizarTablaCatalogoGlobal() {{
                 const tbody = document.getElementById('tbodyCatalogoGlobal');
-                tbody.innerHTML = window.catalogoMaestro.map((p, idx) => `<tr><td class="fw-bold text-dark">${{p.item}}</td><td class="fw-semibold text-secondary">${{p.descripcion}}</td><td class="text-center"><span class="badge bg-light text-dark border">${{p.unidad}}</span></td><td class="text-center"><button class="btn btn-sm text-danger border-0 p-0" onclick="eliminarCatalogo(${{idx}})"><i class="bi bi-x-circle-fill"></i></button></td></tr>`).join('');
+                tbody.innerHTML = window.catalogoMaestro.map((p, idx) => `<tr><td class="fw-bold text-dark">${{p.item}}</td><td class="fw-semibold text-secondary">${{p.descripcion}}</td><td class="text-center"><span class="badge bg-light text-dark border">${{p.unidad}}</span></td><td class="text-center"><button type="button" class="btn btn-sm text-danger border-0 p-0" onclick="eliminarCatalogo(${{idx}})"><i class="bi bi-x-circle-fill"></i></button></td></tr>`).join('');
                 document.getElementById('lbl_total_cat').innerText = window.catalogoMaestro.length;
             }}
 
@@ -353,7 +345,7 @@ def redaccion_asiento_residente():
                     window.m6_lista.forEach(p => {{ 
                         let l = `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}}`;
                         if(p.prog) l += ` &nbsp; (Prog: ${{p.prog}})`;
-                        if(p.metrado) l += ` &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}`;
+                        if(p.metrado && p.metrado !== '') l += ` &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}`;
                         textoPapel += l + `<br>`; 
                     }});
                 }}
