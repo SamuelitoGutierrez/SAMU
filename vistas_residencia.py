@@ -8,7 +8,7 @@ from navbar import obtener_navbar
 from datetime import datetime
 
 # ==============================================================================
-# IMPORTACIÓN DINÁMICA DE LOS 10 MÓDULOS
+# IMPORTACIÓN DINÁMICA DE LOS MÓDULOS
 # ==============================================================================
 try:
     from mod_01_jornal import JORNAL_HTML
@@ -92,41 +92,17 @@ def redaccion_asiento_residente():
             @keyframes floatInUp {{ from {{ opacity: 0; transform: translateY(30px); }} to {{ opacity: 1; transform: translateY(0); }} }}
             @keyframes floatOutDown {{ from {{ opacity: 1; transform: translateY(0); }} to {{ opacity: 0; transform: translateY(30px); }} }}
             
-            /* Stepper Superior y Botones con Zoom */
             .stepper-container {{ position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); z-index: 900; padding: 15px 20px; overflow-x: auto; white-space: nowrap; display: flex; align-items: center; gap: 8px; opacity: 0; pointer-events: none; transition: opacity 0.5s; }}
             .stepper-container::-webkit-scrollbar {{ display: none; }}
             
             .step-btn {{ border: 1px solid #cbd5e1; border-radius: 30px; padding: 10px 20px; font-size: 12px; font-weight: 600; color: #475569; background: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-origin: center; }}
-            
-            /* ESTADO ACTIVO DEL BOTÓN: ZOOM, NEGRO Y BLANCO */
-            .step-btn.active {{ 
-                background: #ffffff !important; 
-                color: #000000 !important; 
-                font-weight: 800 !important; 
-                transform: scale(1.15) !important; 
-                box-shadow: 0 10px 25px rgba(0,0,0,0.12); 
-                border-color: #000000 !important; 
-                margin: 0 10px; 
-            }}
+            .step-btn.active {{ background: #ffffff !important; color: #000000 !important; font-weight: 800 !important; transform: scale(1.15) !important; box-shadow: 0 10px 25px rgba(0,0,0,0.12); border-color: #000000 !important; margin: 0 10px; }}
             .step-btn.omitted {{ background: #64748b !important; color: white !important; border-color: #475569 !important; }}
 
-            /* TOOLTIP ELEGANTE ESTILO DARK MODE */
-            #globalTooltip {{ 
-                position: fixed; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px);
-                color: #ffffff; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; 
-                white-space: nowrap; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
-                pointer-events: none; z-index: 999999; opacity: 0; transform: translateY(10px); transition: opacity 0.2s ease, transform 0.2s ease; 
-            }}
+            #globalTooltip {{ position: fixed; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); color: #ffffff; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); pointer-events: none; z-index: 999999; opacity: 0; transform: translateY(10px); transition: opacity 0.2s ease, transform 0.2s ease; }}
             #globalTooltip.visible {{ opacity: 1; transform: translateY(0); }}
 
-            /* ALERTA ELEGANTE FLOTANTE (REEMPLAZA EL ALERT NATIVO) */
-            .elegant-alert {{
-                position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
-                background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
-                border-radius: 50px; padding: 12px 25px; display: flex; align-items: center; gap: 12px;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,1);
-                z-index: 9999999; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; pointer-events: none;
-            }}
+            .elegant-alert {{ position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 50px; padding: 12px 25px; display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,1); z-index: 9999999; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; pointer-events: none; }}
             .elegant-alert.show {{ transform: translateX(-50%) translateY(0); opacity: 1; }}
             .alert-icon {{ font-size: 20px; }}
             .alert-text {{ font-size: 14px; font-weight: 700; color: #1e293b; }}
@@ -204,17 +180,17 @@ def redaccion_asiento_residente():
         </div>
 
         <div class="stepper-container" id="stepperBar">
-            <button class="step-btn active" id="btnStep1" onclick="jumpToStep(1)">1. Jornal</button>
-            <button class="step-btn" id="btnStep2" onclick="jumpToStep(2)">2. Personal</button>
-            <button class="step-btn" id="btnStep3" onclick="jumpToStep(3)">3. Partidas</button>
-            <button class="step-btn" id="btnStep4" onclick="jumpToStep(4)">4. Mayor Metrado</button>
-            <button class="step-btn" id="btnStep5" onclick="jumpToStep(5)">5. Sub Partidas</button>
-            <button class="step-btn" id="btnStep6" onclick="jumpToStep(6)">6. Actividades</button>
-            <button class="step-btn" id="btnStep7" onclick="jumpToStep(7)">7. Almacén</button>
-            <button class="step-btn" id="btnStep8" onclick="jumpToStep(8)">8. Maquinaria</button>
-            <button class="step-btn" id="btnStep9" onclick="jumpToStep(9)">9. Herramientas</button>
-            <button class="step-btn" id="btnStep10" onclick="jumpToStep(10)">10. Ocurrencias</button>
-            <button class="step-btn border-dark text-dark fw-bold" id="btnStep11" onclick="jumpToStep(11)"><i class="bi bi-shield-lock-fill"></i> Firma Final</button>
+            <button class="step-btn active" id="btnStep1" onclick="jumpToStep(1)" data-tooltip="Faltan datos">1. Jornal</button>
+            <button class="step-btn" id="btnStep2" onclick="jumpToStep(2)" data-tooltip="Faltan datos">2. Personal</button>
+            <button class="step-btn" id="btnStep3" onclick="jumpToStep(3)" data-tooltip="Faltan datos">3. Partidas</button>
+            <button class="step-btn" id="btnStep4" onclick="jumpToStep(4)" data-tooltip="Faltan datos">4. Mayor Metrado</button>
+            <button class="step-btn" id="btnStep5" onclick="jumpToStep(5)" data-tooltip="Faltan datos">5. Sub Partidas</button>
+            <button class="step-btn" id="btnStep6" onclick="jumpToStep(6)" data-tooltip="Faltan datos">6. Actividades</button>
+            <button class="step-btn" id="btnStep7" onclick="jumpToStep(7)" data-tooltip="Faltan datos">7. Almacén</button>
+            <button class="step-btn" id="btnStep8" onclick="jumpToStep(8)" data-tooltip="Faltan datos">8. Maquinaria</button>
+            <button class="step-btn" id="btnStep9" onclick="jumpToStep(9)" data-tooltip="Faltan datos">9. Herramientas</button>
+            <button class="step-btn" id="btnStep10" onclick="jumpToStep(10)" data-tooltip="Faltan datos">10. Ocurrencias</button>
+            <button class="step-btn border-dark text-dark fw-bold" id="btnStep11" onclick="jumpToStep(11)" data-tooltip="Ver Documento Final"><i class="bi bi-shield-lock-fill"></i> Firma Final</button>
         </div>
         <div id="globalTooltip"></div>
 
@@ -282,23 +258,17 @@ def redaccion_asiento_residente():
             let currentStep = 1; const totalSteps = 11; let isAnimating = false;
             let t_m = true; let t_t = true;
 
-            // SISTEMA DE ALERTAS ELEGANTES (Reemplaza alert)
             function mostrarAlerta(mensaje, tipo="error") {{
                 const alerta = document.getElementById('elegantAlert');
                 const icono = document.getElementById('alertIcon');
                 document.getElementById('alertText').innerText = mensaje;
-                if(tipo === "error") {{
-                    icono.innerHTML = '<i class="bi bi-exclamation-circle-fill text-danger"></i>';
-                }} else {{
-                    icono.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
-                }}
+                if(tipo === "error") {{ icono.innerHTML = '<i class="bi bi-exclamation-circle-fill text-danger"></i>'; }} 
+                else {{ icono.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>'; }}
                 alerta.classList.add('show');
                 setTimeout(() => {{ alerta.classList.remove('show'); }}, 3500);
             }}
 
-            document.addEventListener("DOMContentLoaded", function() {{
-                new bootstrap.Modal(document.getElementById('modalConfigInicial')).show();
-            }});
+            document.addEventListener("DOMContentLoaded", function() {{ new bootstrap.Modal(document.getElementById('modalConfigInicial')).show(); }});
 
             function formatearFecha(fechaStr) {{
                 const dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"];
@@ -311,7 +281,7 @@ def redaccion_asiento_residente():
             function iniciarAsiento() {{
                 g_numAsiento = document.getElementById('initNumAsiento').value;
                 let rawDate = document.getElementById('initFecha').value;
-                if(!g_numAsiento || !rawDate) {{ mostrarAlerta("Complete los datos de apertura.", "error"); return; }}
+                if(!g_numAsiento || !rawDate) {{ mostrarAlerta("Complete los datos para iniciar.", "error"); return; }}
                 g_fechaAsiento = formatearFecha(rawDate);
                 document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento;
                 bootstrap.Modal.getInstance(document.getElementById('modalConfigInicial')).hide();
@@ -322,10 +292,8 @@ def redaccion_asiento_residente():
                 sincronizarDatos();
             }}
 
-            // TOOLTIP Y BOTONES
             const gTooltip = document.getElementById('globalTooltip');
             document.querySelectorAll('.step-btn').forEach(btn => {{
-                // Tooltip
                 btn.addEventListener('mousemove', (e) => {{
                     gTooltip.innerText = btn.getAttribute('data-tooltip');
                     gTooltip.style.left = (e.clientX + 15) + 'px'; gTooltip.style.top = (e.clientY + 15) + 'px';
@@ -355,7 +323,6 @@ def redaccion_asiento_residente():
             function anteriorPaso() {{ if(currentStep > 1) jumpToStep(currentStep - 1); }}
             function omitirPaso() {{ document.querySelectorAll(`.req-step${{currentStep}}`).forEach(i => i.value = ""); sincronizarDatos(); siguientePaso(); }}
 
-            // Funciones de Módulos (Jornal y Personal)
             function toggleTurno(turno) {{
                 if(turno === 'm') {{ t_m = !t_m; document.getElementById('card_m').classList.toggle('active', t_m); document.getElementById('v_jornal_m').value = t_m ? "07:00 - 12:00" : ""; document.getElementById('lbl_jornal_m').style.opacity = t_m ? "1" : "0.3"; }}
                 else {{ t_t = !t_t; document.getElementById('card_t').classList.toggle('active', t_t); document.getElementById('v_jornal_t').value = t_t ? "13:00 - 17:00" : ""; document.getElementById('lbl_jornal_t').style.opacity = t_t ? "1" : "0.3"; }}
@@ -368,7 +335,6 @@ def redaccion_asiento_residente():
                 sincronizarDatos();
             }}
 
-            // Motor de Partidas (Módulo 3)
             let partidasList = [];
             function agregarPartidaRapida() {{
                 const inputBuscador = document.getElementById('buscadorPartidas');
@@ -403,22 +369,13 @@ def redaccion_asiento_residente():
                     renderizarListaPartidas(); 
                     document.getElementById('v_partidas').value = "lleno"; 
                     sincronizarDatos(); 
-                    mostrarAlerta(`Se importaron ${count} partidas correctamente.`, "success");
+                    mostrarAlerta(`Se importaron ${{count}} partidas correctamente.`, "success");
                 }}
                 bootstrap.Modal.getInstance(document.getElementById('modalExcel')).hide();
             }}
 
-            function actualizarMetrado(index, valor) {{ 
-                partidasList[index].metrado = valor; 
-                sincronizarDatos(); 
-            }}
-
-            function eliminarPartida(index) {{ 
-                partidasList.splice(index, 1); 
-                if(partidasList.length === 0) document.getElementById('v_partidas').value = ""; 
-                renderizarListaPartidas(); 
-                sincronizarDatos(); 
-            }}
+            function actualizarMetrado(index, valor) {{ partidasList[index].metrado = valor; sincronizarDatos(); }}
+            function eliminarPartida(index) {{ partidasList.splice(index, 1); if(partidasList.length === 0) document.getElementById('v_partidas').value = ""; renderizarListaPartidas(); sincronizarDatos(); }}
 
             function renderizarListaPartidas() {{
                 const container = document.getElementById('listaPartidasAgregadas');
@@ -432,7 +389,6 @@ def redaccion_asiento_residente():
                 `).join('');
             }}
 
-            // RENDERIZADO EN VIVO EN EL CUADERNO (LIVE PREVIEW)
             function sincronizarDatos() {{
                 if(!g_numAsiento) return;
                 let as_str = g_numAsiento.padStart(4, '0');
@@ -460,9 +416,7 @@ def redaccion_asiento_residente():
 
                 if(partidasList.length > 0) {{
                     textoPapel += `3.- Partidas ejecutadas:<br>`;
-                    partidasList.forEach(p => {{ 
-                        textoPapel += `- ${{p.descripcion}} &nbsp;&nbsp;&nbsp;&nbsp; (Metrado: ${{p.metrado || '0.00'}})<br>`; 
-                    }});
+                    partidasList.forEach(p => {{ textoPapel += `- ${{p.descripcion}} &nbsp;&nbsp;&nbsp;&nbsp; (Metrado: ${{p.metrado || '0.00'}})<br>`; }});
                 }}
 
                 const camposText = [
@@ -494,7 +448,6 @@ def redaccion_asiento_residente():
                 }}
             }}
 
-            // SLIDER FIRMA FINAL
             const handle = document.getElementById('sliderHandle'); const track = document.getElementById('sliderTrack'); const progress = document.getElementById('sliderProgress');
             let isDragging = false, startX = 0, maxSlide = 0;
             function calcLimits() {{ maxSlide = track.clientWidth - handle.clientWidth - 8; }}
@@ -503,6 +456,7 @@ def redaccion_asiento_residente():
             function onDrag(e) {{ if (!isDragging) return; let left = (e.clientX || e.touches[0].clientX) - startX; if (left < 4) left = 4; if (left > maxSlide) left = maxSlide; handle.style.left = left + 'px'; progress.style.width = (left + 23) + 'px'; if (left >= maxSlide - 2) {{ isDragging = false; firmar(); }} }}
             function stopDrag() {{ if (!isDragging) return; isDragging = false; handle.style.left = '4px'; progress.style.width = '0px'; }}
             handle.addEventListener('mousedown', startDrag); document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', stopDrag); handle.addEventListener('touchstart', startDrag, {{passive: true}}); document.addEventListener('touchmove', onDrag, {{passive: false}}); document.addEventListener('touchend', stopDrag);
+            
             function firmar() {{ 
                 handle.style.left = maxSlide + 'px'; progress.style.width = '100%'; handle.style.background = '#10b981'; 
                 handle.innerHTML = '<i class="bi bi-check-lg"></i>'; document.getElementById('sliderText').innerText = "FIRMADO LEGALMENTE"; 
