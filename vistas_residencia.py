@@ -11,24 +11,24 @@ from datetime import datetime
 # IMPORTACIÓN DINÁMICA DE LOS MÓDULOS
 # ==============================================================================
 try: from mod_01_jornal import JORNAL_HTML
-except: JORNAL_HTML = "<div class='step-view active' id='step1'><p>Error: mod_01_jornal.py</p></div>"
+except: JORNAL_HTML = "<div class='step-view active' id='step1'><p>Error: mod_01_jornal.py no encontrado.</p></div>"
 
 try: from mod_02_personal import PERSONAL_HTML
-except: PERSONAL_HTML = "<div class='step-view' id='step2'><p>Error: mod_02_personal.py</p></div>"
+except: PERSONAL_HTML = "<div class='step-view' id='step2'><p>Error: mod_02_personal.py no encontrado.</p></div>"
 
 try: from mod_03_partidas import PARTIDAS_HTML
-except: PARTIDAS_HTML = "<div class='step-view' id='step3'><p>Error: mod_03_partidas.py</p></div>"
+except: PARTIDAS_HTML = "<div class='step-view' id='step3'><p>Error: mod_03_partidas.py no encontrado.</p></div>"
 
 try: from mod_04_mayor_metrado import MAYOR_METRADO_HTML
-except: MAYOR_METRADO_HTML = "<div class='step-view' id='step4'><p>Error: mod_04_mayor_metrado.py</p></div>"
+except: MAYOR_METRADO_HTML = "<div class='step-view' id='step4'><p>Módulo 04 en construcción...</p></div>"
 
 try: from mod_05_sub_partidas import SUB_PARTIDAS_HTML
-except: SUB_PARTIDAS_HTML = "<div class='step-view' id='step5'><p>Error: mod_05_sub_partidas.py</p></div>"
+except: SUB_PARTIDAS_HTML = "<div class='step-view' id='step5'><p>Módulo 05 en construcción...</p></div>"
 
 try: from mod_06_actividades import ACTIVIDADES_HTML
-except: ACTIVIDADES_HTML = "<div class='step-view' id='step6'><p>Error: mod_06_actividades.py</p></div>"
+except: ACTIVIDADES_HTML = "<div class='step-view' id='step6'><p>Módulo 06 en construcción...</p></div>"
 
-# Textareas transitorios para 7, 8, 9, 10
+# Transitorios para 7, 8, 9, 10
 ALMACEN_HTML = "<div class='step-view' id='step7'><div class='step-title'>7.- Almacén</div><textarea class='form-control req-step7' id='v_almacen' rows='5' oninput='sincronizarDatos()'></textarea></div>"
 MAQUINARIA_HTML = "<div class='step-view' id='step8'><div class='step-title'>8.- Maquinaria</div><textarea class='form-control req-step8' id='v_maquina' rows='5' oninput='sincronizarDatos()'></textarea></div>"
 HERRAMIENTAS_HTML = "<div class='step-view' id='step9'><div class='step-title'>9.- Herramientas</div><textarea class='form-control req-step9' id='v_herram' rows='4' oninput='sincronizarDatos()'></textarea></div>"
@@ -90,7 +90,18 @@ def redaccion_asiento_residente():
             .form-control {{ border-radius: 12px; border: 1px solid #cbd5e1; padding: 12px 14px; font-size: 14px; }}
             .form-control:focus {{ border-color: #0066cc; box-shadow: 0 0 0 4px rgba(0,102,204,0.15); }}
 
-            /* CUADERNO FÍSICO */
+            .time-card {{ background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: all 0.3s;}}
+            .time-card.active {{ border-color: var(--celeste-obra); background: #f0f9ff; }}
+            .time-card .clock-icon {{ font-size: 28px; color: #94a3b8; }}
+            .time-card.active .clock-icon {{ color: var(--celeste-obra); }}
+
+            .elegant-card {{ background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px 12px; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; }}
+            .elegant-card.active {{ border-color: var(--celeste-obra); background: rgba(2, 99, 160, 0.03); }}
+            .elegant-card .p-icon {{ font-size: 26px; color: #94a3b8; transition: all 0.3s; margin-bottom: 4px; }}
+            .elegant-card.active .p-icon {{ color: var(--celeste-obra); transform: scale(1.1); }}
+            .elegant-card input {{ border: none; background: transparent; text-align: center; font-weight: 800; font-size: 20px; width: 100%; outline: none; }}
+
+            /* CUADERNO FÍSICO (Alineación y Letra de 22px) */
             .papel-fisico {{ background: #fdfdfa; width: 100%; min-height: 980px; padding: 45px 50px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; font-family: Arial, sans-serif; color: #000; position: relative;}}
             .p-header-top {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }} 
             .p-title-box {{ text-align: center; flex: 1; margin-left: 60px;}}
@@ -132,13 +143,13 @@ def redaccion_asiento_residente():
 
         <div class="modal fade" id="modalCatalogoGlobal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-xl">
-                <div class="modal-content" style="border-radius: 20px; overflow: hidden; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
+                <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
                     <div class="modal-header border-0 bg-light pb-3">
                         <h5 class="modal-title fw-bold text-dark"><i class="bi bi-table text-success me-2"></i> Base Global de Partidas</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-4 bg-white" id="zonaPegadoModal">
-                        <div class="excel-paste-zone" id="pasteHint" style="border: 2px dashed #cbd5e1; border-radius: 12px; padding: 10px; background: #f8fafc; text-align: center; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-bottom: 15px;">
+                        <div id="pasteHint" style="border: 2px dashed #cbd5e1; border-radius: 12px; padding: 10px; background: #f8fafc; text-align: center; color: #64748b; font-size: 12px; font-weight: 600; transition: 0.3s; margin-bottom: 15px;">
                             <i class="bi bi-clipboard-check fs-4 d-block mb-1"></i>
                             Copie las 3 columnas desde Excel (ITEM | PARTIDA | UNIDAD) y presione <b>Ctrl + V</b> aquí.
                         </div>
@@ -150,9 +161,9 @@ def redaccion_asiento_residente():
                                 <tbody id="tbodyCatalogoGlobal"></tbody>
                                 <tfoot>
                                     <tr class="bg-light">
-                                        <td><input type="text" id="man_item" placeholder="Ej: 01.01" class="form-control form-control-sm border-0 shadow-none bg-white"></td>
-                                        <td><input type="text" id="man_desc" placeholder="Nombre de la partida..." class="form-control form-control-sm border-0 shadow-none bg-white"></td>
-                                        <td><input type="text" id="man_und" placeholder="M3" class="form-control form-control-sm border-0 shadow-none bg-white text-center"></td>
+                                        <td><input type="text" id="man_item" placeholder="Ej: 01.01" class="form-control form-control-sm border-0 bg-white"></td>
+                                        <td><input type="text" id="man_desc" placeholder="Nombre de la partida..." class="form-control form-control-sm border-0 bg-white"></td>
+                                        <td><input type="text" id="man_und" placeholder="M3" class="form-control form-control-sm border-0 bg-white text-center"></td>
                                         <td class="text-center"><button type="button" class="btn btn-sm btn-dark rounded-pill" onclick="agregarPartidaGlobal()"><i class="bi bi-plus-lg"></i></button></td>
                                     </tr>
                                 </tfoot>
@@ -243,10 +254,11 @@ def redaccion_asiento_residente():
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         
         <script>
+            // CONFIGURACIÓN GLOBAL
             let g_numAsiento = ""; let g_fechaAsiento = "";
             let currentStep = 1; const totalSteps = 11; let isAnimating = false;
             
-            // INICIALIZACIÓN DE LISTAS GLOBALES
+            // EL CATÁLOGO MAESTRO (Accesible para M3, M4, M5, M6)
             window.catalogoMaestro = [];
             window.m3_lista = []; window.m4_lista = []; window.m5_lista = []; window.m6_lista = [];
 
@@ -260,7 +272,14 @@ def redaccion_asiento_residente():
 
             document.addEventListener("DOMContentLoaded", function() {{ new bootstrap.Modal(document.getElementById('modalConfigInicial')).show(); }});
             function formatearFecha(fechaStr) {{ const dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]; const [y, m, d] = fechaStr.split('-'); const dateObj = new Date(y, m-1, d); let dayIndex = dateObj.getDay() - 1; if(dayIndex === -1) dayIndex = 6; return `${{dias[dayIndex]}}, ${{d}}/${{m}}/${{y}}`; }}
-            function iniciarAsiento() {{ g_numAsiento = document.getElementById('initNumAsiento').value; let rawDate = document.getElementById('initFecha').value; if(!g_numAsiento || !rawDate) {{ mostrarAlerta("Complete los datos para iniciar.", "error"); return; }} g_fechaAsiento = formatearFecha(rawDate); document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento; bootstrap.Modal.getInstance(document.getElementById('modalConfigInicial')).hide(); document.getElementById('mainLayout').classList.add('unlocked'); document.getElementById('stepperBar').style.opacity = '1'; document.getElementById('stepperBar').style.pointerEvents = 'all'; document.getElementById('bottomBarUI').classList.add('unlocked'); sincronizarDatos(); }}
+            
+            function iniciarAsiento() {{ 
+                g_numAsiento = document.getElementById('initNumAsiento').value; let rawDate = document.getElementById('initFecha').value; 
+                if(!g_numAsiento || !rawDate) {{ mostrarAlerta("Complete los datos para iniciar.", "error"); return; }} 
+                g_fechaAsiento = formatearFecha(rawDate); document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento; 
+                bootstrap.Modal.getInstance(document.getElementById('modalConfigInicial')).hide(); 
+                document.getElementById('mainLayout').classList.add('unlocked'); document.getElementById('stepperBar').style.opacity = '1'; document.getElementById('stepperBar').style.pointerEvents = 'all'; document.getElementById('bottomBarUI').classList.add('unlocked'); sincronizarDatos(); 
+            }}
 
             // LÓGICA DEL CATÁLOGO GLOBAL (EXCEL)
             function abrirCatalogoGlobal() {{ new bootstrap.Modal(document.getElementById('modalCatalogoGlobal')).show(); }}
@@ -278,6 +297,7 @@ def redaccion_asiento_residente():
                 }});
                 if(count > 0) {{ renderizarTablaCatalogoGlobal(); document.getElementById('pasteHint').innerHTML = `<i class="bi bi-check-circle-fill text-success fs-4 d-block mb-1"></i> ¡Excelente! Se cargaron ${{count}} partidas.`; document.getElementById('pasteHint').style.borderColor = '#10b981'; document.getElementById('pasteHint').style.backgroundColor = '#ecfdf5'; }}
             }});
+            
             function agregarPartidaGlobal() {{ const item = document.getElementById('man_item').value.trim(); const desc = document.getElementById('man_desc').value.trim(); const und = document.getElementById('man_und').value.trim() || 'GLB'; if(!desc) {{ return; }} window.catalogoMaestro.push({{ item: item || '-', descripcion: desc, unidad: und.toUpperCase() }}); document.getElementById('man_item').value = ''; document.getElementById('man_desc').value = ''; document.getElementById('man_und').value = ''; document.getElementById('man_item').focus(); renderizarTablaCatalogoGlobal(); }}
             function eliminarCatalogo(index) {{ window.catalogoMaestro.splice(index, 1); renderizarTablaCatalogoGlobal(); }}
             function renderizarTablaCatalogoGlobal() {{
@@ -324,34 +344,41 @@ def redaccion_asiento_residente():
                     textoPapel += lineas_p.join(' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ') + `<br>`;
                 }}
 
-                // 3. Partidas M3
+                // 3. Partidas M3 (Soporta metrado vacío)
                 if (typeof window.m3_lista !== 'undefined' && window.m3_lista.length > 0) {{
                     textoPapel += `3.- Partidas ejecutadas:<br>`;
-                    window.m3_lista.forEach(p => {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}} &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}<br>`; }});
+                    window.m3_lista.forEach(p => {{ 
+                        if(p.metrado && p.metrado !== '') {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}} &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}<br>`; }}
+                        else {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}}<br>`; }}
+                    }});
                 }}
+                
                 // 4. Mayor Metrado M4
                 if (typeof window.m4_lista !== 'undefined' && window.m4_lista.length > 0) {{
                     textoPapel += `4.- Mayor metrado ejecutado:<br>`;
-                    window.m4_lista.forEach(p => {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}} &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}<br>`; }});
+                    window.m4_lista.forEach(p => {{ 
+                        if(p.metrado && p.metrado !== '') {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}} &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}<br>`; }}
+                        else {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}}<br>`; }}
+                    }});
                 }}
+                
                 // 5. Sub Partidas M5
                 if (typeof window.m5_lista !== 'undefined' && window.m5_lista.length > 0) {{
                     textoPapel += `5.- Sub partidas ejecutadas:<br>`;
-                    window.m5_lista.forEach(p => {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}} &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}<br>`; }});
-                }}
-                // 6. Actividades M6
-                if (typeof window.m6_lista !== 'undefined' && window.m6_lista.length > 0) {{
-                    textoPapel += `6.- Actividades en ejecución:<br>`;
-                    window.m6_lista.forEach(p => {{ 
-                        let l = `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}}`;
-                        if(p.prog) l += ` &nbsp; (Prog: ${{p.prog}})`;
-                        if(p.metrado && p.metrado !== '') l += ` &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}`;
-                        textoPapel += l + `<br>`; 
+                    window.m5_lista.forEach(p => {{ 
+                        if(p.metrado && p.metrado !== '') {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}} &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}<br>`; }}
+                        else {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}}<br>`; }}
                     }});
                 }}
 
-                // Campos Restantes (7 al 10)
-                const cRestantes = [ {{id: 'v_almacen', t: '7.- Movimiento de almacén'}}, {{id: 'v_maquina', t: '8.- Maquinarias y equipos'}}, {{id: 'v_herram', t: '9.- Herramientas manuales'}}, {{id: 'v_ocurrencia', t: '10.- Ocurrencias y otros'}} ];
+                // Campos Restantes (6 al 10) - (6 se reemplazará luego por su módulo dinámico)
+                const cRestantes = [ 
+                    {{id: 'v_activ', t: '6.- Actividades ejecutadas'}}, 
+                    {{id: 'v_almacen', t: '7.- Movimiento de almacén'}}, 
+                    {{id: 'v_maquina', t: '8.- Maquinarias y equipos'}}, 
+                    {{id: 'v_herram', t: '9.- Herramientas manuales'}}, 
+                    {{id: 'v_ocurrencia', t: '10.- Ocurrencias y otros'}} 
+                ];
                 cRestantes.forEach(c => {{ const el = document.getElementById(c.id); if(el && el.value) textoPapel += `${{c.t}}:<br>${{el.value.replace(/\\n/g, '<br>')}}<br>`; }});
 
                 const outContainer = document.getElementById('out_general');
@@ -362,6 +389,22 @@ def redaccion_asiento_residente():
                     let cPrevio = outContainer.innerHTML;
                     outContainer.innerHTML = `<div>${{cPrevio}}</div><span class="p-van-line">... Van</span><div class="p-break-page"></div><div style="display:flex; justify-content:space-between; width:100%; margin-bottom:10px; font-family:'Caveat', cursive; color:var(--celeste-obra); font-weight:bold; font-size:22px;"><div style="padding-left:10px;">... VIENE DEL ASIENTO No ${{as_str}} DEL RESIDENTE DE OBRA</div><div style="padding-right:10px;">${{g_fechaAsiento}}</div></div>`;
                 }}
+            }}
+            
+            // Slider Final
+            const handle = document.getElementById('sliderHandle'); const track = document.getElementById('sliderTrack'); const progress = document.getElementById('sliderProgress');
+            let isDragging = false, startX = 0, maxSlide = 0;
+            function calcLimits() {{ maxSlide = track.clientWidth - handle.clientWidth - 8; }}
+            window.addEventListener('resize', calcLimits); setTimeout(calcLimits, 500);
+            function startDrag(e) {{ isDragging = true; startX = (e.clientX || e.touches[0].clientX) - handle.offsetLeft; calcLimits(); }}
+            function onDrag(e) {{ if (!isDragging) return; let left = (e.clientX || e.touches[0].clientX) - startX; if (left < 4) left = 4; if (left > maxSlide) left = maxSlide; handle.style.left = left + 'px'; progress.style.width = (left + 23) + 'px'; if (left >= maxSlide - 2) {{ isDragging = false; firmar(); }} }}
+            function stopDrag() {{ if (!isDragging) return; isDragging = false; handle.style.left = '4px'; progress.style.width = '0px'; }}
+            handle.addEventListener('mousedown', startDrag); document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', stopDrag); handle.addEventListener('touchstart', startDrag, {{passive: true}}); document.addEventListener('touchmove', onDrag, {{passive: false}}); document.addEventListener('touchend', stopDrag);
+            function firmar() {{ 
+                handle.style.left = maxSlide + 'px'; progress.style.width = '100%'; handle.style.background = '#10b981'; 
+                handle.innerHTML = '<i class="bi bi-check-lg"></i>'; document.getElementById('sliderText').innerText = "FIRMADO LEGALMENTE"; 
+                mostrarAlerta("¡Asiento cerrado y guardado en Base de Datos con éxito!", "success");
+                setTimeout(() => {{ window.location.href = '/cuaderno'; }}, 2500);
             }}
         </script>
     </body>
