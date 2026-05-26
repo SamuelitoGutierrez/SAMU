@@ -1,13 +1,8 @@
 # =========================================================
 # mod_02_personal.py
-# Componente: 2.- Personal de Obra
+# Módulo: 2.- Personal de Obra
 # =========================================================
 
-from flask import Blueprint
-
-mod_02_bp = Blueprint('mod_02_personal', __name__)
-
-# Exponemos el bloque HTML limpio para el chasis
 PERSONAL_HTML = """
 <div class="step-view" id="step2">
     <div class="step-title">2.- Personal de Obra</div>
