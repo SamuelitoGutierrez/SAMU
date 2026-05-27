@@ -306,6 +306,7 @@ HTML_NAVBAR = """
 
 <script>
     const esAdmin = {ADMIN_JS};
+    const rolUsuario = {ROL_JS};
     
     // Matriz de Datos: Hemos agregado navLabel y navUrl para que el celular sepa cuáles son las opciones principales.
     const menuData = {
@@ -435,8 +436,18 @@ HTML_NAVBAR = """
     }
 
     // --- SEGURIDAD ---
+    function tieneAcceso(url) {
+        if (esAdmin) return true;
+        if (url === '#') return false;
+        if (rolUsuario === 'Almacenero' && url.startsWith('/almacen')) return true;
+        if (['Ingeniero', 'Residente', 'Supervisor'].includes(rolUsuario)) {
+            return ['/cuaderno', '/residencia', '/supervision', '/panel'].some(ruta => url.startsWith(ruta));
+        }
+        return false;
+    }
+
     function checkAcceso(e, url) {
-        if (!esAdmin || url === '#') {
+        if (!tieneAcceso(url)) {
             e.preventDefault();
             const toast = document.getElementById('lockToast');
             toast.innerHTML = url === '#' ? '<i class="bi bi-tools me-2" style="color: #0ea5e9;"></i> En construcción.' : '<i class="bi bi-shield-lock-fill me-2" style="color: #f9a8d4;"></i> Sin acceso.';

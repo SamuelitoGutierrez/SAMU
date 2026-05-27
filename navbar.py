@@ -3,17 +3,23 @@
 # SAMU Ingeniería — Lógica dinámica del navbar
 # =========================================================
 
+import json
+
+from flask import session
+
 try:
     from vistas_navbar import HTML_NAVBAR
 except ImportError:
     HTML_NAVBAR = ""
 
-def obtener_navbar(es_admin, nombre_usuario):
+def obtener_navbar(es_admin, nombre_usuario, rol_usuario=None):
     """
     Toma la plantilla HTML_NAVBAR y reemplaza las variables
     dinámicas según la sesión del usuario actual.
     """
     admin_js = 'true' if es_admin else 'false'
+    rol_actual = rol_usuario if rol_usuario is not None else session.get('rol', '')
+    rol_js = json.dumps(rol_actual or '')
     
     # CORRECCIÓN DE ESTADO DE SESIÓN
     if not nombre_usuario or nombre_usuario == 'Visitante':
@@ -24,6 +30,11 @@ def obtener_navbar(es_admin, nombre_usuario):
         html_usuario = f'<span style="color: #1d1d1f;">{nombre_usuario}</span> <i class="bi bi-person-circle ms-2" style="font-size: 1.3rem; color: #1d1d1f;"></i>'
     
     # Inyectamos los datos en la plantilla HTML
-    html_final = HTML_NAVBAR.replace("{HTML_USUARIO}", html_usuario).replace("{ADMIN_JS}", admin_js)
+    html_final = (
+        HTML_NAVBAR
+        .replace("{HTML_USUARIO}", html_usuario)
+        .replace("{ADMIN_JS}", admin_js)
+        .replace("{ROL_JS}", rol_js)
+    )
     
     return html_final

@@ -1,6 +1,7 @@
 import os
 import importlib
 from flask import Flask, session, request, redirect, url_for, render_template_string, Blueprint
+from mod_07_almacen import mod_07_bp
 
 def crear_servidor_samu():
     app = Flask(__name__)
@@ -13,6 +14,11 @@ def crear_servidor_samu():
     # =====================================================================
     print("Iniciando Motor SAMU...")
     print("Buscando módulos en el sistema...")
+
+    # Registro directo del Modulo 7 para que funcione aunque este servidor
+    # cargue solo los archivos vistas_*.py por auto-descubrimiento.
+    app.register_blueprint(mod_07_bp)
+    print(" [+] Módulo conectado: mod_07_almacen -> (Ruta: /almacen)")
     
     # Escanea todos los archivos en el directorio actual
     for archivo in os.listdir('.'):
