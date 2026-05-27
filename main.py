@@ -1,5 +1,11 @@
 import os
 import importlib
+import sys
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 from flask import Flask, session, request, redirect, url_for, render_template_string, Blueprint
 from mod_07_almacen import mod_07_bp
 

@@ -28,7 +28,9 @@ except: SUB_PARTIDAS_HTML = "<div class='step-view' id='step5'><p>En construcci�
 try: from mod_06_actividades import ACTIVIDADES_HTML
 except: ACTIVIDADES_HTML = "<div class='step-view' id='step6'><p>En construcción...</p></div>"
 
-ALMACEN_HTML = "<div class='step-view' id='step7'><div class='step-title'>7.- Almacén</div><textarea class='form-control req-step7' id='v_almacen' rows='5' oninput='sincronizarDatos()'></textarea></div>"
+try: from mod_07_almacen import ALMACEN_HTML
+except: ALMACEN_HTML = "<div class='step-view' id='step7'><p>En construcción...</p></div>"
+
 MAQUINARIA_HTML = "<div class='step-view' id='step8'><div class='step-title'>8.- Maquinaria</div><textarea class='form-control req-step8' id='v_maquina' rows='5' oninput='sincronizarDatos()'></textarea></div>"
 HERRAMIENTAS_HTML = "<div class='step-view' id='step9'><div class='step-title'>9.- Herramientas</div><textarea class='form-control req-step9' id='v_herram' rows='4' oninput='sincronizarDatos()'></textarea></div>"
 OCURRENCIAS_HTML = "<div class='step-view' id='step10'><div class='step-title text-danger'>10.- Ocurrencias</div><textarea class='form-control border-danger req-step10' id='v_ocurrencia' rows='6' oninput='sincronizarDatos()'></textarea></div>"

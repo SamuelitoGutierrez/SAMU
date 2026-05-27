@@ -1,5 +1,11 @@
 import os
 import importlib
+import sys
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 from flask import Flask, session, request, redirect, url_for, render_template_string, Blueprint
 from mod_07_almacen import mod_07_bp
 
@@ -21,7 +27,7 @@ def crear_servidor_samu():
     print(" [+] Módulo conectado: mod_07_almacen -> (Ruta: /almacen)")
     
     # Escanea todos los archivos en el directorio actual
-    for archivo in os.listdir('.'):
+    for archivo in os.listdir(BASE_DIR):
         # Solo procesa los archivos que son vistas (interfaces)
         if archivo.startswith('vistas_') and archivo.endswith('.py'):
             nombre_modulo = archivo[:-3] # Quita el '.py'
@@ -114,7 +120,8 @@ def crear_servidor_samu():
 # =====================================================================
 # ARRANQUE DEL SERVIDOR
 # =====================================================================
+app = crear_servidor_samu()
+
 if __name__ == '__main__':
-    app = crear_servidor_samu()
     # Ejecuta el servidor en todas las interfaces de red para Coolify
     app.run(debug=True, host='0.0.0.0', port=5000)

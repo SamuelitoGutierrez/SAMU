@@ -3,6 +3,63 @@ from flask import Blueprint, render_template_string, session, url_for
 from navbar import obtener_navbar
 
 
+ALMACEN_HTML = """
+<style>
+    .m7-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 18px; }
+    .m7-card { border: 1px solid #e2e8f0; background: #ffffff; border-radius: 18px; padding: 18px; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04); }
+    .m7-card:hover, .m7-card.active { transform: translateY(-3px); border-color: #0263a0; background: #f0f9ff; box-shadow: 0 16px 34px rgba(2, 99, 160, 0.12); }
+    .m7-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 16px; color: #ffffff; font-size: 25px; margin-bottom: 12px; }
+    .m7-materiales .m7-icon { background: linear-gradient(135deg, #0369a1, #0ea5e9); }
+    .m7-combustible .m7-icon { background: linear-gradient(135deg, #b45309, #f59e0b); }
+    .m7-title { font-size: 16px; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: 8px; }
+    .m7-desc { font-size: 12px; color: #64748b; line-height: 1.5; margin: 0; }
+    .m7-textarea { border-radius: 16px; min-height: 130px; resize: vertical; }
+    @media (max-width: 576px) { .m7-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="step-view" id="step7">
+    <div class="step-title">7.- Movimientos de Almacen</div>
+    <p class="text-muted small mb-3">Seleccione el tipo de movimiento y describa el control realizado en obra.</p>
+
+    <div class="m7-grid">
+        <div class="m7-card m7-materiales" id="m7_card_materiales" onclick="m7_seleccionar('materiales')">
+            <div class="m7-icon"><i class="bi bi-bricks"></i></div>
+            <div class="m7-title">Movimiento de Materiales de Construccion</div>
+            <p class="m7-desc">Entradas, salidas, consumos y control de materiales para frentes de trabajo.</p>
+        </div>
+
+        <div class="m7-card m7-combustible" id="m7_card_combustible" onclick="m7_seleccionar('combustible')">
+            <div class="m7-icon"><i class="bi bi-fuel-pump-fill"></i></div>
+            <div class="m7-title">Movimiento de Combustible</div>
+            <p class="m7-desc">Despachos, consumo y trazabilidad de combustible para maquinaria.</p>
+        </div>
+    </div>
+
+    <textarea class="form-control req-step7 m7-textarea" id="v_almacen" rows="5" placeholder="Detalle el movimiento de almacen realizado..." oninput="sincronizarDatos()"></textarea>
+</div>
+
+<script>
+    function m7_seleccionar(tipo) {
+        const materiales = document.getElementById('m7_card_materiales');
+        const combustible = document.getElementById('m7_card_combustible');
+        const detalle = document.getElementById('v_almacen');
+
+        materiales.classList.toggle('active', tipo === 'materiales');
+        combustible.classList.toggle('active', tipo === 'combustible');
+
+        if (tipo === 'materiales') {
+            detalle.value = 'Movimiento de materiales de construccion: ';
+        } else {
+            detalle.value = 'Movimiento de combustible: ';
+        }
+
+        detalle.focus();
+        if (typeof sincronizarDatos === 'function') sincronizarDatos();
+    }
+</script>
+"""
+
+
 mod_07_bp = Blueprint("almacen", __name__)
 
 
@@ -376,9 +433,254 @@ def panel_almacen():
 
 @mod_07_bp.route("/almacen/materiales")
 def movimiento_materiales():
-    return "", 204
+    return render_template_string(
+        _PANTALLA_MOVIMIENTO_HTML,
+        menu_superior=obtener_navbar(session.get("rol") == "Admin", session.get("nombre", "Visitante")),
+        titulo="Movimiento de Materiales de Construccion",
+        subtitulo="Registro operativo para entradas, salidas y control de materiales de obra.",
+        icono="bi-box-seam-fill",
+        color="#0284c7",
+        etiqueta="Almacen / Obra",
+        campos=[
+            "Fecha del movimiento",
+            "Material",
+            "Unidad",
+            "Cantidad",
+            "Frente de trabajo",
+            "Responsable",
+        ],
+    )
 
 
 @mod_07_bp.route("/almacen/combustible")
 def movimiento_combustible():
-    return "", 204
+    return render_template_string(
+        _PANTALLA_MOVIMIENTO_HTML,
+        menu_superior=obtener_navbar(session.get("rol") == "Admin", session.get("nombre", "Visitante")),
+        titulo="Movimiento de Combustible",
+        subtitulo="Control de despacho, consumo y trazabilidad para maquinaria y frentes.",
+        icono="bi-fuel-pump-fill",
+        color="#d97706",
+        etiqueta="Combustible / Maquinaria",
+        campos=[
+            "Fecha del despacho",
+            "Equipo o maquinaria",
+            "Tipo de combustible",
+            "Galones",
+            "Horometro / kilometraje",
+            "Operador responsable",
+        ],
+    )
+
+
+_PANTALLA_MOVIMIENTO_HTML = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SAMU - {{ titulo }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            color: #1d1d1f;
+        }
+
+        .mov-shell {
+            min-height: 100vh;
+            padding: 100px 20px 44px;
+        }
+
+        .mov-container {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .mov-card {
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(255, 255, 255, 0.92);
+            border-radius: 28px;
+            box-shadow: 0 26px 80px rgba(15, 23, 42, 0.1);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            overflow: hidden;
+        }
+
+        .mov-header {
+            padding: 34px;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+            display: flex;
+            gap: 22px;
+            align-items: center;
+        }
+
+        .mov-icon {
+            width: 76px;
+            height: 76px;
+            flex: 0 0 76px;
+            display: grid;
+            place-items: center;
+            border-radius: 24px;
+            background: {{ color }};
+            color: #fff;
+            font-size: 34px;
+            box-shadow: 0 18px 42px color-mix(in srgb, {{ color }} 35%, transparent);
+        }
+
+        .mov-kicker {
+            display: inline-flex;
+            padding: 7px 12px;
+            margin-bottom: 8px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.08);
+            color: #334155;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(30px, 4vw, 46px);
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            line-height: 1.02;
+        }
+
+        .mov-header p {
+            margin: 10px 0 0;
+            color: #64748b;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .mov-body {
+            padding: 34px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .field-box {
+            background: #fff;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 18px;
+            padding: 16px;
+        }
+
+        .field-box label {
+            display: block;
+            margin-bottom: 8px;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .field-box input {
+            width: 100%;
+            border: 0;
+            outline: 0;
+            color: #0f172a;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .mov-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            margin-top: 28px;
+            flex-wrap: wrap;
+        }
+
+        .btn-back,
+        .btn-save {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 0;
+            border-radius: 999px;
+            padding: 14px 20px;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .btn-back {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-save {
+            background: #0f172a;
+            color: #fff;
+        }
+
+        @media (max-width: 720px) {
+            .mov-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    {{ menu_superior | safe }}
+    <main class="mov-shell">
+        <section class="mov-container">
+            <div class="mov-card">
+                <div class="mov-header">
+                    <div class="mov-icon">
+                        <i class="bi {{ icono }}"></i>
+                    </div>
+                    <div>
+                        <span class="mov-kicker">{{ etiqueta }}</span>
+                        <h1>{{ titulo }}</h1>
+                        <p>{{ subtitulo }}</p>
+                    </div>
+                </div>
+
+                <div class="mov-body">
+                    <form>
+                        <div class="form-grid">
+                            {% for campo in campos %}
+                            <div class="field-box">
+                                <label>{{ campo }}</label>
+                                <input type="text" placeholder="Ingrese {{ campo | lower }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mov-actions">
+                            <a class="btn-back" href="{{ url_for('almacen.panel_almacen') }}">
+                                <i class="bi bi-arrow-left"></i>
+                                Volver a Almacen
+                            </a>
+                            <button class="btn-save" type="button">
+                                <i class="bi bi-check2-circle"></i>
+                                Guardar movimiento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
+"""
