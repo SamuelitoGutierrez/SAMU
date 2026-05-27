@@ -6,6 +6,7 @@
 from flask import Blueprint, render_template_string, session, redirect, url_for
 from navbar import obtener_navbar
 from datetime import datetime
+from cuaderno_obra import CUADERNO_OBRA_CSS, CUADERNO_OBRA_JS, obtener_cuaderno_obra_html
 
 # ==============================================================================
 # IMPORTACIÓN DINÁMICA
@@ -46,6 +47,7 @@ def redaccion_asiento_residente():
     menu_superior = obtener_navbar(es_admin, nombre_completo)
     fecha_hoy_iso = datetime.now().strftime('%Y-%m-%d')
     numero_hoja = "0001"
+    cuaderno_obra_html = obtener_cuaderno_obra_html(numero_hoja)
 
     html_completo = f"""
     <!DOCTYPE html>
@@ -97,28 +99,7 @@ def redaccion_asiento_residente():
             .elegant-card.active .p-icon {{ color: var(--celeste-obra); transform: scale(1.1); }}
             .elegant-card input {{ border: none; background: transparent; text-align: center; font-weight: 800; font-size: 20px; width: 100%; outline: none; }}
 
-            /* ==========================================
-               CUADERNO FÍSICO CORREGIDO (TEXTO CONTINUO)
-               ========================================== */
-            .papel-fisico {{ background: #fdfdfa; width: 100%; min-height: 980px; padding: 45px 50px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; font-family: Arial, sans-serif; color: #000; position: relative;}}
-            .p-header-top {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }} 
-            .p-title-box {{ text-align: center; flex: 1; margin-left: 60px;}}
-            .p-title-box h1 {{ font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0;}}
-            .p-num {{ font-size: 24px; font-weight: bold; }}
-            .p-meta {{ margin-bottom: 12px; padding-bottom: 14px; border-bottom: 3px solid #000; }}
-            .p-row {{ display: flex; align-items: flex-end; margin-bottom: 6px; }}
-            .p-label {{ font-size: 14px; font-weight: bold; margin-right: 8px; }}
-            .p-line {{ flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }}
-            .lapicero-meta {{ position: absolute; bottom: -1px; left: 10px; font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 22px; font-weight: 700; white-space: nowrap; }}
-            
-            .p-body-lines {{ background-image: repeating-linear-gradient(transparent, transparent 27px, #cbd5e1 28px); line-height: 28px; min-height: 650px; padding-top: 2px; position: relative; margin-top: 15px;}}
-            
-            /* Lapicero ahora está justificado para simular el párrafo continuo */
-            .lapicero {{ font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 22px; line-height: 28px; padding-left: 2px; font-weight: 700; text-align: justify; word-wrap: break-word; }}
-            
-            .p-break-page {{ border-top: 2px dashed #94a3b8; margin: 35px 0 20px 0; padding-top: 15px; position: relative; }}
-            .p-footer {{ display: flex; justify-content: space-between; margin-top: 50px; font-size: 12px; font-weight: bold; color: #000;}}
-            .p-sig {{ border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }}
+            {CUADERNO_OBRA_CSS}
             
             .bottom-bar {{ position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border-top: 1px solid rgba(0,0,0,0.08); padding: 15px 30px; z-index: 900; display: flex; justify-content: space-between; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s;}}
             .bottom-bar.unlocked {{ opacity: 1; pointer-events: all; }}
@@ -220,30 +201,7 @@ def redaccion_asiento_residente():
             </div>
 
             <div class="preview-column">
-                <div class="papel-fisico" id="papelOficial">
-                    <div class="p-header-top">
-                        <div style="width: 80px;"></div>
-                        <div class="p-title-box"><h1>CUADERNO DE OBRA</h1></div>
-                        <div style="text-align: right; width: 80px;"><div class="p-num">Nº <span style="font-size: 26px; margin-left:3px;">{numero_hoja}</span></div></div>
-                    </div>
-                    <div class="p-meta">
-                        <div class="d-flex w-100 mb-1">
-                            <div class="d-flex" style="flex: 0.5;"><span class="p-label">Fecha:</span><div class="p-line"><span class="lapicero-meta" id="lbl_hoja_fecha">--</span></div></div>
-                            <div class="d-flex" style="flex: 0.5; margin-left: 15px;"><span class="p-label">Modalidad:</span><div class="p-line"><span class="lapicero-meta">Administración Directa</span></div></div>
-                        </div>
-                        <div class="p-row"><span class="p-label">Obra:</span><div class="p-line"><span class="lapicero-meta">Mejoramiento de la Carretera Asiruni - Rosaspata</span></div></div>
-                        <div class="p-row"><span class="p-label">Proyecto:</span><div class="p-line"><span class="lapicero-meta">Tramo I</span></div></div>
-                        <div class="p-row"><span class="p-label">Programa:</span><div class="p-line"><span class="lapicero-meta">-</span></div></div>
-                        <div class="p-row"><span class="p-label">Entidad Ejecutora:</span><div class="p-line"><span class="lapicero-meta">Gobierno Regional Puno</span></div></div>
-                    </div>
-
-                    <div class="p-body-lines" id="contenedorLineasCuaderno">
-                        <div class="lapicero" id="out_general"></div>
-                    </div>
-                    <div class="p-footer">
-                        <div class="p-sig">ING. INSPECTOR</div><div class="p-sig">ING. RESIDENTE</div><div class="p-sig">ING. SUPERVISOR</div>
-                    </div>
-                </div>
+                {cuaderno_obra_html}
             </div>
         </div>
 
@@ -346,96 +304,7 @@ def redaccion_asiento_residente():
             function toggleTurno(turno) {{ if(turno === 'm') {{ t_m = !t_m; document.getElementById('card_m').classList.toggle('active', t_m); document.getElementById('v_jornal_m').value = t_m ? "07:00 - 12:00" : ""; document.getElementById('lbl_jornal_m').style.opacity = t_m ? "1" : "0.3"; }} else {{ t_t = !t_t; document.getElementById('card_t').classList.toggle('active', t_t); document.getElementById('v_jornal_t').value = t_t ? "13:00 - 17:00" : ""; document.getElementById('lbl_jornal_t').style.opacity = t_t ? "1" : "0.3"; }} sincronizarDatos(); }}
             function evaluarTarjeta(id) {{ const val = document.getElementById('v_' + id).value; document.getElementById('c_' + id).classList.toggle('active', val > 0); sincronizarDatos(); }}
 
-            // =====================================================================
-            // MOTOR DE RENDERIZADO "TIPO ORACIÓN" CON PAGINACIÓN INTELIGENTE
-            // =====================================================================
-            function paginateText(texto, contenedorId, maxHeight) {{
-                const container = document.getElementById(contenedorId);
-                container.innerHTML = texto;
-                if(container.offsetHeight <= maxHeight) return [texto, ""];
-                
-                // Búsqueda binaria para encontrar el corte perfecto de página
-                let words = texto.split(' ');
-                let low = 0, high = words.length;
-                let best = 0;
-                while(low <= high) {{
-                    let mid = Math.floor((low + high) / 2);
-                    container.innerHTML = words.slice(0, mid).join(' ') + ' ... Van';
-                    if(container.offsetHeight <= maxHeight) {{ best = mid; low = mid + 1; }} 
-                    else {{ high = mid - 1; }}
-                }}
-                return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
-            }}
-
-            function sincronizarDatos() {{
-                if(!g_numAsiento) return;
-                let as_str = g_numAsiento.padStart(4, '0');
-                
-                let cabecera = `<div style="display:flex; justify-content:space-between; width:100%; margin-bottom: 5px; font-family: Arial, sans-serif;"><div style="padding-left:40px; font-weight:bold; font-size:17px; color:#000;">ASIENTO No ${{as_str}} DEL RESIDENTE DE OBRA</div><div style="padding-right:10px; font-weight:bold; font-size:17px; color:#000;">${{g_fechaAsiento}}</div></div>`;
-
-                let parrafo = ""; // Aquí construiremos la "Oración continua"
-
-                // 1. Jornal
-                const vJm = document.getElementById('v_jornal_m'); const vJt = document.getElementById('v_jornal_t');
-                const vJ1 = vJm ? vJm.value : ''; const vJ2 = vJt ? vJt.value : '';
-                if(vJ1 || vJ2) {{
-                    parrafo += "1.- Jornal de trabajo: ";
-                    if(vJ1) parrafo += `Mañana: ${{vJ1}}`;
-                    if(vJ1 && vJ2) parrafo += ", ";
-                    if(vJ2) parrafo += `Tarde: ${{vJ2}}`;
-                    parrafo += ". ";
-                }}
-                
-                // 2. Personal (Solo los > 0)
-                let p_data = [
-                    {{k: 'operarios', v: parseInt(document.getElementById('v_oper')?.value||0)}}, {{k: 'oficiales', v: parseInt(document.getElementById('v_ofic')?.value||0)}},
-                    {{k: 'peones', v: parseInt(document.getElementById('v_peon')?.value||0)}}, {{k: 'mecánicos', v: parseInt(document.getElementById('v_meca')?.value||0)}},
-                    {{k: 'controladores', v: parseInt(document.getElementById('v_ctrl')?.value||0)}}, {{k: 'operadores', v: parseInt(document.getElementById('v_ope_maq')?.value||0)}}
-                ];
-                let p_filtrado = p_data.filter(x => x.v > 0);
-                if(p_filtrado.length > 0) {{
-                    parrafo += "2.- Personal de obra: ";
-                    parrafo += p_filtrado.map(x => `${{x.v.toString().padStart(2,'0')}} ${{x.k}}`).join(', ') + ". ";
-                }}
-
-                // 3. Partidas M3
-                if (typeof window.m3_lista !== 'undefined' && window.m3_lista.length > 0) {{
-                    parrafo += "3.- Partidas ejecutadas: ";
-                    parrafo += window.m3_lista.map(p => p.metrado ? `${{p.item}} ${{p.descripcion}} = ${{p.metrado}} ${{p.unidad}}` : `${{p.item}} ${{p.descripcion}}`).join('; ') + ". ";
-                }}
-
-                // Textos Libres 4, 5, 6, 7, 8, 9, 10
-                const cRestantes = [ 
-                    {{id: 'v_mayor_m', t: '4.- Partidas de mayor metrado'}}, {{id: 'v_sub_p', t: '5.- Sub partidas ejecutadas'}},
-                    {{id: 'v_activ', t: '6.- Actividades ejecutadas'}}, {{id: 'v_almacen', t: '7.- Movimiento de almacén'}}, 
-                    {{id: 'v_maquina', t: '8.- Maquinarias y equipos'}}, {{id: 'v_herram', t: '9.- Herramientas manuales'}}, 
-                    {{id: 'v_ocurrencia', t: '10.- Ocurrencias y otros'}} 
-                ];
-                cRestantes.forEach(c => {{ 
-                    const el = document.getElementById(c.id); 
-                    if(el && el.value) {{ parrafo += `${{c.t}}: ${{el.value.replace(/\\n/g, ' ')}} `; }}
-                }});
-
-                const outContainer = document.getElementById('out_general');
-                
-                // Procesar Paginación Exacta
-                const [pagina1, pagina2] = paginateText(parrafo, 'out_general', 560);
-                
-                if (pagina2 === "") {{
-                    // Si cabe en una hoja
-                    outContainer.innerHTML = cabecera + pagina1;
-                }} else {{
-                    // Si sobrepasa, hacemos la página 1 con "Van" pegado al final del texto y creamos la hoja 2
-                    let htmlFinal = cabecera + pagina1 + ' <span class="p-van-line d-inline" style="padding-left:15px;">... Van</span>';
-                    htmlFinal += `<div class="p-break-page"></div>`;
-                    htmlFinal += `<div style="display:flex; justify-content:space-between; width:100%; margin-bottom:10px; font-family:'Caveat', cursive; color:var(--celeste-obra); font-weight:bold; font-size:22px;">
-                        <div style="padding-left:10px;">... VIENE DEL ASIENTO No ${{as_str}} DEL RESIDENTE DE OBRA</div>
-                        <div style="padding-right:10px;">${{g_fechaAsiento}}</div>
-                    </div>`;
-                    htmlFinal += pagina2;
-                    outContainer.innerHTML = htmlFinal;
-                }}
-            }}
+            {CUADERNO_OBRA_JS}
         </script>
     </body>
     </html>
