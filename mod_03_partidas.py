@@ -1,6 +1,6 @@
 # =========================================================
 # mod_03_partidas.py
-# Módulo: 3.- Partidas Ejecutadas (Tabla Excel + Doble Enter)
+# Módulo: 3.- Partidas Ejecutadas (Corregido: Live Preview + Auto-Foco)
 # =========================================================
 
 from flask import Blueprint
@@ -31,7 +31,7 @@ PARTIDAS_HTML = """
         </button>
     </div>
     
-    <p class="text-muted small mb-3">Busque la partida y presione <b>Enter</b>. Digite el metrado y presione <b>Enter</b> nuevamente.</p>
+    <p class="text-muted small mb-3">Busque la partida y presione <b>Enter</b>. Digite el metrado y presione <b>Enter</b> nuevamente <span class="text-primary fw-bold">(El metrado es opcional)</span>.</p>
     
     <div class="position-relative mb-4">
         <div class="input-group shadow-sm">
@@ -70,13 +70,13 @@ PARTIDAS_HTML = """
                             </tr>
                         </thead>
                         <tbody id="tbodyCatalogo">
-                            </tbody>
+                        </tbody>
                         <tfoot>
                             <tr class="bg-light">
                                 <td><input type="text" id="man_item" placeholder="Ej: 01.01" class="form-control form-control-sm border-0 shadow-none bg-white"></td>
                                 <td><input type="text" id="man_desc" placeholder="Escriba el nombre de la partida..." class="form-control form-control-sm border-0 shadow-none bg-white"></td>
                                 <td><input type="text" id="man_und" placeholder="M3" class="form-control form-control-sm border-0 shadow-none bg-white text-center"></td>
-                                <td class="text-center"><button class="btn btn-sm btn-dark rounded-pill" onclick="agregarPartidaManual()"><i class="bi bi-plus-lg"></i></button></td>
+                                <td class="text-center"><button type="button" class="btn btn-sm btn-dark rounded-pill" onclick="agregarPartidaManual()"><i class="bi bi-plus-lg"></i></button></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -102,7 +102,7 @@ PARTIDAS_HTML = """
                     <input type="number" step="0.01" class="form-control text-center fw-bold" id="inputMetrado" placeholder="0.00" onkeydown="if(event.key==='Enter'){event.preventDefault(); confirmarMetrado();}">
                     <span class="input-group-text bg-white fw-bold text-primary" id="lbl_m_und">UND</span>
                 </div>
-                <p class="small text-muted mb-0">Digite el avance y presione <b>Enter</b>.</p>
+                <p class="small text-muted mb-0">Presione <b>Enter</b> para guardar.</p>
             </div>
         </div>
     </div>
@@ -110,22 +110,30 @@ PARTIDAS_HTML = """
 
 <script>
     // ==========================================
-    // CORRECCIÓN PANTALLA GRIS (BUG Z-INDEX BOOTSTRAP)
+    // INICIALIZACIÓN GLOBAL Y AUTO-FOCO
     // ==========================================
+    // Usamos window.m3_lista para que vistas_residencia.py pueda leerlo e imprimirlo
+    window.m3_lista = window.m3_lista || [];
+    window.catalogoMaestro = window.catalogoMaestro || [];
+    
+    let partidaSeleccionadaTemporal = null;
+    let indexSeleccionadoDropdown = -1;
+    let miniModalInstance = null;
+
+    // Enganche al DOM para mover los modales y forzar el Auto-Focus
     setTimeout(() => {
         const mReg = document.getElementById('modalRegistrarPartidas');
         const mMet = document.getElementById('modalMetrado');
         if(mReg && mReg.parentNode !== document.body) document.body.appendChild(mReg);
-        if(mMet && mMet.parentNode !== document.body) document.body.appendChild(mMet);
+        if(mMet && mMet.parentNode !== document.body) {
+            document.body.appendChild(mMet);
+            
+            // CORRECCIÓN: Evento oficial de Bootstrap para enfocar el cursor sin dar click
+            mMet.addEventListener('shown.bs.modal', function () {
+                document.getElementById('inputMetrado').focus();
+            });
+        }
     }, 500);
-
-    // ==========================================
-    // VARIABLES GLOBALES DEL MÓDULO 3
-    // ==========================================
-    let catalogoMaestro = []; 
-    let partidasEjecutadas = []; 
-    let partidaSeleccionadaTemporal = null;
-    let indexSeleccionadoDropdown = -1;
 
     // ==========================================
     // LÓGICA DE REGISTRO DE PARTIDAS (EXCEL + MANUAL)
@@ -135,10 +143,9 @@ PARTIDAS_HTML = """
         new bootstrap.Modal(document.getElementById('modalRegistrarPartidas')).show(); 
     }
 
-    // INTERCEPTAR "CTRL + V" (PEGADO MÁGICO)
     document.addEventListener('paste', function(e) {
         const modalEl = document.getElementById('modalRegistrarPartidas');
-        if (!modalEl.classList.contains('show')) return; // Solo funciona si la ventana está abierta
+        if (!modalEl || !modalEl.classList.contains('show')) return; 
 
         e.preventDefault();
         let pasteData = (e.clipboardData || window.clipboardData).getData('text');
@@ -151,10 +158,10 @@ PARTIDAS_HTML = """
             if(!row.trim()) return;
             const cols = row.split('\\t'); 
             if(cols.length >= 3) {
-                catalogoMaestro.push({ item: cols[0].trim(), descripcion: cols[1].trim(), unidad: cols[2].trim() });
+                window.catalogoMaestro.push({ item: cols[0].trim(), descripcion: cols[1].trim(), unidad: cols[2].trim() });
                 countAgregados++;
             } else if (cols.length === 2) {
-                catalogoMaestro.push({ item: cols[0].trim(), descripcion: cols[1].trim(), unidad: 'GLB' });
+                window.catalogoMaestro.push({ item: cols[0].trim(), descripcion: cols[1].trim(), unidad: 'GLB' });
                 countAgregados++;
             }
         });
@@ -167,7 +174,6 @@ PARTIDAS_HTML = """
         }
     });
 
-    // AGREGAR UNO POR UNO MANUALMENTE
     function agregarPartidaManual() {
         const item = document.getElementById('man_item').value.trim();
         const desc = document.getElementById('man_desc').value.trim();
@@ -175,7 +181,7 @@ PARTIDAS_HTML = """
 
         if(!desc) { alert("La descripción es obligatoria."); return; }
 
-        catalogoMaestro.push({ item: item || '-', descripcion: desc, unidad: und.toUpperCase() });
+        window.catalogoMaestro.push({ item: item || '-', descripcion: desc, unidad: und.toUpperCase() });
         
         document.getElementById('man_item').value = '';
         document.getElementById('man_desc').value = '';
@@ -186,21 +192,21 @@ PARTIDAS_HTML = """
     }
 
     function eliminarDelCatalogo(index) {
-        catalogoMaestro.splice(index, 1);
+        window.catalogoMaestro.splice(index, 1);
         renderizarTablaCatalogo();
     }
 
     function renderizarTablaCatalogo() {
         const tbody = document.getElementById('tbodyCatalogo');
-        tbody.innerHTML = catalogoMaestro.map((p, idx) => `
+        tbody.innerHTML = window.catalogoMaestro.map((p, idx) => `
             <tr>
                 <td class="fw-bold text-dark">${p.item}</td>
                 <td class="fw-semibold text-secondary">${p.descripcion}</td>
                 <td class="text-center"><span class="badge-unidad bg-light text-dark">${p.unidad}</span></td>
-                <td class="text-center"><button class="btn btn-sm text-danger border-0 p-0" onclick="eliminarDelCatalogo(${idx})"><i class="bi bi-x-circle-fill"></i></button></td>
+                <td class="text-center"><button type="button" class="btn btn-sm text-danger border-0 p-0" onclick="eliminarDelCatalogo(${idx})"><i class="bi bi-x-circle-fill"></i></button></td>
             </tr>
         `).join('');
-        document.getElementById('lbl_total_cat').innerText = catalogoMaestro.length;
+        document.getElementById('lbl_total_cat').innerText = window.catalogoMaestro.length;
     }
 
     // ==========================================
@@ -210,12 +216,12 @@ PARTIDAS_HTML = """
         const input = document.getElementById('buscadorPartidas').value.toLowerCase();
         const dropdown = document.getElementById('dropdownPartidas');
         
-        if(input === '' || catalogoMaestro.length === 0) {
+        if(input === '' || window.catalogoMaestro.length === 0) {
             dropdown.style.display = 'none';
             return;
         }
 
-        const filtrados = catalogoMaestro.filter(p => p.item.toLowerCase().includes(input) || p.descripcion.toLowerCase().includes(input)).slice(0, 8);
+        const filtrados = window.catalogoMaestro.filter(p => p.item.toLowerCase().includes(input) || p.descripcion.toLowerCase().includes(input)).slice(0, 8);
         
         if(filtrados.length > 0) {
             dropdown.innerHTML = filtrados.map((p, idx) => `
@@ -262,8 +268,6 @@ PARTIDAS_HTML = """
     // ==========================================
     // MINI MODAL DE METRADO
     // ==========================================
-    let miniModalInstance = null;
-
     function abrirMiniModal(indexFiltrado) {
         const dropdown = document.getElementById('dropdownPartidas');
         const filtrados = JSON.parse(dropdown.dataset.filtrados);
@@ -283,18 +287,18 @@ PARTIDAS_HTML = """
         if(!miniModalInstance) miniModalInstance = new bootstrap.Modal(document.getElementById('modalMetrado'));
         miniModalInstance.show();
         
-        setTimeout(() => { document.getElementById('inputMetrado').focus(); }, 400);
+        // El auto-focus ahora es manejado por el evento 'shown.bs.modal' al inicio del script.
     }
 
     function confirmarMetrado() {
         const metradoVal = document.getElementById('inputMetrado').value;
-        if(metradoVal === '') { alert("Debe digitar el avance del día. Si no hubo, escriba 0"); return; }
         
-        partidasEjecutadas.push({
+        // Se inyecta en la variable global window.m3_lista para que vistas_residencia lo lea
+        window.m3_lista.push({
             item: partidaSeleccionadaTemporal.item,
             descripcion: partidaSeleccionadaTemporal.descripcion,
             unidad: partidaSeleccionadaTemporal.unidad,
-            metrado: parseFloat(metradoVal).toFixed(2)
+            metrado: metradoVal !== '' ? parseFloat(metradoVal).toFixed(2) : ''
         });
 
         miniModalInstance.hide();
@@ -309,22 +313,22 @@ PARTIDAS_HTML = """
     }
 
     function eliminarPartidaEjecutada(index) { 
-        partidasEjecutadas.splice(index, 1); 
-        if(partidasEjecutadas.length === 0) document.getElementById('v_partidas').value = ""; 
+        window.m3_lista.splice(index, 1); 
+        if(window.m3_lista.length === 0) document.getElementById('v_partidas').value = ""; 
         renderizarPartidasEjecutadas(); 
         if (typeof sincronizarDatos === "function") sincronizarDatos(); 
     }
 
     function renderizarPartidasEjecutadas() {
         const container = document.getElementById('listaPartidasAgregadas');
-        container.innerHTML = partidasEjecutadas.map((p, index) => `
+        container.innerHTML = window.m3_lista.map((p, index) => `
             <div class="bg-white border rounded-3 p-2 d-flex justify-content-between align-items-center shadow-sm" style="border-left: 4px solid #0263a0 !important;">
                 <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 350px;">
                     <span class="badge-item">${p.item}</span>
                     <span class="small fw-semibold text-truncate" title="${p.descripcion}">${p.descripcion}</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <span class="fw-bold text-dark fs-6">${p.metrado} <small class="text-muted" style="font-size:10px;">${p.unidad}</small></span>
+                    <span class="fw-bold text-dark fs-6">${p.metrado ? p.metrado : '-'} <small class="text-muted" style="font-size:10px;">${p.metrado ? p.unidad : ''}</small></span>
                     <button type="button" class="btn btn-sm text-danger border-0 ms-2" onclick="eliminarPartidaEjecutada(${index})"><i class="bi bi-trash"></i></button>
                 </div>
             </div>
