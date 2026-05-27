@@ -1,6 +1,6 @@
 # =========================================================
 # mod_03_partidas.py
-# Módulo: 3.- Partidas Ejecutadas (Corregido: Live Preview + Auto-Foco)
+# Módulo: 3.- Partidas Ejecutadas (Panel de Pegado Inteligente 4 Columnas)
 # =========================================================
 
 from flask import Blueprint
@@ -16,22 +16,21 @@ PARTIDAS_HTML = """
     .badge-item { background: #1e293b; color: white; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; }
     .badge-unidad { background: #e2e8f0; color: #475569; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; margin-left: auto;}
     
-    /* Estilos de la tabla tipo Excel */
-    .excel-table th { background: #f8fafc; font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;}
-    .excel-table td { font-size: 13px; vertical-align: middle; border-color: #f1f5f9;}
-    .excel-paste-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 10px; background: #f8fafc; text-align: center; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-bottom: 15px;}
-    .excel-paste-zone:hover { border-color: #0263a0; color: #0263a0; background: #f0f9ff;}
+    /* Estilos del Panel de Pegado Inteligente */
+    .col-header { background: #f8fafc; border: 1px solid #cbd5e1; border-bottom: none; border-radius: 8px 8px 0 0; padding: 8px; text-align: center; font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 0.5px; }
+    .col-textarea { border-radius: 0 0 8px 8px; border: 1px solid #cbd5e1; font-size: 12px; line-height: 1.8; padding: 10px; resize: none; overflow-x: hidden; white-space: pre; }
+    .col-textarea:focus { border-color: #0263a0; box-shadow: 0 0 0 3px rgba(2,99,160,0.1); outline: none; }
 </style>
 
 <div class="step-view" id="step3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="step-title mb-0">3.- Partidas Ejecutadas</div>
-        <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold shadow-sm" onclick="abrirModalRegistrarPartidas()">
-            <i class="bi bi-grid-3x3"></i> Registrar Partidas
+        <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold shadow-sm" onclick="abrirModalPegadoInteligente()">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Pegado Múltiple (Excel)
         </button>
     </div>
     
-    <p class="text-muted small mb-3">Busque la partida y presione <b>Enter</b>. Digite el metrado y presione <b>Enter</b> nuevamente <span class="text-primary fw-bold">(El metrado es opcional)</span>.</p>
+    <p class="text-muted small mb-3">Busque la partida y presione <b>Enter</b>, o use el botón verde para pegar columnas directamente desde Excel.</p>
     
     <div class="position-relative mb-4">
         <div class="input-group shadow-sm">
@@ -45,47 +44,43 @@ PARTIDAS_HTML = """
     <input type="hidden" id="v_partidas" class="req-step3" value="">
 </div>
 
-<div class="modal fade" id="modalRegistrarPartidas" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalPegadoInteligente" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content" style="border-radius: 20px; overflow: hidden; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
+        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
             <div class="modal-header border-0 bg-light pb-3">
-                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-table text-success me-2"></i> Base de Partidas</h5>
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-layout-three-columns text-success me-2"></i> Importación Masiva (Estilo Excel)</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4 bg-white" id="zonaPegadoModal">
+            <div class="modal-body p-4 bg-white">
                 
-                <div class="excel-paste-zone" id="pasteHint">
-                    <i class="bi bi-clipboard-check fs-4 d-block mb-1"></i>
-                    Copie las 3 columnas desde su Excel y presione <b>Ctrl + V</b> en cualquier parte de esta ventana para cargarlas automáticamente.
-                </div>
+                <p class="small text-muted mb-3 text-center">
+                    <i class="bi bi-info-circle-fill text-primary"></i> 
+                    Pegue sus datos columna por columna en cada cuadro. <b>Si pega las 4 columnas juntas en el primer cuadro, el sistema las distribuirá automáticamente.</b>
+                </p>
 
-                <div class="table-responsive" style="max-height: 40vh; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px;">
-                    <table class="table table-hover mb-0 excel-table">
-                        <thead style="position: sticky; top: 0; z-index: 10;">
-                            <tr>
-                                <th width="15%">ITEM</th>
-                                <th width="65%">PARTIDA</th>
-                                <th width="15%">UND DE MEDIDA</th>
-                                <th width="5%" class="text-center"><i class="bi bi-gear"></i></th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyCatalogo">
-                        </tbody>
-                        <tfoot>
-                            <tr class="bg-light">
-                                <td><input type="text" id="man_item" placeholder="Ej: 01.01" class="form-control form-control-sm border-0 shadow-none bg-white"></td>
-                                <td><input type="text" id="man_desc" placeholder="Escriba el nombre de la partida..." class="form-control form-control-sm border-0 shadow-none bg-white"></td>
-                                <td><input type="text" id="man_und" placeholder="M3" class="form-control form-control-sm border-0 shadow-none bg-white text-center"></td>
-                                <td class="text-center"><button type="button" class="btn btn-sm btn-dark rounded-pill" onclick="agregarPartidaManual()"><i class="bi bi-plus-lg"></i></button></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                <div class="row g-2">
+                    <div class="col-2">
+                        <div class="col-header">1. ÍTEMS</div>
+                        <textarea id="p_items" class="form-control col-textarea text-center fw-bold" rows="12" placeholder="Pegar..." onpaste="handleSmartPaste(event, 'p_items')" onscroll="sincronizarScroll('p_items')"></textarea>
+                    </div>
+                    <div class="col-6">
+                        <div class="col-header">2. DESCRIPCIÓN DE PARTIDAS</div>
+                        <textarea id="p_descs" class="form-control col-textarea fw-semibold text-dark" rows="12" placeholder="Pegar..." onpaste="handleSmartPaste(event, 'p_descs')" onscroll="sincronizarScroll('p_descs')"></textarea>
+                    </div>
+                    <div class="col-2">
+                        <div class="col-header">3. UNIDADES</div>
+                        <textarea id="p_unds" class="form-control col-textarea text-center" rows="12" placeholder="Pegar..." onpaste="handleSmartPaste(event, 'p_unds')" onscroll="sincronizarScroll('p_unds')"></textarea>
+                    </div>
+                    <div class="col-2">
+                        <div class="col-header text-primary">4. METRADOS</div>
+                        <textarea id="p_mets" class="form-control col-textarea text-center fw-bold text-primary" rows="12" placeholder="Pegar..." onpaste="handleSmartPaste(event, 'p_mets')" onscroll="sincronizarScroll('p_mets')"></textarea>
+                    </div>
                 </div>
 
             </div>
-            <div class="modal-footer border-0 pt-0 bg-white">
-                <span class="text-muted small fw-semibold me-auto">Total partidas registradas: <span id="lbl_total_cat" class="text-primary">0</span></span>
-                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Listo, continuar</button>
+            <div class="modal-footer border-0 pt-0 bg-white d-flex justify-content-between">
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" onclick="limpiarGrilla()">Limpiar Cuadros</button>
+                <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" onclick="procesarGrillaMasiva()">Procesar y Agregar al Cuaderno</button>
             </div>
         </div>
     </div>
@@ -102,7 +97,7 @@ PARTIDAS_HTML = """
                     <input type="number" step="0.01" class="form-control text-center fw-bold" id="inputMetrado" placeholder="0.00" onkeydown="if(event.key==='Enter'){event.preventDefault(); confirmarMetrado();}">
                     <span class="input-group-text bg-white fw-bold text-primary" id="lbl_m_und">UND</span>
                 </div>
-                <p class="small text-muted mb-0">Presione <b>Enter</b> para guardar.</p>
+                <p class="small text-muted mb-0">Digite el avance y presione <b>Enter</b>.</p>
             </div>
         </div>
     </div>
@@ -110,9 +105,19 @@ PARTIDAS_HTML = """
 
 <script>
     // ==========================================
-    // INICIALIZACIÓN GLOBAL Y AUTO-FOCO
+    // AUTO-FOCO Y Z-INDEX
     // ==========================================
-    // Usamos window.m3_lista para que vistas_residencia.py pueda leerlo e imprimirlo
+    setTimeout(() => {
+        const mPegado = document.getElementById('modalPegadoInteligente');
+        const mMet = document.getElementById('modalMetrado');
+        if(mPegado && mPegado.parentNode !== document.body) document.body.appendChild(mPegado);
+        if(mMet && mMet.parentNode !== document.body) {
+            document.body.appendChild(mMet);
+            mMet.addEventListener('shown.bs.modal', function () { document.getElementById('inputMetrado').focus(); });
+        }
+    }, 500);
+
+    // Variables Globales 
     window.m3_lista = window.m3_lista || [];
     window.catalogoMaestro = window.catalogoMaestro || [];
     
@@ -120,112 +125,128 @@ PARTIDAS_HTML = """
     let indexSeleccionadoDropdown = -1;
     let miniModalInstance = null;
 
-    // Enganche al DOM para mover los modales y forzar el Auto-Focus
-    setTimeout(() => {
-        const mReg = document.getElementById('modalRegistrarPartidas');
-        const mMet = document.getElementById('modalMetrado');
-        if(mReg && mReg.parentNode !== document.body) document.body.appendChild(mReg);
-        if(mMet && mMet.parentNode !== document.body) {
-            document.body.appendChild(mMet);
-            
-            // CORRECCIÓN: Evento oficial de Bootstrap para enfocar el cursor sin dar click
-            mMet.addEventListener('shown.bs.modal', function () {
-                document.getElementById('inputMetrado').focus();
-            });
-        }
-    }, 500);
-
     // ==========================================
-    // LÓGICA DE REGISTRO DE PARTIDAS (EXCEL + MANUAL)
+    // LÓGICA DE PEGADO INTELIGENTE (4 COLUMNAS)
     // ==========================================
-    function abrirModalRegistrarPartidas() { 
-        renderizarTablaCatalogo();
-        new bootstrap.Modal(document.getElementById('modalRegistrarPartidas')).show(); 
+    function abrirModalPegadoInteligente() { 
+        new bootstrap.Modal(document.getElementById('modalPegadoInteligente')).show(); 
     }
 
-    document.addEventListener('paste', function(e) {
-        const modalEl = document.getElementById('modalRegistrarPartidas');
-        if (!modalEl || !modalEl.classList.contains('show')) return; 
-
-        e.preventDefault();
-        let pasteData = (e.clipboardData || window.clipboardData).getData('text');
-        if(!pasteData.trim()) return;
-
-        const rows = pasteData.split('\\n');
-        let countAgregados = 0;
-
-        rows.forEach(row => {
-            if(!row.trim()) return;
-            const cols = row.split('\\t'); 
-            if(cols.length >= 3) {
-                window.catalogoMaestro.push({ item: cols[0].trim(), descripcion: cols[1].trim(), unidad: cols[2].trim() });
-                countAgregados++;
-            } else if (cols.length === 2) {
-                window.catalogoMaestro.push({ item: cols[0].trim(), descripcion: cols[1].trim(), unidad: 'GLB' });
-                countAgregados++;
-            }
+    function sincronizarScroll(sourceId) {
+        const source = document.getElementById(sourceId);
+        const textareas = ['p_items', 'p_descs', 'p_unds', 'p_mets'];
+        textareas.forEach(id => {
+            if(id !== sourceId) document.getElementById(id).scrollTop = source.scrollTop;
         });
+    }
 
-        if(countAgregados > 0) {
-            renderizarTablaCatalogo();
-            document.getElementById('pasteHint').innerHTML = `<i class="bi bi-check-circle-fill text-success fs-4 d-block mb-1"></i> ¡Excelente! Se cargaron ${countAgregados} partidas al catálogo.`;
-            document.getElementById('pasteHint').style.borderColor = '#10b981';
-            document.getElementById('pasteHint').style.backgroundColor = '#ecfdf5';
+    function limpiarGrilla() {
+        document.getElementById('p_items').value = '';
+        document.getElementById('p_descs').value = '';
+        document.getElementById('p_unds').value = '';
+        document.getElementById('p_mets').value = '';
+    }
+
+    // El cerebro del pegado: Si pegas varias columnas con TAB, las divide
+    function handleSmartPaste(e, targetId) {
+        let pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        
+        if(pasteData.includes('\\t')) {
+            e.preventDefault(); // Detenemos el pegado normal
+            const rows = pasteData.split('\\n');
+            let i_arr=[], d_arr=[], u_arr=[], m_arr=[];
+            
+            rows.forEach(row => {
+                if(!row.trim()) return;
+                const cols = row.split('\\t');
+                
+                // Si pega en la columna 1, asume que vienen 4 columnas
+                if (targetId === 'p_items') {
+                    i_arr.push(cols[0] || ''); 
+                    d_arr.push(cols[1] || ''); 
+                    u_arr.push(cols[2] || ''); 
+                    m_arr.push(cols[3] || '');
+                } 
+                // Si pega en la columna 2, asume que vienen Desc, Und, Metrado
+                else if (targetId === 'p_descs') {
+                    d_arr.push(cols[0] || ''); 
+                    u_arr.push(cols[1] || ''); 
+                    m_arr.push(cols[2] || '');
+                }
+            });
+
+            // Inyectamos a los cuadros sumando a lo que ya había (con un salto de línea si es necesario)
+            if (targetId === 'p_items') {
+                if(i_arr.length) document.getElementById('p_items').value += (document.getElementById('p_items').value ? '\\n' : '') + i_arr.join('\\n');
+                if(d_arr.length) document.getElementById('p_descs').value += (document.getElementById('p_descs').value ? '\\n' : '') + d_arr.join('\\n');
+                if(u_arr.length) document.getElementById('p_unds').value  += (document.getElementById('p_unds').value ? '\\n' : '') + u_arr.join('\\n');
+                if(m_arr.length) document.getElementById('p_mets').value  += (document.getElementById('p_mets').value ? '\\n' : '') + m_arr.join('\\n');
+            } else if (targetId === 'p_descs') {
+                if(d_arr.length) document.getElementById('p_descs').value += (document.getElementById('p_descs').value ? '\\n' : '') + d_arr.join('\\n');
+                if(u_arr.length) document.getElementById('p_unds').value  += (document.getElementById('p_unds').value ? '\\n' : '') + u_arr.join('\\n');
+                if(m_arr.length) document.getElementById('p_mets').value  += (document.getElementById('p_mets').value ? '\\n' : '') + m_arr.join('\\n');
+            }
         }
-    });
-
-    function agregarPartidaManual() {
-        const item = document.getElementById('man_item').value.trim();
-        const desc = document.getElementById('man_desc').value.trim();
-        const und = document.getElementById('man_und').value.trim() || 'GLB';
-
-        if(!desc) { alert("La descripción es obligatoria."); return; }
-
-        window.catalogoMaestro.push({ item: item || '-', descripcion: desc, unidad: und.toUpperCase() });
-        
-        document.getElementById('man_item').value = '';
-        document.getElementById('man_desc').value = '';
-        document.getElementById('man_und').value = '';
-        document.getElementById('man_item').focus();
-        
-        renderizarTablaCatalogo();
+        // Si no detecta TAB, el navegador hará el pegado nativo normal en esa única columna
     }
 
-    function eliminarDelCatalogo(index) {
-        window.catalogoMaestro.splice(index, 1);
-        renderizarTablaCatalogo();
-    }
+    function procesarGrillaMasiva() {
+        const items = document.getElementById('p_items').value.split('\\n');
+        const descs = document.getElementById('p_descs').value.split('\\n');
+        const unds = document.getElementById('p_unds').value.split('\\n');
+        const mets = document.getElementById('p_mets').value.split('\\n');
+        
+        let maxRows = Math.max(items.length, descs.length, unds.length, mets.length);
+        let count = 0;
 
-    function renderizarTablaCatalogo() {
-        const tbody = document.getElementById('tbodyCatalogo');
-        tbody.innerHTML = window.catalogoMaestro.map((p, idx) => `
-            <tr>
-                <td class="fw-bold text-dark">${p.item}</td>
-                <td class="fw-semibold text-secondary">${p.descripcion}</td>
-                <td class="text-center"><span class="badge-unidad bg-light text-dark">${p.unidad}</span></td>
-                <td class="text-center"><button type="button" class="btn btn-sm text-danger border-0 p-0" onclick="eliminarDelCatalogo(${idx})"><i class="bi bi-x-circle-fill"></i></button></td>
-            </tr>
-        `).join('');
-        document.getElementById('lbl_total_cat').innerText = window.catalogoMaestro.length;
+        for(let i = 0; i < maxRows; i++) {
+            let desc = (descs[i] || '').trim();
+            if(!desc) continue; // La descripción es lo único verdaderamente obligatorio
+            
+            let item = (items[i] || '').trim() || '-';
+            let und = (unds[i] || '').trim().toUpperCase() || 'GLB';
+            let met = (mets[i] || '').trim();
+
+            // 1. Guardar en el cuaderno (m3_lista)
+            window.m3_lista.push({
+                item: item,
+                descripcion: desc,
+                unidad: und,
+                metrado: met ? parseFloat(met).toFixed(2) : ''
+            });
+
+            // 2. Guardar en el catálogo global para futuras búsquedas predictivas
+            window.catalogoMaestro.push({ item: item, descripcion: desc, unidad: und });
+            
+            count++;
+        }
+
+        if(count > 0) {
+            limpiarGrilla();
+            bootstrap.Modal.getInstance(document.getElementById('modalPegadoInteligente')).hide();
+            
+            renderizarPartidasEjecutadas();
+            document.getElementById('v_partidas').value = "lleno"; 
+            if (typeof sincronizarDatos === "function") sincronizarDatos();
+        }
     }
 
     // ==========================================
-    // BUSCADOR PREDICTIVO (DOBLE ENTER)
+    // BUSCADOR PREDICTIVO Y MINI MODAL
     // ==========================================
     function filtrarCatalogo() {
         const input = document.getElementById('buscadorPartidas').value.toLowerCase();
         const dropdown = document.getElementById('dropdownPartidas');
         
         if(input === '' || window.catalogoMaestro.length === 0) {
-            dropdown.style.display = 'none';
-            return;
+            dropdown.style.display = 'none'; return;
         }
 
         const filtrados = window.catalogoMaestro.filter(p => p.item.toLowerCase().includes(input) || p.descripcion.toLowerCase().includes(input)).slice(0, 8);
         
         if(filtrados.length > 0) {
             dropdown.innerHTML = filtrados.map((p, idx) => `
-                <div class="dropdown-item-p ${idx === 0 ? 'selected' : ''}" onclick="abrirMiniModal(${idx})" id="drop_item_${idx}">
+                <div class="dropdown-item-p ${idx === 0 ? 'selected' : ''}" onclick="abrirMiniModal(${idx})">
                     <span class="badge-item">${p.item}</span>
                     <span class="text-truncate">${p.descripcion}</span>
                     <span class="badge-unidad">${p.unidad}</span>
@@ -265,35 +286,26 @@ PARTIDAS_HTML = """
         }
     }
 
-    // ==========================================
-    // MINI MODAL DE METRADO
-    // ==========================================
     function abrirMiniModal(indexFiltrado) {
         const dropdown = document.getElementById('dropdownPartidas');
         const filtrados = JSON.parse(dropdown.dataset.filtrados);
         partidaSeleccionadaTemporal = filtrados[indexFiltrado];
         
-        // Limpiamos buscador y cerramos menú
         document.getElementById('buscadorPartidas').value = '';
         dropdown.style.display = 'none';
 
-        // Llenamos datos
         document.getElementById('lbl_m_item').innerText = partidaSeleccionadaTemporal.item;
         document.getElementById('lbl_m_desc').innerText = partidaSeleccionadaTemporal.descripcion;
         document.getElementById('lbl_m_und').innerText = partidaSeleccionadaTemporal.unidad;
         document.getElementById('inputMetrado').value = '';
 
-        // Mostramos
         if(!miniModalInstance) miniModalInstance = new bootstrap.Modal(document.getElementById('modalMetrado'));
         miniModalInstance.show();
-        
-        // El auto-focus ahora es manejado por el evento 'shown.bs.modal' al inicio del script.
     }
 
     function confirmarMetrado() {
         const metradoVal = document.getElementById('inputMetrado').value;
         
-        // Se inyecta en la variable global window.m3_lista para que vistas_residencia lo lea
         window.m3_lista.push({
             item: partidaSeleccionadaTemporal.item,
             descripcion: partidaSeleccionadaTemporal.descripcion,
@@ -305,10 +317,7 @@ PARTIDAS_HTML = """
         renderizarPartidasEjecutadas();
         document.getElementById('v_partidas').value = "lleno"; 
         
-        // Escribe directamente en el Cuaderno Físico
         if (typeof sincronizarDatos === "function") sincronizarDatos();
-        
-        // Devuelve el cursor al buscador principal
         setTimeout(() => { document.getElementById('buscadorPartidas').focus(); }, 300);
     }
 
@@ -328,7 +337,7 @@ PARTIDAS_HTML = """
                     <span class="small fw-semibold text-truncate" title="${p.descripcion}">${p.descripcion}</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <span class="fw-bold text-dark fs-6">${p.metrado ? p.metrado : '-'} <small class="text-muted" style="font-size:10px;">${p.metrado ? p.unidad : ''}</small></span>
+                    <span class="fw-bold text-dark fs-6">${p.metrado ? p.metrado : '-'} <small class="text-muted" style="font-size:10px;">${p.unidad}</small></span>
                     <button type="button" class="btn btn-sm text-danger border-0 ms-2" onclick="eliminarPartidaEjecutada(${index})"><i class="bi bi-trash"></i></button>
                 </div>
             </div>
