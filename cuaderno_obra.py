@@ -23,6 +23,9 @@ CUADERNO_OBRA_CSS = """
             .modulo-redaccion { margin: 0 0 0; }
             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
             .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; }
+            .almacen-bloque { display: block; padding-left: 22px; }
+            .almacen-principal { display: block; padding-left: 18px; font-weight: 600; }
+            .almacen-sub { display: block; padding-left: 44px; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
             .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000;}
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
@@ -181,12 +184,31 @@ CUADERNO_OBRA_JS = """
             }
 
             function htmlModulo(modulo) {
+                if (modulo.titulo.startsWith('7.')) {
+                    return `
+                        <div class="modulo-redaccion">
+                            <span class="modulo-titulo">${escaparHtml(modulo.titulo)}</span>
+                            <span class="almacen-bloque">${htmlAlmacen(modulo.contenido)}</span>
+                        </div>
+                    `;
+                }
                 return `
                     <div class="modulo-redaccion">
                         <span class="modulo-titulo">${escaparHtml(modulo.titulo)}</span>
                         <span class="modulo-contenido">${escaparHtmlConSaltos(modulo.contenido)}</span>
                     </div>
                 `;
+            }
+
+            function htmlAlmacen(texto) {
+                if (!texto || texto === '-') return '<span class="modulo-contenido">-</span>';
+                return String(texto).split('\\n').map(linea => {
+                    const limpia = normalizarOracion(linea);
+                    if (!limpia) return '';
+                    if (limpia.startsWith('*')) return `<span class="almacen-principal">${escaparHtml(limpia)}</span>`;
+                    if (limpia.startsWith('-')) return `<span class="almacen-sub">${escaparHtml(limpia)}</span>`;
+                    return `<span class="almacen-sub">${escaparHtml(limpia)}</span>`;
+                }).join('');
             }
 
             function paginaHtml(asiento, fecha, modulos, continuacion=false, van=false) {
