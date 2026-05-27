@@ -100,6 +100,10 @@ def iniciar_servidor_samu():
             if not any(ruta.startswith(m) for m in ['mecanico.', 'inicio.']):
                 return generar_error_403()
 
+        elif rol == 'Almacenero':
+            if not any(ruta.startswith(m) for m in ['almacen.', 'inicio.']):
+                return generar_error_403()
+
     # 3. INTERFACES DE ERROR ESTILO APPLE
     def generar_error_403():
         return render_template_string("""

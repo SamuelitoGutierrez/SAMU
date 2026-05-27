@@ -277,7 +277,7 @@ HTML_NAVBAR = """
             <a href="/cuaderno" class="nav-link-item" onmouseover="openMenu('cuaderno')">Cuaderno de Obra</a>
             <a href="#" class="nav-link-item" onmouseover="openMenu('personal')">Control del Personal</a>
             <a href="#" class="nav-link-item" onmouseover="openMenu('equipo')">Equipo Mecánico</a>
-            <a href="#" class="nav-link-item" onmouseover="openMenu('almacen')">Almacén</a>
+            <a href="/almacen" class="nav-link-item" onmouseover="openMenu('almacen')">Almacén</a>
             <a href="#" class="nav-link-item" onmouseover="openMenu('avance')">Avance de Obra</a>
             <a href="#" class="nav-link-item" onmouseover="openMenu('sistema')">Sistema</a>
         </div>
@@ -328,9 +328,13 @@ HTML_NAVBAR = """
             sub: [] 
         },
         almacen: { 
-            navLabel: "Almacén", navUrl: "#",
-            title: "Inventario", 
-            main: [{ label: "Materiales y Stock", url: "#" }, { label: "Combustible", url: "#" }], 
+            navLabel: "Almacén", navUrl: "/almacen",
+            title: "Movimientos de Almacén", 
+            main: [
+                { label: "Panel de Movimientos", url: "/almacen" },
+                { label: "Materiales de Construcción", url: "/almacen/materiales" },
+                { label: "Combustible", url: "/almacen/combustible" }
+            ], 
             sub: [] 
         },
         avance: { 
