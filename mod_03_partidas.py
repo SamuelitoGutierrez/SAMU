@@ -1,6 +1,6 @@
 # =========================================================
 # mod_03_partidas.py
-# Módulo: 3.- Partidas Ejecutadas (Pegado Mágico Excel + UI Premium)
+# Módulo: 3.- Partidas Ejecutadas (Pegado Inteligente + Antiduplicados)
 # =========================================================
 
 from flask import Blueprint
@@ -10,7 +10,7 @@ mod_03_bp = Blueprint('mod_03_partidas', __name__)
 PARTIDAS_HTML = """
 <style>
     /* Buscador Predictivo */
-    .dropdown-partidas { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 0 0 12px 12px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 15px 30px rgba(0,0,0,0.15); display: none; }
+    .dropdown-partidas { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 0 0 12px 12px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 15px 35px rgba(0,0,0,0.15); display: none; }
     .dropdown-item-p { padding: 12px 18px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 13px; display: flex; gap: 12px; align-items: center; transition: 0.2s; }
     .dropdown-item-p:hover, .dropdown-item-p.selected { background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #0263a0; color: #0f172a; font-weight: 700; }
     .badge-item { background: #1e293b; color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
@@ -32,15 +32,17 @@ PARTIDAS_HTML = """
     /* Tabla Estilo Excel */
     .excel-table { border-collapse: separate; border-spacing: 0; width: 100%; }
     .excel-table th { background: #f1f5f9; color: #475569; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 10px; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;}
-    .excel-table td { font-size: 13px; font-weight: 500; vertical-align: middle; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; color: #1e293b;}
+    .excel-table td { font-size: 13px; font-weight: 500; vertical-align: middle; padding: 6px 10px; border-bottom: 1px solid #e2e8f0; color: #1e293b;}
     .excel-table tr:hover td { background: #f8fafc; }
+    .input-metrado-grid { width: 90px; text-align: center; font-weight: 700; color: #0263a0; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px; background: #f0f9ff; transition: 0.3s;}
+    .input-metrado-grid:focus { outline: none; border-color: #0263a0; box-shadow: 0 0 0 3px rgba(2,99,160,0.1); background: #ffffff;}
 </style>
 
 <div class="step-view" id="step3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="step-title mb-0">3.- Partidas Ejecutadas</div>
-        <button type="button" class="btn btn-sm text-white rounded-pill fw-bold shadow-sm" style="background: linear-gradient(135deg, #10b981, #059669); border: none;" onclick="abrirModalCatalogoGlobal()">
-            <i class="bi bi-file-earmark-excel me-1"></i> Catálogo Base (Excel)
+        <button type="button" class="btn btn-sm text-white rounded-pill fw-bold shadow-sm px-3" style="background: linear-gradient(135deg, #10b981, #059669); border: none;" onclick="abrirModalCatalogoGlobal()">
+            <i class="bi bi-file-earmark-excel me-1"></i> AGREGAR PARTIDAS
         </button>
     </div>
     
@@ -63,41 +65,51 @@ PARTIDAS_HTML = """
         <div class="modal-content" style="border-radius: 20px; overflow: hidden; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.3);">
             
             <div class="modal-header-gradient d-flex justify-content-between align-items-center">
-                <h5 class="modal-title fw-bold m-0"><i class="bi bi-database-fill-add me-2"></i> Memoria Global de Partidas</h5>
+                <h5 class="modal-title fw-bold m-0"><i class="bi bi-layout-three-columns me-2"></i> PARTIDAS</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
             <div class="modal-body p-4 bg-white">
-                <div class="paste-zone mb-4 shadow-sm">
+                <div class="paste-zone mb-3 shadow-sm">
                     <div class="paste-zone-overlay">
                         <i class="bi bi-clipboard2-check-fill fs-2 mb-1"></i>
                         <span class="fw-bold">Haga clic aquí y presione Ctrl + V para pegar desde Excel</span>
-                        <span class="small fw-normal text-secondary opacity-75">El sistema detectará las columnas automáticamente (Item, Partida, Unidad)</span>
+                        <span class="small fw-normal text-secondary opacity-75">Soporta 3 columnas (Catálogo) o 4 columnas (Incluyendo Metrados diarios)</span>
                     </div>
                     <textarea class="paste-zone-input" onpaste="handlePegadoMagico(event)"></textarea>
                 </div>
 
-                <div class="table-responsive" style="max-height: 40vh; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                <div class="table-responsive" style="max-height: 45vh; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
                     <table class="excel-table">
                         <thead>
                             <tr>
-                                <th width="15%" class="text-center">Ítem</th>
-                                <th width="65%">Descripción de la Partida</th>
+                                <th width="12%" class="text-center">Ítem</th>
+                                <th width="58%">Descripción de la Partida</th>
                                 <th width="10%" class="text-center">Unidad</th>
-                                <th width="10%" class="text-center"><i class="bi bi-gear-fill"></i></th>
+                                <th width="15%" class="text-center text-primary"><i class="bi bi-pencil-square me-1"></i>Metrado</th>
+                                <th width="5%" class="text-center"><i class="bi bi-gear-fill"></i></th>
                             </tr>
                         </thead>
                         <tbody id="tbodyCatalogoGlobal">
                             </tbody>
+                        <tfoot>
+                            <tr class="bg-light border-top">
+                                <td><input type="text" id="man_item" placeholder="01.01" class="form-control form-control-sm border-0 bg-transparent text-center fw-bold"></td>
+                                <td><input type="text" id="man_desc" placeholder="Nueva partida manual..." class="form-control form-control-sm border-0 bg-transparent fw-semibold"></td>
+                                <td><input type="text" id="man_und" placeholder="GLB" class="form-control form-control-sm border-0 bg-transparent text-center"></td>
+                                <td class="text-center"><input type="number" id="man_met" placeholder="Avance" class="form-control form-control-sm border-0 bg-transparent text-center text-primary fw-bold"></td>
+                                <td class="text-center"><button type="button" class="btn btn-sm btn-dark rounded-circle shadow-sm" onclick="agregarPartidaManual()"><i class="bi bi-plus-lg"></i></button></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
             
             <div class="modal-footer border-top-0 bg-light d-flex justify-content-between py-3">
-                <span class="text-muted small fw-semibold">Partidas cargadas: <span id="lbl_total_cat" class="badge bg-primary rounded-pill ms-1 fs-6">0</span></span>
+                <span class="text-muted small fw-semibold">Catálogo en memoria: <span id="lbl_total_cat" class="badge bg-secondary rounded-pill ms-1 fs-6">0</span></span>
                 <div>
                     <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold me-2" onclick="limpiarCatalogo()">Vaciar</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" data-bs-dismiss="modal">Guardar y Cerrar</button>
+                    <button type="button" class="btn text-white rounded-pill px-5 fw-bold shadow-sm" style="background: linear-gradient(135deg, #0263a0, #0284c7);" onclick="procesarTransferenciaAlCuaderno()">Guardar y Transferir</button>
                 </div>
             </div>
         </div>
@@ -120,7 +132,7 @@ PARTIDAS_HTML = """
                     <span class="input-group-text fw-bold text-white" style="background: #0284c7; border: none;" id="m3_lbl_und">UND</span>
                 </div>
                 
-                <p class="small mb-0" style="color: #94a3b8;"><i class="bi bi-keyboard me-1"></i> Presione <b>Enter</b> para continuar</p>
+                <p class="small mb-0" style="color: #94a3b8;"><i class="bi bi-keyboard me-1"></i> Presione <b>Enter</b> para guardar</p>
             </div>
         </div>
     </div>
@@ -137,20 +149,19 @@ PARTIDAS_HTML = """
     let m3_idx = -1;
     let m3_modal_inst = null;
 
-    // Colocar modales en el Body y Auto-Foco instantáneo
     setTimeout(() => {
         const mCat = document.getElementById('modalCatalogoGlobal');
         const mMet = document.getElementById('m3_modal');
         if(mCat && mCat.parentNode !== document.body) document.body.appendChild(mCat);
         if(mMet && mMet.parentNode !== document.body) {
             document.body.appendChild(mMet);
-            // Auto Focus sin necesidad de hacer clic
+            // Auto Focus Inmediato para el mini modal oscuro
             mMet.addEventListener('shown.bs.modal', function () { document.getElementById('m3_input').focus(); });
         }
     }, 500);
 
     // ==========================================
-    // LÓGICA DE PEGADO MÁGICO (EXCEL)
+    // LÓGICA DE PEGADO MÁGICO (EXCEL A TABLA)
     // ==========================================
     function abrirModalCatalogoGlobal() { 
         renderizarTablaCatalogoGlobal();
@@ -172,41 +183,61 @@ PARTIDAS_HTML = """
             let item = '-';
             let desc = '';
             let und = 'GLB';
+            let met = '';
 
-            // Inteligencia de columnas: Detecta si pegaste 1, 2 o 3 columnas
-            if(cols.length >= 3) {
-                item = cols[0].trim();
-                desc = cols[1].trim();
-                und = cols[2].trim().toUpperCase();
+            // Inteligencia que soporta 1, 2, 3 o 4 columnas desde Excel
+            if(cols.length >= 4) {
+                item = cols[0].trim(); desc = cols[1].trim(); und = cols[2].trim().toUpperCase(); met = cols[3].trim();
+            } else if(cols.length === 3) {
+                item = cols[0].trim(); desc = cols[1].trim(); und = cols[2].trim().toUpperCase();
             } else if (cols.length === 2) {
-                // Si son 2 columnas, puede ser (Item, Desc) o (Desc, Unidad)
-                // Si la columna 1 es muy larga, asumimos que es (Desc, Unidad)
-                if(cols[0].length > 15) {
-                    desc = cols[0].trim();
-                    und = cols[1].trim().toUpperCase();
-                } else {
-                    item = cols[0].trim();
-                    desc = cols[1].trim();
-                }
+                if(cols[0].length > 15) { desc = cols[0].trim(); und = cols[1].trim().toUpperCase(); } 
+                else { item = cols[0].trim(); desc = cols[1].trim(); }
             } else if (cols.length === 1) {
                 desc = cols[0].trim();
             }
 
+            // Lógica Antiduplicados (Si ya existe, solo actualizamos su metrado diario)
             if(desc !== '') {
-                window.catalogoMaestro.push({ item: item, descripcion: desc, unidad: und });
-                agregados++;
+                let existe = window.catalogoMaestro.find(c => c.descripcion.toLowerCase() === desc.toLowerCase());
+                if(existe) {
+                    if(met !== '') existe.met_dia = met;
+                } else {
+                    window.catalogoMaestro.push({ item: item, descripcion: desc, unidad: und, met_dia: met });
+                    agregados++;
+                }
             }
         });
 
-        if(agregados > 0) {
-            renderizarTablaCatalogoGlobal();
-            if (typeof mostrarAlerta === "function") {
-                mostrarAlerta(`¡Éxito! Se cargaron ${agregados} partidas en memoria.`, "success");
-            }
+        renderizarTablaCatalogoGlobal();
+        if(agregados > 0 && typeof mostrarAlerta === "function") {
+            mostrarAlerta(`¡Éxito! Se cargaron ${agregados} nuevas partidas al catálogo.`, "success");
+        }
+        e.target.value = ''; // Limpia el textarea oculto
+    }
+
+    function agregarPartidaManual() {
+        const item = document.getElementById('man_item').value.trim() || '-';
+        const desc = document.getElementById('man_desc').value.trim();
+        const und = document.getElementById('man_und').value.trim().toUpperCase() || 'GLB';
+        const met = document.getElementById('man_met').value.trim();
+
+        if(!desc) { alert("La descripción de la partida es obligatoria."); return; }
+
+        let existe = window.catalogoMaestro.find(c => c.descripcion.toLowerCase() === desc.toLowerCase());
+        if(existe) {
+            existe.met_dia = met;
+        } else {
+            window.catalogoMaestro.push({ item: item, descripcion: desc, unidad: und, met_dia: met });
         }
         
-        // Limpia el textarea para el siguiente pegado
-        e.target.value = '';
+        document.getElementById('man_item').value = ''; document.getElementById('man_desc').value = '';
+        document.getElementById('man_und').value = ''; document.getElementById('man_met').value = '';
+        renderizarTablaCatalogoGlobal();
+    }
+
+    function actualizarMetradoGrilla(idx, val) {
+        window.catalogoMaestro[idx].met_dia = val;
     }
 
     function eliminarCatalogo(index) {
@@ -228,14 +259,47 @@ PARTIDAS_HTML = """
                 <td class="fw-bold text-center" style="color:#0263a0;">${p.item}</td>
                 <td class="fw-semibold">${p.descripcion}</td>
                 <td class="text-center"><span class="badge-unidad border border-secondary">${p.unidad}</span></td>
+                <td class="text-center">
+                    <input type="number" step="0.01" class="input-metrado-grid" value="${p.met_dia || ''}" placeholder="-" onchange="actualizarMetradoGrilla(${idx}, this.value)">
+                </td>
                 <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger border-0 p-1" onclick="eliminarCatalogo(${idx})"><i class="bi bi-trash-fill"></i></button></td>
             </tr>
         `).join('');
         document.getElementById('lbl_total_cat').innerText = window.catalogoMaestro.length;
     }
 
+    // TRANSFERIR LOS METRADOS DEL CATÁLOGO AL CUADERNO DE OBRA
+    function procesarTransferenciaAlCuaderno() {
+        let transferidos = 0;
+        
+        window.catalogoMaestro.forEach(p => {
+            if(p.met_dia && p.met_dia.trim() !== '') {
+                // Lo añade al cuaderno
+                window.m3_lista.push({
+                    item: p.item,
+                    descripcion: p.descripcion,
+                    unidad: p.unidad,
+                    metrado: parseFloat(p.met_dia).toFixed(2)
+                });
+                transferidos++;
+                // Lo borra de la grilla para que mañana amanezca en blanco
+                p.met_dia = ''; 
+            }
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('modalCatalogoGlobal')).hide();
+        renderizarTablaCatalogoGlobal(); // Refresca la tabla para limpiar los inputs
+        m3_render();
+        
+        if(transferidos > 0) {
+            document.getElementById('v_partidas').value = "lleno"; 
+            if (typeof sincronizarDatos === "function") sincronizarDatos();
+            if (typeof mostrarAlerta === "function") mostrarAlerta(`Se transfirieron ${transferidos} metrados al Cuaderno de Obra.`, "success");
+        }
+    }
+
     // ==========================================
-    // BUSCADOR PREDICTIVO Y DOBLE ENTER
+    // BUSCADOR PREDICTIVO INDIVIDUAL Y DOBLE ENTER
     // ==========================================
     function m3_filtrar() {
         const val = document.getElementById('m3_buscador').value.toLowerCase();
