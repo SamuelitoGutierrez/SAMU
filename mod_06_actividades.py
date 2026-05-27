@@ -16,10 +16,19 @@ ACTIVIDADES_HTML = """
     .badge-unidad { background: #e2e8f0; color: #475569; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; margin-left: auto;}
     .excel-paste-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 10px; background: #f8fafc; text-align: center; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-bottom: 15px;}
     .excel-paste-zone:hover { border-color: #0263a0; color: #0263a0; background: #f0f9ff;}
+    .m6-btn-primary { background: linear-gradient(135deg, #0263a0, #0ea5e9); color: #fff; border: none; }
+    .m6-chip { border: 1px solid #cbd5e1; border-radius: 999px; background: #fff; padding: 8px 12px; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; transition: 0.2s; }
+    .m6-chip:hover { border-color: #0263a0; background: #f0f9ff; color: #0263a0; transform: translateY(-1px); }
+    .m6-modal-soft { border: none; border-radius: 22px; box-shadow: 0 25px 60px rgba(15,23,42,0.22); overflow: hidden; }
 </style>
 
 <div class="step-view" id="step6">
-    <div class="step-title">6.- Actividades en Ejecución</div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="step-title mb-0">6.- Actividades en Ejecución</div>
+        <button type="button" class="btn btn-sm rounded-pill fw-bold shadow-sm px-3 m6-btn-primary" onclick="abrirModalMasivoM6()">
+            <i class="bi bi-clipboard-plus me-1"></i> Carga masiva / partidas
+        </button>
+    </div>
     
     <p class="text-muted small mb-3">Escriba una actividad o selecciónela del catálogo y presione <b>Enter</b>. Luego avance con Enter por progresiva, metrado y unidad.</p>
     
@@ -33,6 +42,29 @@ ACTIVIDADES_HTML = """
     
     <div id="m6_lista_ui" class="d-flex flex-column gap-2 mb-3"></div>
     <input type="hidden" id="v_actividades_status" class="req-step6" value="">
+</div>
+
+<div class="modal fade" id="m6_modal_masivo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content m6-modal-soft">
+            <div class="modal-header border-0 bg-light pb-3">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-card-checklist text-primary me-2"></i> Registrar actividades</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-white">
+                <div class="excel-paste-zone" id="m6_pasteHint">
+                    <i class="bi bi-clipboard-check fs-4 d-block mb-1"></i>
+                    Copie actividades desde Excel y presione <b>Ctrl + V</b> aquí. <br>
+                    <span class="fw-normal text-muted">Formato: Actividad | Progresiva opcional | Metrado opcional | Unidad opcional</span>
+                </div>
+                <div class="small text-muted fw-bold mb-2">Partidas registradas disponibles</div>
+                <div id="m6_partidas_chips" class="d-flex flex-wrap gap-2"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0 bg-white">
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Listo, continuar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="m6_modal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
@@ -94,10 +126,43 @@ ACTIVIDADES_HTML = """
 
     // Lógica Pegado Masivo Excel
     function abrirModalMasivoM6() {
+        m6_render_partidas_registradas();
         document.getElementById('m6_pasteHint').innerHTML = `<i class="bi bi-clipboard-check fs-4 d-block mb-1"></i> Copie desde Excel y presione <b>Ctrl + V</b> aquí.`;
         document.getElementById('m6_pasteHint').style.borderColor = '#cbd5e1';
         document.getElementById('m6_pasteHint').style.backgroundColor = '#f8fafc';
         new bootstrap.Modal(document.getElementById('m6_modal_masivo')).show();
+    }
+
+    function m6_partidas_base() {
+        const desdeM3 = Array.isArray(window.m3_lista) ? window.m3_lista : [];
+        const desdeM4 = Array.isArray(window.m4_lista) ? window.m4_lista : [];
+        const desdeM5 = Array.isArray(window.m5_lista) ? window.m5_lista : [];
+        return [...desdeM3, ...desdeM4, ...desdeM5];
+    }
+
+    function m6_render_partidas_registradas() {
+        const cont = document.getElementById('m6_partidas_chips');
+        const partidas = m6_partidas_base();
+        if(!cont) return;
+        if(partidas.length === 0) {
+            cont.innerHTML = `<div class="text-muted small">Aún no hay partidas registradas en los módulos 3, 4 o 5.</div>`;
+            return;
+        }
+        cont.innerHTML = partidas.map((p, idx) => `
+            <button type="button" class="m6-chip" onclick="m6_actividad_desde_partida(${idx})">
+                ${p.item && p.item !== '-' ? `<span class="badge-item me-1">${p.item}</span>` : ''}
+                ${p.descripcion}
+            </button>
+        `).join('');
+    }
+
+    function m6_actividad_desde_partida(idx) {
+        const partida = m6_partidas_base()[idx];
+        if(!partida) return;
+        const texto = partida.item && partida.item !== '-' ? `${partida.item} ${partida.descripcion}` : partida.descripcion;
+        m6_abrir_libre(texto);
+        const modalMasivo = bootstrap.Modal.getInstance(document.getElementById('m6_modal_masivo'));
+        if(modalMasivo) modalMasivo.hide();
     }
 
     document.addEventListener('paste', function(e) {

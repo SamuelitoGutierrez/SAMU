@@ -97,7 +97,7 @@ CUADERNO_OBRA_JS = """
                     .map(linea => normalizarOracion(linea))
                     .filter(Boolean)
                     .join('\\n');
-                if (texto) modulos.push({ titulo, contenido: texto });
+                modulos.push({ titulo, contenido: texto || '-' });
             }
 
             function cantidadPersonal(cantidad, nombre) {
@@ -114,6 +114,8 @@ CUADERNO_OBRA_JS = """
                     if (vJ1) partes.push(`Mañana: ${vJ1}`);
                     if (vJ2) partes.push(`Tarde: ${vJ2}`);
                     agregarModulo(modulos, '1. Jornal de trabajo', partes.join(', '));
+                } else {
+                    agregarModulo(modulos, '1. Jornal de trabajo', '');
                 }
 
                 const personal = [
@@ -129,10 +131,14 @@ CUADERNO_OBRA_JS = """
                     const primeraLinea = personal.slice(0, 4).map(x => cantidadPersonal(x.v, x.k)).join('    ');
                     const segundaLinea = personal.slice(4).map(x => cantidadPersonal(x.v, x.k)).join('    ');
                     agregarModulo(modulos, '2. Personal de obra', [primeraLinea, segundaLinea].filter(Boolean).join('\\n'));
+                } else {
+                    agregarModulo(modulos, '2. Personal de obra', '');
                 }
 
                 if (Array.isArray(window.m3_lista) && window.m3_lista.length > 0) {
                     agregarModulo(modulos, '3. Partidas ejecutadas', window.m3_lista.map(formatoItem).join('\\n'));
+                } else {
+                    agregarModulo(modulos, '3. Partidas ejecutadas', '');
                 }
 
                 if (Array.isArray(window.m4_lista) && window.m4_lista.length > 0) {
