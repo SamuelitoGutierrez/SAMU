@@ -1,6 +1,7 @@
 import os
 import importlib
 from flask import Flask, session, request, redirect, url_for, render_template_string, Blueprint
+from mod_07_almacen import mod_07_bp
 
 def iniciar_servidor_samu():
     aplicacion = Flask(__name__)
@@ -49,8 +50,16 @@ def iniciar_servidor_samu():
         "vistas_registro_personal", "vistas_residencia", "vistas_supervision", "vistas_topografia"
     ]
 
+    # Registro explicito del Modulo 7 - Movimientos de Almacen.
+    aplicacion.register_blueprint(mod_07_bp)
+    modulos_registrados_directamente = {"mod_07_almacen"}
+
     print("Cargando y enlazando todo el ecosistema de SAMU...")
     for nombre_modulo in todos_los_modulos:
+        if nombre_modulo in modulos_registrados_directamente:
+            print(f" [VISTA OK] Conectado: {nombre_modulo}.py")
+            continue
+
         try:
             modulo = importlib.import_module(nombre_modulo)
             es_vista = False
