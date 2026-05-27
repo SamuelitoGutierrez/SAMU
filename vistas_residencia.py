@@ -8,27 +8,26 @@ from navbar import obtener_navbar
 from datetime import datetime
 
 # ==============================================================================
-# IMPORTACIÓN DINÁMICA DE LOS MÓDULOS
+# IMPORTACIÓN DINÁMICA
 # ==============================================================================
 try: from mod_01_jornal import JORNAL_HTML
-except: JORNAL_HTML = "<div class='step-view active' id='step1'><p>Error: mod_01_jornal.py no encontrado.</p></div>"
+except: JORNAL_HTML = "<div class='step-view active' id='step1'><p>Error: mod_01_jornal.py</p></div>"
 
 try: from mod_02_personal import PERSONAL_HTML
-except: PERSONAL_HTML = "<div class='step-view' id='step2'><p>Error: mod_02_personal.py no encontrado.</p></div>"
+except: PERSONAL_HTML = "<div class='step-view' id='step2'><p>Error: mod_02_personal.py</p></div>"
 
 try: from mod_03_partidas import PARTIDAS_HTML
-except: PARTIDAS_HTML = "<div class='step-view' id='step3'><p>Error: mod_03_partidas.py no encontrado.</p></div>"
+except: PARTIDAS_HTML = "<div class='step-view' id='step3'><p>Error: mod_03_partidas.py</p></div>"
 
 try: from mod_04_mayor_metrado import MAYOR_METRADO_HTML
-except: MAYOR_METRADO_HTML = "<div class='step-view' id='step4'><p>Módulo 04 en construcción...</p></div>"
+except: MAYOR_METRADO_HTML = "<div class='step-view' id='step4'><p>En construcción...</p></div>"
 
 try: from mod_05_sub_partidas import SUB_PARTIDAS_HTML
-except: SUB_PARTIDAS_HTML = "<div class='step-view' id='step5'><p>Módulo 05 en construcción...</p></div>"
+except: SUB_PARTIDAS_HTML = "<div class='step-view' id='step5'><p>En construcción...</p></div>"
 
 try: from mod_06_actividades import ACTIVIDADES_HTML
-except: ACTIVIDADES_HTML = "<div class='step-view' id='step6'><p>Módulo 06 en construcción...</p></div>"
+except: ACTIVIDADES_HTML = "<div class='step-view' id='step6'><p>En construcción...</p></div>"
 
-# Transitorios para 7, 8, 9, 10
 ALMACEN_HTML = "<div class='step-view' id='step7'><div class='step-title'>7.- Almacén</div><textarea class='form-control req-step7' id='v_almacen' rows='5' oninput='sincronizarDatos()'></textarea></div>"
 MAQUINARIA_HTML = "<div class='step-view' id='step8'><div class='step-title'>8.- Maquinaria</div><textarea class='form-control req-step8' id='v_maquina' rows='5' oninput='sincronizarDatos()'></textarea></div>"
 HERRAMIENTAS_HTML = "<div class='step-view' id='step9'><div class='step-title'>9.- Herramientas</div><textarea class='form-control req-step9' id='v_herram' rows='4' oninput='sincronizarDatos()'></textarea></div>"
@@ -43,7 +42,6 @@ def redaccion_asiento_residente():
     es_admin = session.get('rol') == 'Admin'
     nombre_completo = session.get('nombre', 'Ing. Samuel Gutierrez')
     menu_superior = obtener_navbar(es_admin, nombre_completo)
-    
     fecha_hoy_iso = datetime.now().strftime('%Y-%m-%d')
     numero_hoja = "0001"
 
@@ -66,17 +64,14 @@ def redaccion_asiento_residente():
             
             .stepper-container {{ position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); z-index: 900; padding: 15px 20px; overflow-x: auto; white-space: nowrap; display: flex; align-items: center; gap: 8px; opacity: 0; pointer-events: none; transition: opacity 0.5s; }}
             .stepper-container::-webkit-scrollbar {{ display: none; }}
+            .step-btn {{ border: 1px solid #cbd5e1; border-radius: 30px; padding: 10px 20px; font-size: 12px; font-weight: 600; color: #475569; background: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.3s; transform-origin: center; }}
+            .step-btn.active {{ background: #ffffff !important; color: #000000 !important; font-weight: 800 !important; transform: scale(1.15); box-shadow: 0 10px 25px rgba(0,0,0,0.12); border-color: #000000 !important; margin: 0 10px; }}
             
-            .step-btn {{ border: 1px solid #cbd5e1; border-radius: 30px; padding: 10px 20px; font-size: 12px; font-weight: 600; color: #475569; background: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-origin: center; }}
-            .step-btn.active {{ background: #ffffff !important; color: #000000 !important; font-weight: 800 !important; transform: scale(1.15) !important; box-shadow: 0 10px 25px rgba(0,0,0,0.12); border-color: #000000 !important; margin: 0 10px; }}
-            .step-btn.omitted {{ background: #64748b !important; color: white !important; border-color: #475569 !important; }}
-
-            #globalTooltip {{ position: fixed; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); color: #ffffff; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); pointer-events: none; z-index: 999999; opacity: 0; transform: translateY(10px); transition: opacity 0.2s ease, transform 0.2s ease; }}
+            #globalTooltip {{ position: fixed; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); color: #ffffff; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: 0 10px 25px rgba(0,0,0,0.2); pointer-events: none; z-index: 999999; opacity: 0; transform: translateY(10px); transition: opacity 0.2s ease, transform 0.2s ease; }}
             #globalTooltip.visible {{ opacity: 1; transform: translateY(0); }}
 
             .elegant-alert {{ position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 50px; padding: 12px 25px; display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,1); z-index: 9999999; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; pointer-events: none; }}
             .elegant-alert.show {{ transform: translateX(-50%) translateY(0); opacity: 1; }}
-            .alert-icon {{ font-size: 20px; }} .alert-text {{ font-size: 14px; font-weight: 700; color: #1e293b; }}
 
             .split-layout {{ display: flex; gap: 40px; max-width: 1500px; margin: 140px auto 0 auto; padding: 0 20px; align-items: flex-start; filter: blur(5px); pointer-events: none; transition: filter 0.5s; }}
             .split-layout.unlocked {{ filter: blur(0); pointer-events: all; }}
@@ -87,9 +82,8 @@ def redaccion_asiento_residente():
             .step-view.active {{ display: block; animation: floatInUp 0.35s forwards; }}
             .step-view.exit {{ display: block; animation: floatOutDown 0.3s forwards; }}
             .step-title {{ font-size: 22px; font-weight: 800; margin-bottom: 25px; color: #0f172a; letter-spacing: -0.5px;}}
-            .form-control {{ border-radius: 12px; border: 1px solid #cbd5e1; padding: 12px 14px; font-size: 14px; }}
-            .form-control:focus {{ border-color: #0066cc; box-shadow: 0 0 0 4px rgba(0,102,204,0.15); }}
 
+            /* Tarjetas M1 y M2 */
             .time-card {{ background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: all 0.3s;}}
             .time-card.active {{ border-color: var(--celeste-obra); background: #f0f9ff; }}
             .time-card .clock-icon {{ font-size: 28px; color: #94a3b8; }}
@@ -101,7 +95,9 @@ def redaccion_asiento_residente():
             .elegant-card.active .p-icon {{ color: var(--celeste-obra); transform: scale(1.1); }}
             .elegant-card input {{ border: none; background: transparent; text-align: center; font-weight: 800; font-size: 20px; width: 100%; outline: none; }}
 
-            /* CUADERNO FÍSICO (Alineación y Letra de 22px) */
+            /* ==========================================
+               CUADERNO FÍSICO CORREGIDO (TEXTO CONTINUO)
+               ========================================== */
             .papel-fisico {{ background: #fdfdfa; width: 100%; min-height: 980px; padding: 45px 50px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; font-family: Arial, sans-serif; color: #000; position: relative;}}
             .p-header-top {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }} 
             .p-title-box {{ text-align: center; flex: 1; margin-left: 60px;}}
@@ -112,15 +108,23 @@ def redaccion_asiento_residente():
             .p-label {{ font-size: 14px; font-weight: bold; margin-right: 8px; }}
             .p-line {{ flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }}
             .lapicero-meta {{ position: absolute; bottom: -1px; left: 10px; font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 22px; font-weight: 700; white-space: nowrap; }}
+            
             .p-body-lines {{ background-image: repeating-linear-gradient(transparent, transparent 27px, #cbd5e1 28px); line-height: 28px; min-height: 650px; padding-top: 2px; position: relative; margin-top: 15px;}}
-            .lapicero {{ font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 22px; line-height: 28px; padding-left: 2px; font-weight: 700; }}
-            .p-van-line {{ text-align: right; font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 22px; font-weight: 700; display: block; width: 100%; margin-top: 12px; padding-right: 10px;}}
+            
+            /* Lapicero ahora está justificado para simular el párrafo continuo */
+            .lapicero {{ font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 22px; line-height: 28px; padding-left: 2px; font-weight: 700; text-align: justify; word-wrap: break-word; }}
+            
             .p-break-page {{ border-top: 2px dashed #94a3b8; margin: 35px 0 20px 0; padding-top: 15px; position: relative; }}
             .p-footer {{ display: flex; justify-content: space-between; margin-top: 50px; font-size: 12px; font-weight: bold; color: #000;}}
             .p-sig {{ border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }}
             
             .bottom-bar {{ position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border-top: 1px solid rgba(0,0,0,0.08); padding: 15px 30px; z-index: 900; display: flex; justify-content: space-between; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s;}}
             .bottom-bar.unlocked {{ opacity: 1; pointer-events: all; }}
+
+            /* Estilos del Panel de Pegado Inteligente */
+            .col-header {{ background: #f8fafc; border: 1px solid #cbd5e1; border-bottom: none; border-radius: 8px 8px 0 0; padding: 8px; text-align: center; font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 0.5px; }}
+            .col-textarea {{ border-radius: 0 0 8px 8px; border: 1px solid #cbd5e1; font-size: 12px; line-height: 1.8; padding: 10px; resize: none; overflow-x: hidden; white-space: pre; background: #fff;}}
+            .col-textarea:focus {{ border-color: #0263a0; box-shadow: 0 0 0 3px rgba(2,99,160,0.1); outline: none; }}
         </style>
     </head>
     <body>
@@ -141,38 +145,43 @@ def redaccion_asiento_residente():
             </div>
         </div>
 
-        <div class="modal fade" id="modalCatalogoGlobal" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="modalPegadoInteligente" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-xl">
                 <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
                     <div class="modal-header border-0 bg-light pb-3">
-                        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-table text-success me-2"></i> Base Global de Partidas</h5>
+                        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-layout-three-columns text-success me-2"></i> Catálogo Maestro de Partidas</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body p-4 bg-white" id="zonaPegadoModal">
-                        <div id="pasteHint" style="border: 2px dashed #cbd5e1; border-radius: 12px; padding: 10px; background: #f8fafc; text-align: center; color: #64748b; font-size: 12px; font-weight: 600; transition: 0.3s; margin-bottom: 15px;">
-                            <i class="bi bi-clipboard-check fs-4 d-block mb-1"></i>
-                            Copie las 3 columnas desde Excel (ITEM | PARTIDA | UNIDAD) y presione <b>Ctrl + V</b> aquí.
-                        </div>
-                        <div class="table-responsive" style="max-height: 40vh; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px;">
-                            <table class="table table-hover mb-0">
-                                <thead style="position: sticky; top: 0; z-index: 10; background: #f8fafc; font-size: 11px;">
-                                    <tr><th width="15%">ITEM</th><th width="65%">PARTIDA</th><th width="15%">UNIDAD</th><th width="5%" class="text-center"><i class="bi bi-gear"></i></th></tr>
-                                </thead>
-                                <tbody id="tbodyCatalogoGlobal"></tbody>
-                                <tfoot>
-                                    <tr class="bg-light">
-                                        <td><input type="text" id="man_item" placeholder="Ej: 01.01" class="form-control form-control-sm border-0 bg-white"></td>
-                                        <td><input type="text" id="man_desc" placeholder="Nombre de la partida..." class="form-control form-control-sm border-0 bg-white"></td>
-                                        <td><input type="text" id="man_und" placeholder="M3" class="form-control form-control-sm border-0 bg-white text-center"></td>
-                                        <td class="text-center"><button type="button" class="btn btn-sm btn-dark rounded-pill" onclick="agregarPartidaGlobal()"><i class="bi bi-plus-lg"></i></button></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                    <div class="modal-body p-4 bg-white">
+                        <p class="small text-muted mb-3 text-center">
+                            <i class="bi bi-info-circle-fill text-primary"></i> 
+                            Pegue las columnas desde el Expediente Técnico. <b>Esto SOLO alimentará el buscador, NO se escribirá en el cuaderno de hoy.</b>
+                        </p>
+                        <div class="row g-2">
+                            <div class="col-2">
+                                <div class="col-header">1. ÍTEMS</div>
+                                <textarea id="p_items" class="form-control col-textarea text-center fw-bold" rows="12" placeholder="Pegar..." onpaste="handleSmartPaste(event, 'p_items')" onscroll="sincronizarScroll('p_items')"></textarea>
+                            </div>
+                            <div class="col-6">
+                                <div class="col-header">2. DESCRIPCIÓN DE PARTIDAS</div>
+                                <textarea id="p_descs" class="form-control col-textarea fw-semibold text-dark" rows="12" placeholder="Pegar..." onpaste="handleSmartPaste(event, 'p_descs')" onscroll="sincronizarScroll('p_descs')"></textarea>
+                            </div>
+                            <div class="col-2">
+                                <div class="col-header">3. UNIDADES</div>
+                                <textarea id="p_unds" class="form-control col-textarea text-center" rows="12" placeholder="Pegar..." onpaste="handleSmartPaste(event, 'p_unds')" onscroll="sincronizarScroll('p_unds')"></textarea>
+                            </div>
+                            <div class="col-2">
+                                <div class="col-header text-primary">4. METRADO TOTAL (Opcional)</div>
+                                <textarea id="p_mets" class="form-control col-textarea text-center fw-bold text-primary" rows="12" placeholder="Pegar..." onpaste="handleSmartPaste(event, 'p_mets')" onscroll="sincronizarScroll('p_mets')"></textarea>
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer border-0 pt-0 bg-white">
-                        <span class="text-muted small fw-semibold me-auto">Total registradas: <span id="lbl_total_cat" class="text-primary">0</span></span>
-                        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Listo, continuar</button>
+                    <div class="modal-footer border-0 pt-0 bg-white d-flex justify-content-between">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" onclick="limpiarGrilla()">Limpiar Cuadros</button>
+                        <div>
+                            <span class="text-muted small fw-semibold me-3">En memoria: <span id="lbl_total_cat" class="text-primary">0</span></span>
+                            <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" onclick="procesarCatalogoGlobal()">Guardar en Memoria</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -189,7 +198,6 @@ def redaccion_asiento_residente():
             <button type="button" class="step-btn" id="btnStep8" onclick="jumpToStep(8)">8. Maquinaria</button>
             <button type="button" class="step-btn" id="btnStep9" onclick="jumpToStep(9)">9. Herramientas</button>
             <button type="button" class="step-btn" id="btnStep10" onclick="jumpToStep(10)">10. Ocurrencias</button>
-            <button type="button" class="step-btn border-dark text-dark fw-bold" id="btnStep11" onclick="jumpToStep(11)"><i class="bi bi-shield-lock-fill"></i> Firma Final</button>
         </div>
         <div id="globalTooltip"></div>
 
@@ -206,12 +214,6 @@ def redaccion_asiento_residente():
                     {MAQUINARIA_HTML}
                     {HERRAMIENTAS_HTML}
                     {OCURRENCIAS_HTML}
-                    
-                    <div class="step-view" id="step11">
-                        <div class="step-title text-success text-center mb-4"><i class="bi bi-shield-check"></i> Sellar Folio</div>
-                        <p class="text-center text-muted small mb-5">Verifica la hoja de cuaderno generada a la derecha. Al deslizar el candado, los datos quedarán inmutables.</p>
-                        <div class="slider-track" id="sliderTrack" style="width: 100%; max-width: 400px; height: 60px; background: rgba(0,0,0,0.05); border-radius: 30px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0 auto; border: 1px solid rgba(0,0,0,0.05);"><div class="slider-progress" id="sliderProgress" style="position: absolute; left: 0; top: 0; height: 100%; background: rgba(0, 102, 204, 0.1); width: 0; pointer-events: none;"></div><div class="slider-text" id="sliderText" style="font-size: 13px; font-weight: 800; color: #64748b; text-transform: uppercase; z-index: 1; pointer-events: none;">Deslizar para Firmar</div><div class="slider-handle" id="sliderHandle" style="width: 52px; height: 52px; background: #000; color: #fff; border-radius: 50%; position: absolute; left: 4px; display: flex; align-items: center; justify-content: center; z-index: 2; cursor: grab;"><i class="bi bi-lock-fill" style="font-size: 1.2rem;"></i></div></div>
-                    </div>
                 </form>
             </div>
 
@@ -255,10 +257,10 @@ def redaccion_asiento_residente():
         
         <script>
             // CONFIGURACIÓN GLOBAL
-            let g_numAsiento = ""; let g_fechaAsiento = "";
-            let currentStep = 1; const totalSteps = 11; let isAnimating = false;
+            let g_numAsiento = ""; let g_fechaAsiento = ""; let g_fechaRaw = "";
+            let currentStep = 1; const totalSteps = 10; let isAnimating = false;
             
-            // EL CATÁLOGO MAESTRO (Accesible para M3, M4, M5, M6)
+            // EL CATÁLOGO MAESTRO (Accesible para todos) Y LAS LISTAS DIARIAS
             window.catalogoMaestro = [];
             window.m3_lista = []; window.m4_lista = []; window.m5_lista = []; window.m6_lista = [];
 
@@ -276,135 +278,161 @@ def redaccion_asiento_residente():
             function iniciarAsiento() {{ 
                 g_numAsiento = document.getElementById('initNumAsiento').value; let rawDate = document.getElementById('initFecha').value; 
                 if(!g_numAsiento || !rawDate) {{ mostrarAlerta("Complete los datos para iniciar.", "error"); return; }} 
-                g_fechaAsiento = formatearFecha(rawDate); document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento; 
+                g_fechaRaw = rawDate; g_fechaAsiento = formatearFecha(rawDate); document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento; 
                 bootstrap.Modal.getInstance(document.getElementById('modalConfigInicial')).hide(); 
                 document.getElementById('mainLayout').classList.add('unlocked'); document.getElementById('stepperBar').style.opacity = '1'; document.getElementById('stepperBar').style.pointerEvents = 'all'; document.getElementById('bottomBarUI').classList.add('unlocked'); sincronizarDatos(); 
             }}
 
-            // LÓGICA DEL CATÁLOGO GLOBAL (EXCEL)
-            function abrirCatalogoGlobal() {{ new bootstrap.Modal(document.getElementById('modalCatalogoGlobal')).show(); }}
-            document.addEventListener('paste', function(e) {{
-                const modalEl = document.getElementById('modalCatalogoGlobal');
-                if (!modalEl.classList.contains('show')) return;
-                e.preventDefault();
-                let pasteData = (e.clipboardData || window.clipboardData).getData('text');
-                if(!pasteData.trim()) return;
-                const rows = pasteData.split('\\n'); let count = 0;
-                rows.forEach(row => {{
-                    if(!row.trim()) return; const cols = row.split('\\t'); 
-                    if(cols.length >= 3) {{ window.catalogoMaestro.push({{ item: cols[0].trim(), descripcion: cols[1].trim(), unidad: cols[2].trim() }}); count++; }} 
-                    else if (cols.length === 2) {{ window.catalogoMaestro.push({{ item: cols[0].trim(), descripcion: cols[1].trim(), unidad: 'GLB' }}); count++; }}
-                }});
-                if(count > 0) {{ renderizarTablaCatalogoGlobal(); document.getElementById('pasteHint').innerHTML = `<i class="bi bi-check-circle-fill text-success fs-4 d-block mb-1"></i> ¡Excelente! Se cargaron ${{count}} partidas.`; document.getElementById('pasteHint').style.borderColor = '#10b981'; document.getElementById('pasteHint').style.backgroundColor = '#ecfdf5'; }}
-            }});
+            // LÓGICA DEL CATÁLOGO GLOBAL (PEGADO DE 4 COLUMNAS)
+            function abrirModalPegadoInteligente() {{ new bootstrap.Modal(document.getElementById('modalPegadoInteligente')).show(); }}
+            function sincronizarScroll(sourceId) {{ const source = document.getElementById(sourceId); const textareas = ['p_items', 'p_descs', 'p_unds', 'p_mets']; textareas.forEach(id => {{ if(id !== sourceId) document.getElementById(id).scrollTop = source.scrollTop; }}); }}
+            function limpiarGrilla() {{ document.getElementById('p_items').value = ''; document.getElementById('p_descs').value = ''; document.getElementById('p_unds').value = ''; document.getElementById('p_mets').value = ''; }}
             
-            function agregarPartidaGlobal() {{ const item = document.getElementById('man_item').value.trim(); const desc = document.getElementById('man_desc').value.trim(); const und = document.getElementById('man_und').value.trim() || 'GLB'; if(!desc) {{ return; }} window.catalogoMaestro.push({{ item: item || '-', descripcion: desc, unidad: und.toUpperCase() }}); document.getElementById('man_item').value = ''; document.getElementById('man_desc').value = ''; document.getElementById('man_und').value = ''; document.getElementById('man_item').focus(); renderizarTablaCatalogoGlobal(); }}
-            function eliminarCatalogo(index) {{ window.catalogoMaestro.splice(index, 1); renderizarTablaCatalogoGlobal(); }}
-            function renderizarTablaCatalogoGlobal() {{
-                const tbody = document.getElementById('tbodyCatalogoGlobal');
-                tbody.innerHTML = window.catalogoMaestro.map((p, idx) => `<tr><td class="fw-bold text-dark">${{p.item}}</td><td class="fw-semibold text-secondary">${{p.descripcion}}</td><td class="text-center"><span class="badge bg-light text-dark border">${{p.unidad}}</span></td><td class="text-center"><button type="button" class="btn btn-sm text-danger border-0 p-0" onclick="eliminarCatalogo(${{idx}})"><i class="bi bi-x-circle-fill"></i></button></td></tr>`).join('');
-                document.getElementById('lbl_total_cat').innerText = window.catalogoMaestro.length;
+            function handleSmartPaste(e, targetId) {{
+                let pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                if(pasteData.includes('\\t')) {{
+                    e.preventDefault(); const rows = pasteData.split('\\n');
+                    let i_arr=[], d_arr=[], u_arr=[], m_arr=[];
+                    rows.forEach(row => {{
+                        if(!row.trim()) return; const cols = row.split('\\t');
+                        if (targetId === 'p_items') {{ i_arr.push(cols[0]||''); d_arr.push(cols[1]||''); u_arr.push(cols[2]||''); m_arr.push(cols[3]||''); }} 
+                        else if (targetId === 'p_descs') {{ d_arr.push(cols[0]||''); u_arr.push(cols[1]||''); m_arr.push(cols[2]||''); }}
+                    }});
+                    if (targetId === 'p_items') {{
+                        if(i_arr.length) document.getElementById('p_items').value += (document.getElementById('p_items').value ? '\\n' : '') + i_arr.join('\\n');
+                        if(d_arr.length) document.getElementById('p_descs').value += (document.getElementById('p_descs').value ? '\\n' : '') + d_arr.join('\\n');
+                        if(u_arr.length) document.getElementById('p_unds').value += (document.getElementById('p_unds').value ? '\\n' : '') + u_arr.join('\\n');
+                        if(m_arr.length) document.getElementById('p_mets').value += (document.getElementById('p_mets').value ? '\\n' : '') + m_arr.join('\\n');
+                    }} else if (targetId === 'p_descs') {{
+                        if(d_arr.length) document.getElementById('p_descs').value += (document.getElementById('p_descs').value ? '\\n' : '') + d_arr.join('\\n');
+                        if(u_arr.length) document.getElementById('p_unds').value += (document.getElementById('p_unds').value ? '\\n' : '') + u_arr.join('\\n');
+                        if(m_arr.length) document.getElementById('p_mets').value += (document.getElementById('p_mets').value ? '\\n' : '') + m_arr.join('\\n');
+                    }}
+                }}
+            }}
+
+            // ESTO SOLO ALIMENTA LA BASE DE DATOS (NO EL CUADERNO)
+            function procesarCatalogoGlobal() {{
+                const items = document.getElementById('p_items').value.split('\\n');
+                const descs = document.getElementById('p_descs').value.split('\\n');
+                const unds = document.getElementById('p_unds').value.split('\\n');
+                const mets = document.getElementById('p_mets').value.split('\\n');
+                let maxRows = Math.max(items.length, descs.length, unds.length, mets.length);
+                let count = 0;
+                for(let i = 0; i < maxRows; i++) {{
+                    let desc = (descs[i] || '').trim();
+                    if(!desc) continue; 
+                    let item = (items[i] || '').trim() || '-';
+                    let und = (unds[i] || '').trim().toUpperCase() || 'GLB';
+                    let met = (mets[i] || '').trim();
+                    window.catalogoMaestro.push({{ item: item, descripcion: desc, unidad: und, metrado_total: met }});
+                    count++;
+                }}
+                if(count > 0) {{
+                    limpiarGrilla();
+                    document.getElementById('lbl_total_cat').innerText = window.catalogoMaestro.length;
+                    bootstrap.Modal.getInstance(document.getElementById('modalPegadoInteligente')).hide();
+                    mostrarAlerta(`Se guardaron ${{count}} partidas en la memoria del proyecto.`, "success");
+                }}
             }}
 
             // NAVEGACIÓN Y UX
-            const gTooltip = document.getElementById('globalTooltip'); document.querySelectorAll('.step-btn').forEach(btn => {{ btn.addEventListener('mousemove', (e) => {{ gTooltip.innerText = btn.getAttribute('data-tooltip'); gTooltip.style.left = (e.clientX + 15) + 'px'; gTooltip.style.top = (e.clientY + 15) + 'px'; gTooltip.classList.add('visible'); }}); btn.addEventListener('mouseleave', () => {{ gTooltip.classList.remove('visible'); }}); }});
             function jumpToStep(stepIndex) {{ if (isAnimating || currentStep === stepIndex) return; isAnimating = true; const currentView = document.getElementById(`step${{currentStep}}`); currentView.classList.remove('active'); currentView.classList.add('exit'); document.getElementById(`btnStep${{currentStep}}`).classList.remove('active'); setTimeout(() => {{ currentView.classList.remove('exit'); currentStep = stepIndex; document.getElementById(`step${{currentStep}}`).classList.add('active'); document.getElementById(`btnStep${{currentStep}}`).classList.add('active'); const btnAtras = document.getElementById('btnAtras'); if (currentStep > 1) btnAtras.classList.remove('d-none'); else btnAtras.classList.add('d-none'); isAnimating = false; }}, 300); }}
             function siguientePaso() {{ if(currentStep < totalSteps) jumpToStep(currentStep + 1); }} function anteriorPaso() {{ if(currentStep > 1) jumpToStep(currentStep - 1); }} function omitirPaso() {{ siguientePaso(); }}
 
-            // MÓDULO 1 Y 2
             let t_m = true; let t_t = true;
             function toggleTurno(turno) {{ if(turno === 'm') {{ t_m = !t_m; document.getElementById('card_m').classList.toggle('active', t_m); document.getElementById('v_jornal_m').value = t_m ? "07:00 - 12:00" : ""; document.getElementById('lbl_jornal_m').style.opacity = t_m ? "1" : "0.3"; }} else {{ t_t = !t_t; document.getElementById('card_t').classList.toggle('active', t_t); document.getElementById('v_jornal_t').value = t_t ? "13:00 - 17:00" : ""; document.getElementById('lbl_jornal_t').style.opacity = t_t ? "1" : "0.3"; }} sincronizarDatos(); }}
             function evaluarTarjeta(id) {{ const val = document.getElementById('v_' + id).value; document.getElementById('c_' + id).classList.toggle('active', val > 0); sincronizarDatos(); }}
 
-            // RENDERIZADO MAESTRO EN VIVO (LA HOJA DE PAPEL)
+            // =====================================================================
+            // MOTOR DE RENDERIZADO "TIPO ORACIÓN" CON PAGINACIÓN INTELIGENTE
+            // =====================================================================
+            function paginateText(texto, contenedorId, maxHeight) {{
+                const container = document.getElementById(contenedorId);
+                container.innerHTML = texto;
+                if(container.offsetHeight <= maxHeight) return [texto, ""];
+                
+                // Búsqueda binaria para encontrar el corte perfecto de página
+                let words = texto.split(' ');
+                let low = 0, high = words.length;
+                let best = 0;
+                while(low <= high) {{
+                    let mid = Math.floor((low + high) / 2);
+                    container.innerHTML = words.slice(0, mid).join(' ') + ' ... Van';
+                    if(container.offsetHeight <= maxHeight) {{ best = mid; low = mid + 1; }} 
+                    else {{ high = mid - 1; }}
+                }}
+                return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
+            }}
+
             function sincronizarDatos() {{
                 if(!g_numAsiento) return;
                 let as_str = g_numAsiento.padStart(4, '0');
-                let textoPapel = `<div style="display:flex; justify-content:space-between; width:100%; margin-bottom: 5px;"><div style="padding-left:40px;">ASIENTO No ${{as_str}} DEL RESIDENTE DE OBRA</div><div style="padding-right:10px;">${{g_fechaAsiento}}</div></div>`;
+                
+                let cabecera = `<div style="display:flex; justify-content:space-between; width:100%; margin-bottom: 5px; font-family: Arial, sans-serif;"><div style="padding-left:40px; font-weight:bold; font-size:17px; color:#000;">ASIENTO No ${{as_str}} DEL RESIDENTE DE OBRA</div><div style="padding-right:10px; font-weight:bold; font-size:17px; color:#000;">${{g_fechaAsiento}}</div></div>`;
+
+                let parrafo = ""; // Aquí construiremos la "Oración continua"
 
                 // 1. Jornal
                 const vJm = document.getElementById('v_jornal_m'); const vJt = document.getElementById('v_jornal_t');
                 const vJ1 = vJm ? vJm.value : ''; const vJ2 = vJt ? vJt.value : '';
-                if(vJ1 || vJ2) {{ textoPapel += `1.- Jornal de trabajo:<br>`; if(vJ1) textoPapel += `Mañana: ${{vJ1}} `; if(vJ2) textoPapel += `Tarde: ${{vJ2}}`; textoPapel += `<br>`; }}
+                if(vJ1 || vJ2) {{
+                    parrafo += "1.- Jornal de trabajo: ";
+                    if(vJ1) parrafo += `Mañana: ${{vJ1}}`;
+                    if(vJ1 && vJ2) parrafo += ", ";
+                    if(vJ2) parrafo += `Tarde: ${{vJ2}}`;
+                    parrafo += ". ";
+                }}
                 
                 // 2. Personal (Solo los > 0)
                 let p_data = [
-                    {{k: 'operarios', v: parseInt(document.getElementById('v_oper')?.value||0)}},
-                    {{k: 'oficiales', v: parseInt(document.getElementById('v_ofic')?.value||0)}},
-                    {{k: 'peones', v: parseInt(document.getElementById('v_peon')?.value||0)}},
-                    {{k: 'mecánicos', v: parseInt(document.getElementById('v_meca')?.value||0)}},
-                    {{k: 'controladores', v: parseInt(document.getElementById('v_ctrl')?.value||0)}},
-                    {{k: 'operadores', v: parseInt(document.getElementById('v_ope_maq')?.value||0)}}
+                    {{k: 'operarios', v: parseInt(document.getElementById('v_oper')?.value||0)}}, {{k: 'oficiales', v: parseInt(document.getElementById('v_ofic')?.value||0)}},
+                    {{k: 'peones', v: parseInt(document.getElementById('v_peon')?.value||0)}}, {{k: 'mecánicos', v: parseInt(document.getElementById('v_meca')?.value||0)}},
+                    {{k: 'controladores', v: parseInt(document.getElementById('v_ctrl')?.value||0)}}, {{k: 'operadores', v: parseInt(document.getElementById('v_ope_maq')?.value||0)}}
                 ];
                 let p_filtrado = p_data.filter(x => x.v > 0);
                 if(p_filtrado.length > 0) {{
-                    textoPapel += `2.- Personal de obra:<br>`;
-                    let lineas_p = [];
-                    p_filtrado.forEach(x => lineas_p.push(`${{x.v.toString().padStart(2,'0')}} ${{x.k}}`));
-                    textoPapel += lineas_p.join(' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ') + `<br>`;
+                    parrafo += "2.- Personal de obra: ";
+                    parrafo += p_filtrado.map(x => `${{x.v.toString().padStart(2,'0')}} ${{x.k}}`).join(', ') + ". ";
                 }}
 
-                // 3. Partidas M3 (Soporta metrado vacío)
+                // 3. Partidas M3
                 if (typeof window.m3_lista !== 'undefined' && window.m3_lista.length > 0) {{
-                    textoPapel += `3.- Partidas ejecutadas:<br>`;
-                    window.m3_lista.forEach(p => {{ 
-                        if(p.metrado && p.metrado !== '') {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}} &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}<br>`; }}
-                        else {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}}<br>`; }}
-                    }});
-                }}
-                
-                // 4. Mayor Metrado M4
-                if (typeof window.m4_lista !== 'undefined' && window.m4_lista.length > 0) {{
-                    textoPapel += `4.- Mayor metrado ejecutado:<br>`;
-                    window.m4_lista.forEach(p => {{ 
-                        if(p.metrado && p.metrado !== '') {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}} &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}<br>`; }}
-                        else {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}}<br>`; }}
-                    }});
-                }}
-                
-                // 5. Sub Partidas M5
-                if (typeof window.m5_lista !== 'undefined' && window.m5_lista.length > 0) {{
-                    textoPapel += `5.- Sub partidas ejecutadas:<br>`;
-                    window.m5_lista.forEach(p => {{ 
-                        if(p.metrado && p.metrado !== '') {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}} &nbsp;&nbsp;=&nbsp;&nbsp; ${{p.metrado}} ${{p.unidad}}<br>`; }}
-                        else {{ textoPapel += `&nbsp;&nbsp;&nbsp;&nbsp;${{p.item}} &nbsp; ${{p.descripcion}}<br>`; }}
-                    }});
+                    parrafo += "3.- Partidas ejecutadas: ";
+                    parrafo += window.m3_lista.map(p => p.metrado ? `${{p.item}} ${{p.descripcion}} = ${{p.metrado}} ${{p.unidad}}` : `${{p.item}} ${{p.descripcion}}`).join('; ') + ". ";
                 }}
 
-                // Campos Restantes (6 al 10) - (6 se reemplazará luego por su módulo dinámico)
+                // Textos Libres 4, 5, 6, 7, 8, 9, 10
                 const cRestantes = [ 
-                    {{id: 'v_activ', t: '6.- Actividades ejecutadas'}}, 
-                    {{id: 'v_almacen', t: '7.- Movimiento de almacén'}}, 
-                    {{id: 'v_maquina', t: '8.- Maquinarias y equipos'}}, 
-                    {{id: 'v_herram', t: '9.- Herramientas manuales'}}, 
+                    {{id: 'v_mayor_m', t: '4.- Partidas de mayor metrado'}}, {{id: 'v_sub_p', t: '5.- Sub partidas ejecutadas'}},
+                    {{id: 'v_activ', t: '6.- Actividades ejecutadas'}}, {{id: 'v_almacen', t: '7.- Movimiento de almacén'}}, 
+                    {{id: 'v_maquina', t: '8.- Maquinarias y equipos'}}, {{id: 'v_herram', t: '9.- Herramientas manuales'}}, 
                     {{id: 'v_ocurrencia', t: '10.- Ocurrencias y otros'}} 
                 ];
-                cRestantes.forEach(c => {{ const el = document.getElementById(c.id); if(el && el.value) textoPapel += `${{c.t}}:<br>${{el.value.replace(/\\n/g, '<br>')}}<br>`; }});
+                cRestantes.forEach(c => {{ 
+                    const el = document.getElementById(c.id); 
+                    if(el && el.value) {{ parrafo += `${{c.t}}: ${{el.value.replace(/\\n/g, ' ')}} `; }}
+                }});
 
                 const outContainer = document.getElementById('out_general');
-                outContainer.innerHTML = textoPapel;
                 
-                // VAN / VIENE AUTOMÁTICO
-                if (outContainer.offsetHeight > 560) {{
-                    let cPrevio = outContainer.innerHTML;
-                    outContainer.innerHTML = `<div>${{cPrevio}}</div><span class="p-van-line">... Van</span><div class="p-break-page"></div><div style="display:flex; justify-content:space-between; width:100%; margin-bottom:10px; font-family:'Caveat', cursive; color:var(--celeste-obra); font-weight:bold; font-size:22px;"><div style="padding-left:10px;">... VIENE DEL ASIENTO No ${{as_str}} DEL RESIDENTE DE OBRA</div><div style="padding-right:10px;">${{g_fechaAsiento}}</div></div>`;
+                // Procesar Paginación Exacta
+                const [pagina1, pagina2] = paginateText(parrafo, 'out_general', 560);
+                
+                if (pagina2 === "") {{
+                    // Si cabe en una hoja
+                    outContainer.innerHTML = cabecera + pagina1;
+                }} else {{
+                    // Si sobrepasa, hacemos la página 1 con "Van" pegado al final del texto y creamos la hoja 2
+                    let htmlFinal = cabecera + pagina1 + ' <span class="p-van-line d-inline" style="padding-left:15px;">... Van</span>';
+                    htmlFinal += `<div class="p-break-page"></div>`;
+                    htmlFinal += `<div style="display:flex; justify-content:space-between; width:100%; margin-bottom:10px; font-family:'Caveat', cursive; color:var(--celeste-obra); font-weight:bold; font-size:22px;">
+                        <div style="padding-left:10px;">... VIENE DEL ASIENTO No ${{as_str}} DEL RESIDENTE DE OBRA</div>
+                        <div style="padding-right:10px;">${{g_fechaAsiento}}</div>
+                    </div>`;
+                    htmlFinal += pagina2;
+                    outContainer.innerHTML = htmlFinal;
                 }}
-            }}
-            
-            // Slider Final
-            const handle = document.getElementById('sliderHandle'); const track = document.getElementById('sliderTrack'); const progress = document.getElementById('sliderProgress');
-            let isDragging = false, startX = 0, maxSlide = 0;
-            function calcLimits() {{ maxSlide = track.clientWidth - handle.clientWidth - 8; }}
-            window.addEventListener('resize', calcLimits); setTimeout(calcLimits, 500);
-            function startDrag(e) {{ isDragging = true; startX = (e.clientX || e.touches[0].clientX) - handle.offsetLeft; calcLimits(); }}
-            function onDrag(e) {{ if (!isDragging) return; let left = (e.clientX || e.touches[0].clientX) - startX; if (left < 4) left = 4; if (left > maxSlide) left = maxSlide; handle.style.left = left + 'px'; progress.style.width = (left + 23) + 'px'; if (left >= maxSlide - 2) {{ isDragging = false; firmar(); }} }}
-            function stopDrag() {{ if (!isDragging) return; isDragging = false; handle.style.left = '4px'; progress.style.width = '0px'; }}
-            handle.addEventListener('mousedown', startDrag); document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', stopDrag); handle.addEventListener('touchstart', startDrag, {{passive: true}}); document.addEventListener('touchmove', onDrag, {{passive: false}}); document.addEventListener('touchend', stopDrag);
-            function firmar() {{ 
-                handle.style.left = maxSlide + 'px'; progress.style.width = '100%'; handle.style.background = '#10b981'; 
-                handle.innerHTML = '<i class="bi bi-check-lg"></i>'; document.getElementById('sliderText').innerText = "FIRMADO LEGALMENTE"; 
-                mostrarAlerta("¡Asiento cerrado y guardado en Base de Datos con éxito!", "success");
-                setTimeout(() => {{ window.location.href = '/cuaderno'; }}, 2500);
             }}
         </script>
     </body>
