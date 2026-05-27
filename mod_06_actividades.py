@@ -26,7 +26,7 @@ ACTIVIDADES_HTML = """
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="step-title mb-0">6.- Actividades en Ejecución</div>
         <button type="button" class="btn btn-sm rounded-pill fw-bold shadow-sm px-3 m6-btn-primary" onclick="abrirModalMasivoM6()">
-            <i class="bi bi-clipboard-plus me-1"></i> Carga masiva / partidas
+            <i class="bi bi-clipboard-plus me-1"></i> Partidas / carga masiva
         </button>
     </div>
     
@@ -140,6 +140,19 @@ ACTIVIDADES_HTML = """
         return [...desdeM3, ...desdeM4, ...desdeM5];
     }
 
+    function m6_fuente_busqueda() {
+        const catalogo = Array.isArray(window.catalogoMaestro) ? window.catalogoMaestro : [];
+        const partidas = m6_partidas_base();
+        const combinadas = [...partidas, ...catalogo];
+        const vistas = new Set();
+        return combinadas.filter(p => {
+            const clave = `${p.item || '-'}|${(p.descripcion || '').toLowerCase()}`;
+            if(vistas.has(clave) || !p.descripcion) return false;
+            vistas.add(clave);
+            return true;
+        });
+    }
+
     function m6_render_partidas_registradas() {
         const cont = document.getElementById('m6_partidas_chips');
         const partidas = m6_partidas_base();
@@ -213,12 +226,13 @@ ACTIVIDADES_HTML = """
         const val = document.getElementById('m6_buscador').value.toLowerCase();
         const drop = document.getElementById('m6_dropdown');
         
-        if(val === '' || !window.catalogoMaestro || window.catalogoMaestro.length === 0) {
+        const fuente = m6_fuente_busqueda();
+        if(val === '' || fuente.length === 0) {
             drop.style.display = 'none';
             return;
         }
 
-        const filt = window.catalogoMaestro.filter(p => p.item.toLowerCase().includes(val) || p.descripcion.toLowerCase().includes(val)).slice(0, 6);
+        const filt = fuente.filter(p => String(p.item || '-').toLowerCase().includes(val) || String(p.descripcion || '').toLowerCase().includes(val)).slice(0, 8);
         
         if(filt.length > 0) {
             drop.innerHTML = filt.map((p, i) => `

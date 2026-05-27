@@ -108,6 +108,14 @@ def redaccion_asiento_residente():
             .col-header {{ background: #f8fafc; border: 1px solid #cbd5e1; border-bottom: none; border-radius: 8px 8px 0 0; padding: 8px; text-align: center; font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 0.5px; }}
             .col-textarea {{ border-radius: 0 0 8px 8px; border: 1px solid #cbd5e1; font-size: 12px; line-height: 1.8; padding: 10px; resize: none; overflow-x: hidden; white-space: pre; background: #fff;}}
             .col-textarea:focus {{ border-color: #0263a0; box-shadow: 0 0 0 3px rgba(2,99,160,0.1); outline: none; }}
+            .inicio-asiento-card {{ border: none; border-radius: 30px; overflow: hidden; box-shadow: 0 30px 80px rgba(15,23,42,0.28); background: rgba(255,255,255,0.96); backdrop-filter: blur(24px); }}
+            .inicio-asiento-hero {{ background: linear-gradient(135deg, #0f172a, #0263a0); color: #fff; padding: 28px 34px; text-align: center; }}
+            .inicio-asiento-icon {{ width: 62px; height: 62px; border-radius: 22px; display: grid; place-items: center; margin: 0 auto 14px; background: rgba(255,255,255,0.14); font-size: 30px; }}
+            .inicio-asiento-hero h4 {{ margin: 0; font-weight: 800; letter-spacing: -0.4px; }}
+            .inicio-asiento-hero p {{ margin: 8px 0 0; color: rgba(255,255,255,0.76); font-size: 13px; }}
+            .inicio-asiento-body {{ padding: 30px 34px 34px; }}
+            .inicio-input {{ border-radius: 16px !important; border: 1px solid #dbeafe !important; background: #f8fafc !important; font-weight: 800; }}
+            .inicio-input:focus {{ border-color: #0263a0 !important; box-shadow: 0 0 0 4px rgba(2,99,160,0.12) !important; background: #fff !important; }}
         </style>
     </head>
     <body>
@@ -117,12 +125,23 @@ def redaccion_asiento_residente():
 
         <div class="modal fade" id="modalConfigInicial" data-bs-backdrop="static" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content" style="border-radius: 24px; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
-                    <div class="modal-header border-0 pb-0 justify-content-center mt-3"><h4 class="modal-title fw-bold text-primary"><i class="bi bi-journal-plus"></i> Apertura de Asiento</h4></div>
-                    <div class="modal-body px-5 pb-4">
-                        <div class="mb-3"><label class="form-label fw-bold">N° de Asiento</label><input type="number" id="initNumAsiento" class="form-control form-control-lg bg-light" placeholder="Ej: 88"></div>
-                        <div class="mb-4"><label class="form-label fw-bold">Fecha del Asiento</label><input type="date" id="initFecha" class="form-control form-control-lg bg-light" value="{fecha_hoy_iso}"></div>
-                        <button type="button" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold" onclick="iniciarAsiento()">Iniciar Redacción</button>
+                <div class="modal-content inicio-asiento-card">
+                    <div class="inicio-asiento-hero">
+                        <div class="inicio-asiento-icon"><i class="bi bi-journal-richtext"></i></div>
+                        <h4>Apertura de Asiento</h4>
+                        <p>Ingrese el número y fecha para comenzar la redacción del cuaderno.</p>
+                    </div>
+                    <div class="inicio-asiento-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">N° de Asiento</label>
+                            <input type="number" id="initNumAsiento" class="form-control form-control-lg inicio-input" placeholder="Ej: 88" onkeydown="if(event.key==='Enter'){{event.preventDefault(); document.getElementById('initFecha').focus();}}">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted">Fecha del Asiento</label>
+                            <input type="date" id="initFecha" class="form-control form-control-lg inicio-input" value="{fecha_hoy_iso}" onkeydown="if(event.key==='Enter'){{event.preventDefault(); iniciarAsiento();}}">
+                        </div>
+                        <button type="button" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold shadow-sm" onclick="iniciarAsiento()">Comenzar registro <i class="bi bi-arrow-right ms-1"></i></button>
+                        <div class="text-center text-muted small mt-3">También puede presionar <b>Enter</b> para avanzar.</div>
                     </div>
                 </div>
             </div>
@@ -232,7 +251,11 @@ def redaccion_asiento_residente():
                 alerta.classList.add('show'); setTimeout(() => {{ alerta.classList.remove('show'); }}, 3500);
             }}
 
-            document.addEventListener("DOMContentLoaded", function() {{ new bootstrap.Modal(document.getElementById('modalConfigInicial')).show(); }});
+            document.addEventListener("DOMContentLoaded", function() {{
+                const modalInicial = document.getElementById('modalConfigInicial');
+                modalInicial.addEventListener('shown.bs.modal', function () {{ document.getElementById('initNumAsiento').focus(); }});
+                new bootstrap.Modal(modalInicial).show();
+            }});
             function formatearFecha(fechaStr) {{ const dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]; const [y, m, d] = fechaStr.split('-'); const dateObj = new Date(y, m-1, d); let dayIndex = dateObj.getDay() - 1; if(dayIndex === -1) dayIndex = 6; return `${{dias[dayIndex]}}, ${{d}}/${{m}}/${{y}}`; }}
             
             function iniciarAsiento() {{ 
@@ -297,7 +320,7 @@ def redaccion_asiento_residente():
             }}
 
             // NAVEGACIÓN Y UX
-            function jumpToStep(stepIndex) {{ if (isAnimating || currentStep === stepIndex) return; isAnimating = true; const currentView = document.getElementById(`step${{currentStep}}`); currentView.classList.remove('active'); currentView.classList.add('exit'); document.getElementById(`btnStep${{currentStep}}`).classList.remove('active'); setTimeout(() => {{ currentView.classList.remove('exit'); currentStep = stepIndex; document.getElementById(`step${{currentStep}}`).classList.add('active'); document.getElementById(`btnStep${{currentStep}}`).classList.add('active'); const btnAtras = document.getElementById('btnAtras'); if (currentStep > 1) btnAtras.classList.remove('d-none'); else btnAtras.classList.add('d-none'); isAnimating = false; }}, 300); }}
+            function jumpToStep(stepIndex) {{ if (isAnimating || currentStep === stepIndex) return; isAnimating = true; const currentView = document.getElementById(`step${{currentStep}}`); currentView.classList.remove('active'); currentView.classList.add('exit'); document.getElementById(`btnStep${{currentStep}}`).classList.remove('active'); setTimeout(() => {{ currentView.classList.remove('exit'); currentStep = stepIndex; document.getElementById(`step${{currentStep}}`).classList.add('active'); document.getElementById(`btnStep${{currentStep}}`).classList.add('active'); const btnAtras = document.getElementById('btnAtras'); if (currentStep > 1) btnAtras.classList.remove('d-none'); else btnAtras.classList.add('d-none'); if (typeof sincronizarDatos === "function") sincronizarDatos(); isAnimating = false; }}, 300); }}
             function siguientePaso() {{ if(currentStep < totalSteps) jumpToStep(currentStep + 1); }} function anteriorPaso() {{ if(currentStep > 1) jumpToStep(currentStep - 1); }} function omitirPaso() {{ siguientePaso(); }}
 
             let t_m = true; let t_t = true;
