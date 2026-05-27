@@ -9,6 +9,8 @@ ALMACEN_HTML = """
     .m7-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
     .m7-tab { border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 999px; padding: 9px 16px; font-size: 12px; font-weight: 800; transition: 0.2s; }
     .m7-tab.active { background: #0f172a; color: #fff; border-color: #0f172a; box-shadow: 0 10px 24px rgba(15,23,42,0.16); }
+    .m7-tab.materiales.active { background: linear-gradient(135deg, #0369a1, #0ea5e9); border-color: #0ea5e9; }
+    .m7-tab.combustible.active { background: linear-gradient(135deg, #b45309, #f59e0b); border-color: #f59e0b; }
     .m7-btn { border: none; border-radius: 999px; padding: 9px 14px; font-size: 12px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #0263a0, #0ea5e9); box-shadow: 0 10px 24px rgba(2,99,160,0.15); }
     .m7-paste-zone { border: 2px dashed #cbd5e1; border-radius: 16px; background: #f8fafc; padding: 12px; color: #64748b; text-align: center; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
     .m7-paste-zone:focus-within, .m7-paste-zone:hover { border-color: #0263a0; background: #f0f9ff; color: #0263a0; }
@@ -21,14 +23,26 @@ ALMACEN_HTML = """
     .m7-table input:focus { border-color: #0ea5e9; background: #fff; box-shadow: 0 0 0 3px rgba(14,165,233,0.10); }
     .m7-preview { border-radius: 16px; min-height: 86px; resize: vertical; font-size: 12px; background: #f8fafc; }
     .m7-empty { padding: 18px; text-align: center; color: #94a3b8; font-weight: 700; font-size: 12px; }
+    .m7-fuel-quick { display: none; border: 1px solid #fed7aa; background: #fff7ed; border-radius: 16px; padding: 12px; margin-bottom: 12px; }
+    .m7-fuel-quick.active { display: block; }
+    .m7-fuel-grid { display: grid; grid-template-columns: repeat(2, 1fr) auto; gap: 10px; align-items: end; }
+    .m7-fuel-grid label { font-size: 11px; font-weight: 800; color: #92400e; text-transform: uppercase; }
+    .m7-fuel-grid input { border: 1px solid #fed7aa; border-radius: 12px; padding: 9px 10px; font-weight: 800; outline: none; }
+    .m7-fuel-grid input:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }
+    .m7-btn-fuel { border: none; border-radius: 14px; padding: 10px 14px; color: #fff; background: #b45309; font-size: 12px; font-weight: 800; }
+    @media (max-width: 768px) { .m7-fuel-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) { .m7-table { min-width: 760px; } .m7-table-wrap { overflow-x: auto; } }
 </style>
 
 <div class="step-view" id="step7">
     <div class="step-title">7.- Movimientos de Almacen</div>
-    <p class="text-muted small mb-3">Registre ingreso o salida de materiales de construcción. Puede pegar desde Excel en el orden completo o solo: #, material, unidad y cantidad.</p>
+    <p class="text-muted small mb-3">Registre movimientos de materiales o combustible. Puede pegar desde Excel en el orden: # | Documento | Material/Combustible | Unidad | Cantidad.</p>
 
     <div class="m7-toolbar">
+        <div class="m7-tabs">
+            <button type="button" class="m7-tab materiales active" id="m7_cat_materiales" onclick="m7_cambiar_categoria('materiales')"><i class="bi bi-bricks me-1"></i> Materiales</button>
+            <button type="button" class="m7-tab combustible" id="m7_cat_combustible" onclick="m7_cambiar_categoria('combustible')"><i class="bi bi-fuel-pump-fill me-1"></i> Combustible</button>
+        </div>
         <div class="m7-tabs">
             <button type="button" class="m7-tab active" id="m7_tab_ingreso" onclick="m7_cambiar_tipo('ingreso')"><i class="bi bi-box-arrow-in-down me-1"></i> Ingreso</button>
             <button type="button" class="m7-tab" id="m7_tab_salida" onclick="m7_cambiar_tipo('salida')"><i class="bi bi-box-arrow-up me-1"></i> Salida</button>
@@ -38,7 +52,22 @@ ALMACEN_HTML = """
 
     <div class="m7-paste-zone">
         <div><i class="bi bi-clipboard-check me-1"></i> Pegue aquí desde Excel con Ctrl + V</div>
-        <textarea id="m7_paste_input" placeholder="Orden completo: # | O/C | Contrato/OS | Material | Unidad | Cantidad"></textarea>
+        <textarea id="m7_paste_input" placeholder="# | Contrato / Servicio / Orden de compra | Material o combustible | Unidad | Cantidad"></textarea>
+    </div>
+
+    <div class="m7-fuel-quick" id="m7_fuel_quick">
+        <div class="small fw-bold mb-2" style="color:#92400e;"><i class="bi bi-lightning-charge-fill me-1"></i>Salida rápida de combustible</div>
+        <div class="m7-fuel-grid">
+            <div>
+                <label>Diesel B5 S-50 (GLN)</label>
+                <input type="number" step="0.01" id="m7_diesel_qty" placeholder="0.00">
+            </div>
+            <div>
+                <label>Gasohol regular (GLN)</label>
+                <input type="number" step="0.01" id="m7_gasohol_qty" placeholder="0.00">
+            </div>
+            <button type="button" class="m7-btn-fuel" onclick="m7_agregar_salida_combustible()">Agregar salida</button>
+        </div>
     </div>
 
     <div class="m7-table-wrap mb-3">
@@ -46,9 +75,8 @@ ALMACEN_HTML = """
             <thead>
                 <tr>
                     <th style="width:50px;">#</th>
-                    <th style="width:120px;">Orden compra</th>
-                    <th style="width:150px;">Contrato / O.S.</th>
-                    <th>Material</th>
+                    <th style="width:190px;">Documento</th>
+                    <th id="m7_th_material">Material</th>
                     <th style="width:120px;">Unidad</th>
                     <th style="width:100px;">Cantidad</th>
                     <th style="width:46px;"></th>
@@ -63,8 +91,23 @@ ALMACEN_HTML = """
 </div>
 
 <script>
-    window.m7_movimientos = window.m7_movimientos || { ingreso: [], salida: [] };
+    window.m7_movimientos = window.m7_movimientos || {
+        materiales: { ingreso: [], salida: [] },
+        combustible: { ingreso: [], salida: [] }
+    };
+    let m7_categoria_actual = 'materiales';
     let m7_tipo_actual = 'ingreso';
+
+    function m7_cambiar_categoria(categoria) {
+        m7_categoria_actual = categoria;
+        document.getElementById('m7_cat_materiales').classList.toggle('active', categoria === 'materiales');
+        document.getElementById('m7_cat_combustible').classList.toggle('active', categoria === 'combustible');
+        document.getElementById('m7_th_material').innerText = categoria === 'combustible' ? 'Combustible' : 'Material';
+        document.querySelector('.m7-btn').innerHTML = categoria === 'combustible'
+            ? '<i class="bi bi-plus-lg me-1"></i> Agregar combustible'
+            : '<i class="bi bi-plus-lg me-1"></i> Agregar material';
+        m7_render();
+    }
 
     function m7_cambiar_tipo(tipo) {
         m7_tipo_actual = tipo;
@@ -74,16 +117,15 @@ ALMACEN_HTML = """
     }
 
     function m7_movs() {
-        return window.m7_movimientos[m7_tipo_actual];
+        return window.m7_movimientos[m7_categoria_actual][m7_tipo_actual];
     }
 
     function m7_agregar_fila(data = {}) {
         m7_movs().push({
             numero: data.numero || (m7_movs().length + 1).toString(),
-            orden: data.orden || '',
-            contrato: data.contrato || '',
+            documento: data.documento || '',
             material: data.material || '',
-            unidad: data.unidad || '',
+            unidad: data.unidad || (m7_categoria_actual === 'combustible' ? 'GLN' : ''),
             cantidad: data.cantidad || ''
         });
         m7_render();
@@ -101,8 +143,8 @@ ALMACEN_HTML = """
 
     function m7_parse_row(cols) {
         const clean = cols.map(c => (c || '').trim());
-        if(clean.length >= 6) {
-            return { numero: clean[0], orden: clean[1], contrato: clean[2], material: clean[3], unidad: clean[4], cantidad: clean[5] };
+        if(clean.length >= 5) {
+            return { numero: clean[0], documento: clean[1], material: clean[2], unidad: clean[3], cantidad: clean[4] };
         }
         if(clean.length >= 4) {
             return { numero: clean[0], material: clean[1], unidad: clean[2], cantidad: clean[3] };
@@ -120,6 +162,27 @@ ALMACEN_HTML = """
         return `${cantidadTxt} ${m.unidad.toUpperCase()} ${m.material.toUpperCase()}`;
     }
 
+    function m7_titulo_categoria(categoria) {
+        return categoria === 'combustible' ? 'Movimiento de combustible' : 'Movimiento de materiales de construcción';
+    }
+
+    function m7_agregar_salida_combustible() {
+        const diesel = document.getElementById('m7_diesel_qty').value;
+        const gasohol = document.getElementById('m7_gasohol_qty').value;
+        const categoriaAnterior = m7_categoria_actual;
+        const tipoAnterior = m7_tipo_actual;
+        m7_categoria_actual = 'combustible';
+        m7_tipo_actual = 'salida';
+        if(diesel) m7_agregar_fila({ material: 'DIESEL B5 S-50', unidad: 'GLN', cantidad: diesel });
+        if(gasohol) m7_agregar_fila({ material: 'GASOHOL REGULAR', unidad: 'GLN', cantidad: gasohol });
+        document.getElementById('m7_diesel_qty').value = '';
+        document.getElementById('m7_gasohol_qty').value = '';
+        m7_categoria_actual = categoriaAnterior;
+        m7_tipo_actual = tipoAnterior;
+        m7_cambiar_categoria('combustible');
+        m7_cambiar_tipo('salida');
+    }
+
     function m7_escape_attr(value) {
         return String(value || '')
             .replace(/&/g, '&amp;')
@@ -130,11 +193,16 @@ ALMACEN_HTML = """
 
     function m7_sincronizar() {
         const partes = [];
-        const ingreso = window.m7_movimientos.ingreso.map(m7_formato_item).filter(Boolean);
-        const salida = window.m7_movimientos.salida.map(m7_formato_item).filter(Boolean);
-
-        if(ingreso.length > 0) partes.push(`* Ingreso de materiales de construcción: ${ingreso.join('; ')}`);
-        if(salida.length > 0) partes.push(`* Salida de materiales de construcción: ${salida.join('; ')}`);
+        ['materiales', 'combustible'].forEach(cat => {
+            const ingreso = window.m7_movimientos[cat].ingreso.map(m7_formato_item).filter(Boolean);
+            const salida = window.m7_movimientos[cat].salida.map(m7_formato_item).filter(Boolean);
+            if(ingreso.length > 0 || salida.length > 0) {
+                const bloque = [`* ${m7_titulo_categoria(cat)}`];
+                if(ingreso.length > 0) bloque.push(`- Ingreso: ${ingreso.join('; ')}`);
+                if(salida.length > 0) bloque.push(`- Salida: ${salida.join('; ')}`);
+                partes.push(bloque.join('\\n'));
+            }
+        });
 
         document.getElementById('v_almacen').value = partes.join('\\n');
         if (typeof sincronizarDatos === 'function') sincronizarDatos();
@@ -143,8 +211,10 @@ ALMACEN_HTML = """
     function m7_render() {
         const tbody = document.getElementById('m7_tbody');
         const lista = m7_movs();
+        const quick = document.getElementById('m7_fuel_quick');
+        if(quick) quick.classList.toggle('active', m7_categoria_actual === 'combustible' && m7_tipo_actual === 'salida');
         if(lista.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7"><div class="m7-empty">No hay materiales registrados en ${m7_tipo_actual}.</div></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6"><div class="m7-empty">No hay ${m7_categoria_actual === 'combustible' ? 'combustible' : 'materiales'} registrados en ${m7_tipo_actual}.</div></td></tr>`;
             m7_sincronizar();
             return;
         }
@@ -152,9 +222,8 @@ ALMACEN_HTML = """
         tbody.innerHTML = lista.map((m, idx) => `
             <tr>
                 <td><input value="${m7_escape_attr(m.numero)}" oninput="m7_actualizar(${idx}, 'numero', this.value)"></td>
-                <td><input value="${m7_escape_attr(m.orden)}" placeholder="O/C" oninput="m7_actualizar(${idx}, 'orden', this.value)"></td>
-                <td><input value="${m7_escape_attr(m.contrato)}" placeholder="Contrato / O.S." oninput="m7_actualizar(${idx}, 'contrato', this.value)"></td>
-                <td><input value="${m7_escape_attr(m.material)}" placeholder="Material" oninput="m7_actualizar(${idx}, 'material', this.value)"></td>
+                <td><input value="${m7_escape_attr(m.documento)}" placeholder="Contrato / Servicio / O.C." oninput="m7_actualizar(${idx}, 'documento', this.value)"></td>
+                <td><input value="${m7_escape_attr(m.material)}" placeholder="${m7_categoria_actual === 'combustible' ? 'Combustible' : 'Material'}" oninput="m7_actualizar(${idx}, 'material', this.value)"></td>
                 <td><input value="${m7_escape_attr(m.unidad)}" placeholder="UND" oninput="m7_actualizar(${idx}, 'unidad', this.value)"></td>
                 <td><input value="${m7_escape_attr(m.cantidad)}" placeholder="0.00" oninput="m7_actualizar(${idx}, 'cantidad', this.value)"></td>
                 <td class="text-center"><button type="button" class="btn btn-sm text-danger border-0" onclick="m7_eliminar(${idx})"><i class="bi bi-trash"></i></button></td>
