@@ -11,18 +11,18 @@ CUADERNO_OBRA_CSS = """
             .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
             .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
             .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
-            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 22px; font-weight: 700; white-space: nowrap; }
+            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Georgia, 'Times New Roman', serif; font-style: italic; color: var(--celeste-obra); font-size: 19px; font-weight: 600; white-space: nowrap; }
             .p-body-lines { position: relative; margin-top: 3px; }
             .pagina-cuaderno { background-image: repeating-linear-gradient(transparent, transparent 27px, #cbd5e1 28px); line-height: 28px; min-height: 650px; padding-top: 0; position: relative; }
             .pagina-cuaderno + .pagina-cuaderno { margin-top: 42px; padding-top: 0; border-top: 2px dashed #94a3b8; }
-            .lapicero { font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 22px; line-height: 28px; padding-left: 2px; font-weight: 700; text-align: justify; word-wrap: break-word; }
-            .encabezado-asiento { position: relative; margin: 0 0 4px; min-height: 28px; font-family: 'Caveat', cursive; color: var(--celeste-obra); font-size: 22px; line-height: 28px; font-weight: 700; }
-            .encabezado-asiento .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; color: #000; font-family: Arial, sans-serif; font-size: 16px; letter-spacing: 0.4px; font-weight: 800; padding: 0 138px 0 12px; }
-            .encabezado-asiento.continuacion .titulo-asiento { text-transform: none; color: var(--celeste-obra); font-family: 'Caveat', cursive; font-size: 22px; font-weight: 700; }
+            .lapicero { font-family: Georgia, 'Times New Roman', serif; font-style: italic; color: var(--celeste-obra); font-size: 19px; line-height: 28px; padding-left: 2px; font-weight: 500; text-align: justify; word-wrap: break-word; }
+            .encabezado-asiento { position: relative; margin: 0 0 4px; min-height: 28px; font-family: Georgia, 'Times New Roman', serif; font-style: italic; color: var(--celeste-obra); font-size: 19px; line-height: 28px; font-weight: 700; }
+            .encabezado-asiento .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; color: var(--celeste-obra); font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 19px; letter-spacing: 0.2px; font-weight: 700; padding: 0 138px 0 12px; }
+            .encabezado-asiento.continuacion .titulo-asiento { text-transform: none; color: var(--celeste-obra); font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 19px; font-weight: 700; }
             .encabezado-asiento .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; color: var(--celeste-obra); }
             .modulo-redaccion { margin: 0 0 0; }
             .modulo-titulo { display: block; font-weight: 800; color: #075985; }
-            .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; }
+            .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
             .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000;}
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
@@ -75,6 +75,10 @@ CUADERNO_OBRA_JS = """
                     .replace(/'/g, '&#039;');
             }
 
+            function escaparHtmlConSaltos(texto) {
+                return escaparHtml(texto).replace(/\\n/g, '<br>');
+            }
+
             function valor(id) {
                 const el = document.getElementById(id);
                 return el ? normalizarOracion(el.value) : '';
@@ -82,14 +86,22 @@ CUADERNO_OBRA_JS = """
 
             function formatoItem(p) {
                 const item = p.item && p.item !== '-' ? `${p.item} ` : '';
-                const metrado = p.metrado ? `, con metrado de ${p.metrado} ${p.unidad || ''}` : '';
-                const progresiva = p.prog ? ` en ${p.prog}` : '';
+                const progresiva = p.prog ? ` - ${p.prog}` : '';
+                const metrado = p.metrado ? `: ${p.metrado} ${p.unidad || ''}` : '';
                 return normalizarOracion(`${item}${p.descripcion || ''}${progresiva}${metrado}`);
             }
 
             function agregarModulo(modulos, titulo, contenido) {
-                const texto = normalizarOracion(contenido);
+                const texto = String(contenido || '')
+                    .split('\\n')
+                    .map(linea => normalizarOracion(linea))
+                    .filter(Boolean)
+                    .join('\\n');
                 if (texto) modulos.push({ titulo, contenido: texto });
+            }
+
+            function cantidadPersonal(cantidad, nombre) {
+                return `(${cantidad.toString().padStart(2, '0')}) ${nombre}`;
             }
 
             function redactarModulosCuaderno() {
@@ -99,51 +111,52 @@ CUADERNO_OBRA_JS = """
                 const vJ2 = valor('v_jornal_t');
                 if (vJ1 || vJ2) {
                     let partes = [];
-                    if (vJ1) partes.push(`manana de ${vJ1}`);
-                    if (vJ2) partes.push(`tarde de ${vJ2}`);
-                    agregarModulo(modulos, '1.- Jornal de trabajo', `Se laboro en el turno de ${partes.join(' y ')}.`);
+                    if (vJ1) partes.push(`Mañana: ${vJ1}`);
+                    if (vJ2) partes.push(`Tarde: ${vJ2}`);
+                    agregarModulo(modulos, '1. Jornal de trabajo', partes.join(', '));
                 }
 
                 const personal = [
-                    {k: 'operarios', v: parseInt(valor('v_oper') || 0)},
-                    {k: 'oficiales', v: parseInt(valor('v_ofic') || 0)},
-                    {k: 'peones', v: parseInt(valor('v_peon') || 0)},
-                    {k: 'mecanicos', v: parseInt(valor('v_meca') || 0)},
-                    {k: 'controladores', v: parseInt(valor('v_ctrl') || 0)},
-                    {k: 'operadores', v: parseInt(valor('v_ope_maq') || 0)}
+                    {k: 'Operarios', v: parseInt(valor('v_oper') || 0)},
+                    {k: 'Oficiales', v: parseInt(valor('v_ofic') || 0)},
+                    {k: 'Peones', v: parseInt(valor('v_peon') || 0)},
+                    {k: 'Mecánicos', v: parseInt(valor('v_meca') || 0)},
+                    {k: 'Controladores de maquinaria', v: parseInt(valor('v_ctrl') || 0)},
+                    {k: 'Operadores de maquinaria', v: parseInt(valor('v_ope_maq') || 0)}
                 ].filter(x => x.v > 0);
-                agregarModulo(
-                    modulos,
-                    '2.- Personal de obra',
-                    personal.length ? `Se conto con ${personal.map(x => `${x.v} ${x.k}`).join(', ')} en obra.` : ''
-                );
+
+                if (personal.length > 0) {
+                    const primeraLinea = personal.slice(0, 3).map(x => cantidadPersonal(x.v, x.k)).join('    ');
+                    const segundaLinea = personal.slice(3).map(x => cantidadPersonal(x.v, x.k)).join('    ');
+                    agregarModulo(modulos, '2. Personal de obra', [primeraLinea, segundaLinea].filter(Boolean).join('\\n'));
+                }
 
                 if (Array.isArray(window.m3_lista) && window.m3_lista.length > 0) {
-                    agregarModulo(modulos, '3.- Partidas ejecutadas', `Se ejecutaron las siguientes partidas: ${window.m3_lista.map(formatoItem).join('; ')}.`);
+                    agregarModulo(modulos, '3. Partidas ejecutadas', window.m3_lista.map(formatoItem).join('\\n'));
                 }
 
                 if (Array.isArray(window.m4_lista) && window.m4_lista.length > 0) {
-                    agregarModulo(modulos, '4.- Partidas de mayor metrado', `Se registraron mayores metrados en: ${window.m4_lista.map(formatoItem).join('; ')}.`);
+                    agregarModulo(modulos, '4. Partidas de mayor metrado', window.m4_lista.map(formatoItem).join('\\n'));
                 } else {
-                    agregarModulo(modulos, '4.- Partidas de mayor metrado', valor('v_mayor_m'));
+                    agregarModulo(modulos, '4. Partidas de mayor metrado', valor('v_mayor_m'));
                 }
 
                 if (Array.isArray(window.m5_lista) && window.m5_lista.length > 0) {
-                    agregarModulo(modulos, '5.- Sub partidas ejecutadas', `Se registraron las siguientes sub partidas: ${window.m5_lista.map(formatoItem).join('; ')}.`);
+                    agregarModulo(modulos, '5. Sub partidas ejecutadas', window.m5_lista.map(formatoItem).join('\\n'));
                 } else {
-                    agregarModulo(modulos, '5.- Sub partidas ejecutadas', valor('v_sub_p'));
+                    agregarModulo(modulos, '5. Sub partidas ejecutadas', valor('v_sub_p'));
                 }
 
                 if (Array.isArray(window.m6_lista) && window.m6_lista.length > 0) {
-                    agregarModulo(modulos, '6.- Actividades ejecutadas', `Se desarrollaron las siguientes actividades: ${window.m6_lista.map(formatoItem).join('; ')}.`);
+                    agregarModulo(modulos, '6. Actividades ejecutadas', window.m6_lista.map(formatoItem).join('\\n'));
                 } else {
-                    agregarModulo(modulos, '6.- Actividades ejecutadas', valor('v_activ'));
+                    agregarModulo(modulos, '6. Actividades ejecutadas', valor('v_activ'));
                 }
 
-                agregarModulo(modulos, '7.- Movimiento de almacen', valor('v_almacen'));
-                agregarModulo(modulos, '8.- Maquinarias y equipos', valor('v_maquina'));
-                agregarModulo(modulos, '9.- Herramientas manuales', valor('v_herram'));
-                agregarModulo(modulos, '10.- Ocurrencias y otros', valor('v_ocurrencia'));
+                agregarModulo(modulos, '7. Movimiento de almacén', valor('v_almacen'));
+                agregarModulo(modulos, '8. Maquinarias y equipos', valor('v_maquina'));
+                agregarModulo(modulos, '9. Herramientas manuales', valor('v_herram'));
+                agregarModulo(modulos, '10. Ocurrencias y otros', valor('v_ocurrencia'));
 
                 return modulos;
             }
@@ -164,7 +177,7 @@ CUADERNO_OBRA_JS = """
                 return `
                     <div class="modulo-redaccion">
                         <span class="modulo-titulo">${escaparHtml(modulo.titulo)}</span>
-                        <span class="modulo-contenido">${escaparHtml(modulo.contenido)}</span>
+                        <span class="modulo-contenido">${escaparHtmlConSaltos(modulo.contenido)}</span>
                     </div>
                 `;
             }
