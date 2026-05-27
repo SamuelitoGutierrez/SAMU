@@ -5,57 +5,185 @@ from navbar import obtener_navbar
 
 ALMACEN_HTML = """
 <style>
-    .m7-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 18px; }
-    .m7-card { border: 1px solid #e2e8f0; background: #ffffff; border-radius: 18px; padding: 18px; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04); }
-    .m7-card:hover, .m7-card.active { transform: translateY(-3px); border-color: #0263a0; background: #f0f9ff; box-shadow: 0 16px 34px rgba(2, 99, 160, 0.12); }
-    .m7-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 16px; color: #ffffff; font-size: 25px; margin-bottom: 12px; }
-    .m7-materiales .m7-icon { background: linear-gradient(135deg, #0369a1, #0ea5e9); }
-    .m7-combustible .m7-icon { background: linear-gradient(135deg, #b45309, #f59e0b); }
-    .m7-title { font-size: 16px; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: 8px; }
-    .m7-desc { font-size: 12px; color: #64748b; line-height: 1.5; margin: 0; }
-    .m7-textarea { border-radius: 16px; min-height: 130px; resize: vertical; }
-    @media (max-width: 576px) { .m7-grid { grid-template-columns: 1fr; } }
+    .m7-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .m7-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .m7-tab { border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 999px; padding: 9px 16px; font-size: 12px; font-weight: 800; transition: 0.2s; }
+    .m7-tab.active { background: #0f172a; color: #fff; border-color: #0f172a; box-shadow: 0 10px 24px rgba(15,23,42,0.16); }
+    .m7-btn { border: none; border-radius: 999px; padding: 9px 14px; font-size: 12px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #0263a0, #0ea5e9); box-shadow: 0 10px 24px rgba(2,99,160,0.15); }
+    .m7-paste-zone { border: 2px dashed #cbd5e1; border-radius: 16px; background: #f8fafc; padding: 12px; color: #64748b; text-align: center; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+    .m7-paste-zone:focus-within, .m7-paste-zone:hover { border-color: #0263a0; background: #f0f9ff; color: #0263a0; }
+    .m7-paste-zone textarea { width: 100%; height: 44px; border: 0; outline: 0; resize: none; background: transparent; text-align: center; font-size: 12px; color: #334155; }
+    .m7-table-wrap { border: 1px solid #dbeafe; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,0.05); }
+    .m7-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .m7-table th { background: #f1f5f9; color: #475569; padding: 9px 8px; text-transform: uppercase; letter-spacing: 0.4px; font-size: 10px; border-bottom: 1px solid #cbd5e1; }
+    .m7-table td { padding: 6px; border-bottom: 1px solid #eef2ff; vertical-align: middle; }
+    .m7-table input { width: 100%; border: 1px solid transparent; border-radius: 9px; padding: 7px 8px; font-size: 12px; background: #f8fafc; outline: none; }
+    .m7-table input:focus { border-color: #0ea5e9; background: #fff; box-shadow: 0 0 0 3px rgba(14,165,233,0.10); }
+    .m7-preview { border-radius: 16px; min-height: 86px; resize: vertical; font-size: 12px; background: #f8fafc; }
+    .m7-empty { padding: 18px; text-align: center; color: #94a3b8; font-weight: 700; font-size: 12px; }
+    @media (max-width: 768px) { .m7-table { min-width: 760px; } .m7-table-wrap { overflow-x: auto; } }
 </style>
 
 <div class="step-view" id="step7">
     <div class="step-title">7.- Movimientos de Almacen</div>
-    <p class="text-muted small mb-3">Seleccione el tipo de movimiento y describa el control realizado en obra.</p>
+    <p class="text-muted small mb-3">Registre ingreso o salida de materiales de construcción. Puede pegar desde Excel en el orden completo o solo: #, material, unidad y cantidad.</p>
 
-    <div class="m7-grid">
-        <div class="m7-card m7-materiales" id="m7_card_materiales" onclick="m7_seleccionar('materiales')">
-            <div class="m7-icon"><i class="bi bi-bricks"></i></div>
-            <div class="m7-title">Movimiento de Materiales de Construccion</div>
-            <p class="m7-desc">Entradas, salidas, consumos y control de materiales para frentes de trabajo.</p>
+    <div class="m7-toolbar">
+        <div class="m7-tabs">
+            <button type="button" class="m7-tab active" id="m7_tab_ingreso" onclick="m7_cambiar_tipo('ingreso')"><i class="bi bi-box-arrow-in-down me-1"></i> Ingreso</button>
+            <button type="button" class="m7-tab" id="m7_tab_salida" onclick="m7_cambiar_tipo('salida')"><i class="bi bi-box-arrow-up me-1"></i> Salida</button>
         </div>
-
-        <div class="m7-card m7-combustible" id="m7_card_combustible" onclick="m7_seleccionar('combustible')">
-            <div class="m7-icon"><i class="bi bi-fuel-pump-fill"></i></div>
-            <div class="m7-title">Movimiento de Combustible</div>
-            <p class="m7-desc">Despachos, consumo y trazabilidad de combustible para maquinaria.</p>
-        </div>
+        <button type="button" class="m7-btn" onclick="m7_agregar_fila()"><i class="bi bi-plus-lg me-1"></i> Agregar material</button>
     </div>
 
-    <textarea class="form-control req-step7 m7-textarea" id="v_almacen" rows="5" placeholder="Detalle el movimiento de almacen realizado..." oninput="sincronizarDatos()"></textarea>
+    <div class="m7-paste-zone">
+        <div><i class="bi bi-clipboard-check me-1"></i> Pegue aquí desde Excel con Ctrl + V</div>
+        <textarea id="m7_paste_input" placeholder="Orden completo: # | O/C | Contrato/OS | Material | Unidad | Cantidad"></textarea>
+    </div>
+
+    <div class="m7-table-wrap mb-3">
+        <table class="m7-table">
+            <thead>
+                <tr>
+                    <th style="width:50px;">#</th>
+                    <th style="width:120px;">Orden compra</th>
+                    <th style="width:150px;">Contrato / O.S.</th>
+                    <th>Material</th>
+                    <th style="width:120px;">Unidad</th>
+                    <th style="width:100px;">Cantidad</th>
+                    <th style="width:46px;"></th>
+                </tr>
+            </thead>
+            <tbody id="m7_tbody"></tbody>
+        </table>
+    </div>
+
+    <label class="form-label small fw-bold text-muted">Texto que pasará al cuaderno</label>
+    <textarea class="form-control req-step7 m7-preview" id="v_almacen" rows="4" readonly placeholder="Aquí se generará el movimiento de almacén..."></textarea>
 </div>
 
 <script>
-    function m7_seleccionar(tipo) {
-        const materiales = document.getElementById('m7_card_materiales');
-        const combustible = document.getElementById('m7_card_combustible');
-        const detalle = document.getElementById('v_almacen');
+    window.m7_movimientos = window.m7_movimientos || { ingreso: [], salida: [] };
+    let m7_tipo_actual = 'ingreso';
 
-        materiales.classList.toggle('active', tipo === 'materiales');
-        combustible.classList.toggle('active', tipo === 'combustible');
+    function m7_cambiar_tipo(tipo) {
+        m7_tipo_actual = tipo;
+        document.getElementById('m7_tab_ingreso').classList.toggle('active', tipo === 'ingreso');
+        document.getElementById('m7_tab_salida').classList.toggle('active', tipo === 'salida');
+        m7_render();
+    }
 
-        if (tipo === 'materiales') {
-            detalle.value = 'Movimiento de materiales de construccion: ';
-        } else {
-            detalle.value = 'Movimiento de combustible: ';
+    function m7_movs() {
+        return window.m7_movimientos[m7_tipo_actual];
+    }
+
+    function m7_agregar_fila(data = {}) {
+        m7_movs().push({
+            numero: data.numero || (m7_movs().length + 1).toString(),
+            orden: data.orden || '',
+            contrato: data.contrato || '',
+            material: data.material || '',
+            unidad: data.unidad || '',
+            cantidad: data.cantidad || ''
+        });
+        m7_render();
+    }
+
+    function m7_actualizar(idx, campo, valor) {
+        m7_movs()[idx][campo] = valor;
+        m7_sincronizar();
+    }
+
+    function m7_eliminar(idx) {
+        m7_movs().splice(idx, 1);
+        m7_render();
+    }
+
+    function m7_parse_row(cols) {
+        const clean = cols.map(c => (c || '').trim());
+        if(clean.length >= 6) {
+            return { numero: clean[0], orden: clean[1], contrato: clean[2], material: clean[3], unidad: clean[4], cantidad: clean[5] };
         }
+        if(clean.length >= 4) {
+            return { numero: clean[0], material: clean[1], unidad: clean[2], cantidad: clean[3] };
+        }
+        if(clean.length >= 3) {
+            return { material: clean[0], unidad: clean[1], cantidad: clean[2] };
+        }
+        return null;
+    }
 
-        detalle.focus();
+    function m7_formato_item(m) {
+        if(!m.material || !m.unidad || !m.cantidad) return '';
+        const cantidad = Number(m.cantidad);
+        const cantidadTxt = Number.isFinite(cantidad) ? cantidad.toFixed(2) : m.cantidad;
+        return `${cantidadTxt} ${m.unidad.toUpperCase()} ${m.material.toUpperCase()}`;
+    }
+
+    function m7_escape_attr(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function m7_sincronizar() {
+        const partes = [];
+        const ingreso = window.m7_movimientos.ingreso.map(m7_formato_item).filter(Boolean);
+        const salida = window.m7_movimientos.salida.map(m7_formato_item).filter(Boolean);
+
+        if(ingreso.length > 0) partes.push(`* Ingreso de materiales de construcción: ${ingreso.join('; ')}`);
+        if(salida.length > 0) partes.push(`* Salida de materiales de construcción: ${salida.join('; ')}`);
+
+        document.getElementById('v_almacen').value = partes.join('\\n');
         if (typeof sincronizarDatos === 'function') sincronizarDatos();
     }
+
+    function m7_render() {
+        const tbody = document.getElementById('m7_tbody');
+        const lista = m7_movs();
+        if(lista.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7"><div class="m7-empty">No hay materiales registrados en ${m7_tipo_actual}.</div></td></tr>`;
+            m7_sincronizar();
+            return;
+        }
+
+        tbody.innerHTML = lista.map((m, idx) => `
+            <tr>
+                <td><input value="${m7_escape_attr(m.numero)}" oninput="m7_actualizar(${idx}, 'numero', this.value)"></td>
+                <td><input value="${m7_escape_attr(m.orden)}" placeholder="O/C" oninput="m7_actualizar(${idx}, 'orden', this.value)"></td>
+                <td><input value="${m7_escape_attr(m.contrato)}" placeholder="Contrato / O.S." oninput="m7_actualizar(${idx}, 'contrato', this.value)"></td>
+                <td><input value="${m7_escape_attr(m.material)}" placeholder="Material" oninput="m7_actualizar(${idx}, 'material', this.value)"></td>
+                <td><input value="${m7_escape_attr(m.unidad)}" placeholder="UND" oninput="m7_actualizar(${idx}, 'unidad', this.value)"></td>
+                <td><input value="${m7_escape_attr(m.cantidad)}" placeholder="0.00" oninput="m7_actualizar(${idx}, 'cantidad', this.value)"></td>
+                <td class="text-center"><button type="button" class="btn btn-sm text-danger border-0" onclick="m7_eliminar(${idx})"><i class="bi bi-trash"></i></button></td>
+            </tr>
+        `).join('');
+        m7_sincronizar();
+    }
+
+    setTimeout(() => {
+        const paste = document.getElementById('m7_paste_input');
+        if(!paste) return;
+        paste.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const data = (e.clipboardData || window.clipboardData).getData('text');
+            if(!data.trim()) return;
+            let count = 0;
+            data.split('\\n').forEach(row => {
+                if(!row.trim()) return;
+                const parsed = m7_parse_row(row.split('\\t'));
+                if(parsed && parsed.material) {
+                    m7_agregar_fila(parsed);
+                    count++;
+                }
+            });
+            paste.value = count > 0 ? `Se pegaron ${count} materiales.` : '';
+            setTimeout(() => paste.value = '', 1200);
+        });
+        m7_render();
+    }, 300);
 </script>
 """
 
