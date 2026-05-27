@@ -18,14 +18,9 @@ SUB_PARTIDAS_HTML = """
 </style>
 
 <div class="step-view" id="step5">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="step-title mb-0">5.- Sub Partidas Ejecutadas</div>
-        <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold shadow-sm" onclick="abrirCatalogoGlobal()">
-            <i class="bi bi-journal-text"></i> Base Global de Partidas
-        </button>
-    </div>
+    <div class="step-title">5.- Sub Partidas Ejecutadas</div>
     
-    <p class="text-muted small mb-3">Busque la sub partida ejecutada y presione <b>Enter</b>. Digite el metrado y presione <b>Enter</b> nuevamente. <span class="text-primary fw-bold">(El metrado es opcional).</span></p>
+    <p class="text-muted small mb-3">Busque la sub partida, presione <b>Enter</b>, registre el metrado opcional y vuelva a presionar <b>Enter</b>.</p>
     
     <div class="position-relative mb-4">
         <div class="input-group shadow-sm">
@@ -44,7 +39,7 @@ SUB_PARTIDAS_HTML = """
         <div class="modal-content" style="border-radius: 20px; border: 2px solid #0263a0; box-shadow: 0 20px 40px rgba(2,99,160,0.15);">
             <div class="modal-body p-4 text-center">
                 <div class="badge-item mb-2" id="m5_lbl_item">00.00</div>
-                <h6 class="fw-bold text-dark mb-3" id="m5_lbl_desc" style="line-height: 1.3;">Descripción de la Sub Partida</h6>
+                <h6 class="fw-bold text-dark mb-3" id="m5_lbl_desc" style="line-height: 1.25; font-size: 13px;">Descripción de la Sub Partida</h6>
                 
                 <div class="input-group input-group-lg mb-2 shadow-sm">
                     <input type="number" step="0.01" class="form-control text-center fw-bold" id="m5_input" placeholder="Opcional" onkeydown="if(event.key==='Enter'){event.preventDefault(); m5_guardar();}">
@@ -184,9 +179,9 @@ SUB_PARTIDAS_HTML = """
         const container = document.getElementById('m5_lista_ui');
         container.innerHTML = window.m5_lista.map((p, index) => `
             <div class="bg-white border rounded-3 p-2 d-flex justify-content-between align-items-center shadow-sm" style="border-left: 4px solid #0263a0 !important;">
-                <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 350px;">
+                <div class="d-flex align-items-center gap-2" style="max-width: 390px;">
                     <span class="badge-item">${p.item}</span>
-                    <span class="small fw-semibold text-truncate" title="${p.descripcion}">${p.descripcion}</span>
+                    <span class="small fw-semibold text-dark" style="line-height:1.2; white-space:normal;" title="${p.descripcion}">${p.descripcion}</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="fw-bold text-dark fs-6">${p.metrado ? p.metrado : '-'} <small class="text-muted" style="font-size:10px;">${p.metrado ? p.unidad : ''}</small></span>

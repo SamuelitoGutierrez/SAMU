@@ -19,14 +19,9 @@ ACTIVIDADES_HTML = """
 </style>
 
 <div class="step-view" id="step6">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="step-title mb-0">6.- Actividades en Ejecución</div>
-        <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold shadow-sm" onclick="abrirModalMasivoM6()">
-            <i class="bi bi-file-earmark-excel"></i> Pegado Masivo
-        </button>
-    </div>
+    <div class="step-title">6.- Actividades en Ejecución</div>
     
-    <p class="text-muted small mb-3">Busque en el catálogo o escriba una <b>Actividad Libre</b> y presione <b>Enter</b>. Podrá agregar progresivas y metrados opcionales.</p>
+    <p class="text-muted small mb-3">Escriba una actividad o selecciónela del catálogo y presione <b>Enter</b>. Luego avance con Enter por progresiva, metrado y unidad.</p>
     
     <div class="position-relative mb-4">
         <div class="input-group shadow-sm">
@@ -38,27 +33,6 @@ ACTIVIDADES_HTML = """
     
     <div id="m6_lista_ui" class="d-flex flex-column gap-2 mb-3"></div>
     <input type="hidden" id="v_actividades_status" class="req-step6" value="">
-</div>
-
-<div class="modal fade" id="m6_modal_masivo" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
-            <div class="modal-header border-0 bg-light pb-3">
-                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-card-checklist text-success me-2"></i> Importar Actividades</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4 bg-white">
-                <div class="excel-paste-zone" id="m6_pasteHint">
-                    <i class="bi bi-clipboard-check fs-4 d-block mb-1"></i>
-                    Copie desde Excel y presione <b>Ctrl + V</b> aquí. <br>
-                    <span class="fw-normal text-muted">Formatos aceptados: [Actividad] | [Actividad, Progresiva] | [Actividad, Progresiva, Metrado, Und]</span>
-                </div>
-            </div>
-            <div class="modal-footer border-0 pt-0 bg-white">
-                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Listo, continuar</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="modal fade" id="m6_modal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
@@ -83,12 +57,12 @@ ACTIVIDADES_HTML = """
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">Metrado <span class="text-primary fw-normal">(Opcional)</span></label>
                     <div class="input-group shadow-sm">
-                        <input type="number" step="0.01" class="form-control fw-bold" id="m6_input_met" placeholder="Avance..." onkeydown="if(event.key==='Enter'){event.preventDefault(); m6_guardar();}">
+                        <input type="number" step="0.01" class="form-control fw-bold" id="m6_input_met" placeholder="Opcional" onkeydown="if(event.key==='Enter'){event.preventDefault(); if(this.value.trim()===''){m6_guardar();}else{document.getElementById('m6_input_und').focus();}}">
                         <input type="text" class="form-control text-center" id="m6_input_und" placeholder="Und" style="max-width: 80px;" onkeydown="if(event.key==='Enter'){event.preventDefault(); m6_guardar();}">
                     </div>
                 </div>
                 
-                <p class="text-center small text-muted mb-3">Presione <b>Enter</b> para avanzar entre campos y guardar.</p>
+                <p class="text-center small text-muted mb-3">Enter avanza entre campos. Si el metrado queda vacío, se guarda directamente.</p>
                 <button type="button" class="btn btn-dark w-100 rounded-pill fw-bold" onclick="m6_guardar()">Guardar Actividad</button>
             </div>
         </div>
