@@ -36,14 +36,25 @@ PARTIDAS_HTML = """
     .excel-table tr:hover td { background: #f8fafc; }
     .input-metrado-grid { width: 90px; text-align: center; font-weight: 700; color: #0263a0; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px; background: #f0f9ff; transition: 0.3s;}
     .input-metrado-grid:focus { outline: none; border-color: #0263a0; box-shadow: 0 0 0 3px rgba(2,99,160,0.1); background: #ffffff;}
+    .m3-reg-card { font-size: 12px; padding: 10px 12px !important; }
+    .m3-reg-card .badge-item { font-size: 10px; padding: 3px 7px; }
+    .m3-reg-card .m3-desc { font-size: 12px; line-height: 1.25; white-space: normal; overflow: visible; }
+    .m3-reg-card .m3-met { font-size: 15px !important; white-space: nowrap; }
+    .m3-empty-state { text-align: center; color: #94a3b8; font-size: 12px; font-weight: 700; padding: 20px; }
+    .m3-confirm-icon { width: 58px; height: 58px; border-radius: 20px; display: grid; place-items: center; margin: 0 auto 14px; background: #fef2f2; color: #dc2626; font-size: 28px; }
 </style>
 
 <div class="step-view" id="step3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="step-title mb-0">3.- Partidas Ejecutadas</div>
-        <button type="button" class="btn btn-sm text-white rounded-pill fw-bold shadow-sm px-3" style="background: linear-gradient(135deg, #10b981, #059669); border: none;" onclick="abrirModalCatalogoGlobal()">
-            <i class="bi bi-file-earmark-excel me-1"></i> AGREGAR PARTIDAS
-        </button>
+        <div class="d-flex flex-wrap gap-2 justify-content-end">
+            <button type="button" class="btn btn-sm text-white rounded-pill fw-bold shadow-sm px-3" style="background: linear-gradient(135deg, #0f766e, #14b8a6); border: none;" onclick="abrirModalCatalogoGlobal('catalogo')">
+                <i class="bi bi-archive-fill me-1"></i> Registrar partidas
+            </button>
+            <button type="button" class="btn btn-sm text-white rounded-pill fw-bold shadow-sm px-3" style="background: linear-gradient(135deg, #0263a0, #0ea5e9); border: none;" onclick="abrirModalCatalogoGlobal('diario')">
+                <i class="bi bi-pencil-square me-1"></i> Registrar partidas diarias
+            </button>
+        </div>
     </div>
     
     <p class="text-muted small mb-3">Busque la partida ejecutada en el día y presione <b>Enter</b>. Digite el metrado y presione <b>Enter</b> nuevamente.</p>
@@ -65,7 +76,7 @@ PARTIDAS_HTML = """
         <div class="modal-content" style="border-radius: 20px; overflow: hidden; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.3);">
             
             <div class="modal-header-gradient d-flex justify-content-between align-items-center">
-                <h5 class="modal-title fw-bold m-0"><i class="bi bi-layout-three-columns me-2"></i> PARTIDAS</h5>
+                <h5 class="modal-title fw-bold m-0"><i class="bi bi-layout-three-columns me-2"></i> <span id="m3_modal_titulo">PARTIDAS</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
@@ -73,8 +84,8 @@ PARTIDAS_HTML = """
                 <div class="paste-zone mb-3 shadow-sm">
                     <div class="paste-zone-overlay">
                         <i class="bi bi-clipboard2-check-fill fs-2 mb-1"></i>
-                        <span class="fw-bold">Haga clic aquí y presione Ctrl + V para pegar desde Excel</span>
-                        <span class="small fw-normal text-secondary opacity-75">Soporta 3 columnas (Catálogo) o 4 columnas (Incluyendo Metrados diarios)</span>
+                        <span class="fw-bold" id="m3_paste_titulo">Haga clic aquí y presione Ctrl + V para pegar desde Excel</span>
+                        <span class="small fw-normal text-secondary opacity-75" id="m3_paste_subtitulo">Pegue o registre partidas para alimentar la base del proyecto.</span>
                     </div>
                     <textarea class="paste-zone-input" onpaste="handlePegadoMagico(event)"></textarea>
                 </div>
@@ -86,7 +97,7 @@ PARTIDAS_HTML = """
                                 <th width="12%" class="text-center">Ítem</th>
                                 <th width="58%">Descripción de la Partida</th>
                                 <th width="10%" class="text-center">Unidad</th>
-                                <th width="15%" class="text-center text-primary"><i class="bi bi-pencil-square me-1"></i>Metrado</th>
+                                <th width="15%" class="text-center text-primary m3-col-metrado"><i class="bi bi-pencil-square me-1"></i>Metrado</th>
                                 <th width="5%" class="text-center"><i class="bi bi-gear-fill"></i></th>
                             </tr>
                         </thead>
@@ -97,7 +108,7 @@ PARTIDAS_HTML = """
                                 <td><input type="text" id="man_item" placeholder="01.01" class="form-control form-control-sm border-0 bg-transparent text-center fw-bold"></td>
                                 <td><input type="text" id="man_desc" placeholder="Nueva partida manual..." class="form-control form-control-sm border-0 bg-transparent fw-semibold"></td>
                                 <td><input type="text" id="man_und" placeholder="GLB" class="form-control form-control-sm border-0 bg-transparent text-center"></td>
-                                <td class="text-center"><input type="number" id="man_met" placeholder="Avance" class="form-control form-control-sm border-0 bg-transparent text-center text-primary fw-bold"></td>
+                                <td class="text-center m3-col-metrado"><input type="number" id="man_met" placeholder="Avance" class="form-control form-control-sm border-0 bg-transparent text-center text-primary fw-bold"></td>
                                 <td class="text-center"><button type="button" class="btn btn-sm btn-dark rounded-circle shadow-sm" onclick="agregarPartidaManual()"><i class="bi bi-plus-lg"></i></button></td>
                             </tr>
                         </tfoot>
@@ -108,8 +119,24 @@ PARTIDAS_HTML = """
             <div class="modal-footer border-top-0 bg-light d-flex justify-content-between py-3">
                 <span class="text-muted small fw-semibold">Catálogo en memoria: <span id="lbl_total_cat" class="badge bg-secondary rounded-pill ms-1 fs-6">0</span></span>
                 <div>
-                    <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold me-2" onclick="limpiarCatalogo()">Vaciar</button>
-                    <button type="button" class="btn text-white rounded-pill px-5 fw-bold shadow-sm" style="background: linear-gradient(135deg, #0263a0, #0284c7);" onclick="procesarTransferenciaAlCuaderno()">Guardar y Transferir</button>
+                    <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold me-2" onclick="pedirLimpiarCatalogo()">Vaciar</button>
+                    <button type="button" class="btn text-white rounded-pill px-5 fw-bold shadow-sm" id="m3_btn_accion_modal" style="background: linear-gradient(135deg, #0263a0, #0284c7);" onclick="procesarTransferenciaAlCuaderno()">Guardar y Transferir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="m3_modal_confirm_vaciar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border: none; border-radius: 26px; box-shadow: 0 25px 60px rgba(15,23,42,0.22); overflow: hidden;">
+            <div class="modal-body p-4 text-center bg-white">
+                <div class="m3-confirm-icon"><i class="bi bi-trash3-fill"></i></div>
+                <h5 class="fw-bold text-dark mb-2">Vaciar partidas registradas</h5>
+                <p class="text-muted small mb-4">Esta acción limpiará la tabla visible de partidas. No se eliminarán los registros que ya fueron enviados al cuaderno.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="confirmarLimpiarCatalogo()">Sí, vaciar</button>
                 </div>
             </div>
         </div>
@@ -125,7 +152,7 @@ PARTIDAS_HTML = """
                     <span class="badge" style="background: rgba(255,255,255,0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 13px;" id="m3_lbl_item">00.00</span>
                 </div>
                 
-                <h5 class="fw-bold mb-4" id="m3_lbl_desc" style="line-height: 1.4; color: #f8fafc; font-size: 16px;">Descripción de la Partida</h5>
+                <h5 class="fw-bold mb-4" id="m3_lbl_desc" style="line-height: 1.25; color: #f8fafc; font-size: 13px;">Descripción de la Partida</h5>
                 
                 <div class="input-group input-group-lg mb-3 shadow-lg" style="border-radius: 12px; overflow: hidden; border: 2px solid #38bdf8;">
                     <input type="number" step="0.01" class="form-control text-center fw-bold bg-white text-dark" id="m3_input" placeholder="Avance" onkeydown="if(event.key==='Enter'){event.preventDefault(); m3_guardar();}">
@@ -148,11 +175,14 @@ PARTIDAS_HTML = """
     let m3_temp = null;
     let m3_idx = -1;
     let m3_modal_inst = null;
+    let m3_modo_registro = 'diario';
 
     setTimeout(() => {
         const mCat = document.getElementById('modalCatalogoGlobal');
         const mMet = document.getElementById('m3_modal');
+        const mConfirm = document.getElementById('m3_modal_confirm_vaciar');
         if(mCat && mCat.parentNode !== document.body) document.body.appendChild(mCat);
+        if(mConfirm && mConfirm.parentNode !== document.body) document.body.appendChild(mConfirm);
         if(mMet && mMet.parentNode !== document.body) {
             document.body.appendChild(mMet);
             // Auto Focus Inmediato para el mini modal oscuro
@@ -163,9 +193,26 @@ PARTIDAS_HTML = """
     // ==========================================
     // LÓGICA DE PEGADO MÁGICO (EXCEL A TABLA)
     // ==========================================
-    function abrirModalCatalogoGlobal() { 
+    function abrirModalCatalogoGlobal(modo = 'diario') {
+        m3_modo_registro = modo;
+        const esDiario = modo === 'diario';
+        document.getElementById('m3_modal_titulo').innerText = esDiario ? 'PARTIDAS DIARIAS' : 'CATÁLOGO DE PARTIDAS';
+        document.getElementById('m3_paste_titulo').innerText = esDiario ? 'Pegue partidas con metrados diarios desde Excel' : 'Pegue partidas para registrar la base del proyecto';
+        document.getElementById('m3_paste_subtitulo').innerText = esDiario ? 'Si el pegado incluye metrado, pasará directo al cuaderno.' : 'Aquí se registra el catálogo. Los metrados se llenan en Partidas diarias.';
+        document.getElementById('m3_btn_accion_modal').innerHTML = esDiario ? 'Guardar metrados diarios' : 'Guardar catálogo';
+        document.querySelectorAll('.m3-col-metrado').forEach(el => el.style.display = esDiario ? '' : 'none');
         renderizarTablaCatalogoGlobal();
         new bootstrap.Modal(document.getElementById('modalCatalogoGlobal')).show(); 
+    }
+
+    function agregarPartidaDiaria(p) {
+        window.m3_lista.push({
+            item: p.item || '-',
+            descripcion: p.descripcion,
+            unidad: p.unidad || 'GLB',
+            metrado: p.met_dia !== '' && p.met_dia !== undefined ? parseFloat(p.met_dia).toFixed(2) : ''
+        });
+        document.getElementById('v_partidas').value = "lleno";
     }
 
     function handlePegadoMagico(e) {
@@ -197,21 +244,31 @@ PARTIDAS_HTML = """
                 desc = cols[0].trim();
             }
 
-            // Lógica Antiduplicados (Si ya existe, solo actualizamos su metrado diario)
+            // Lógica Antiduplicados y transferencia diaria
             if(desc !== '') {
                 let existe = window.catalogoMaestro.find(c => c.descripcion.toLowerCase() === desc.toLowerCase());
                 if(existe) {
-                    if(met !== '') existe.met_dia = met;
+                    if(m3_modo_registro === 'diario' && met !== '') existe.met_dia = met;
                 } else {
-                    window.catalogoMaestro.push({ item: item, descripcion: desc, unidad: und, met_dia: met });
+                    window.catalogoMaestro.push({ item: item, descripcion: desc, unidad: und, met_dia: m3_modo_registro === 'diario' ? met : '' });
                     agregados++;
+                }
+
+                if(m3_modo_registro === 'diario' && met !== '') {
+                    agregarPartidaDiaria({ item: item, descripcion: desc, unidad: und, met_dia: met });
+                    const diario = window.catalogoMaestro.find(c => c.descripcion.toLowerCase() === desc.toLowerCase());
+                    if(diario) diario.met_dia = '';
                 }
             }
         });
 
         renderizarTablaCatalogoGlobal();
+        if(m3_modo_registro === 'diario') {
+            m3_render();
+            if (typeof sincronizarDatos === "function") sincronizarDatos();
+        }
         if(agregados > 0 && typeof mostrarAlerta === "function") {
-            mostrarAlerta(`¡Éxito! Se cargaron ${agregados} nuevas partidas al catálogo.`, "success");
+            mostrarAlerta(m3_modo_registro === 'diario' ? `Se cargaron ${agregados} partidas y los metrados fueron enviados al cuaderno.` : `Se cargaron ${agregados} partidas al catálogo.`, "success");
         }
         e.target.value = ''; // Limpia el textarea oculto
     }
@@ -220,15 +277,23 @@ PARTIDAS_HTML = """
         const item = document.getElementById('man_item').value.trim() || '-';
         const desc = document.getElementById('man_desc').value.trim();
         const und = document.getElementById('man_und').value.trim().toUpperCase() || 'GLB';
-        const met = document.getElementById('man_met').value.trim();
+        const met = m3_modo_registro === 'diario' ? document.getElementById('man_met').value.trim() : '';
 
         if(!desc) { alert("La descripción de la partida es obligatoria."); return; }
 
         let existe = window.catalogoMaestro.find(c => c.descripcion.toLowerCase() === desc.toLowerCase());
         if(existe) {
-            existe.met_dia = met;
+            if(m3_modo_registro === 'diario') existe.met_dia = met;
         } else {
             window.catalogoMaestro.push({ item: item, descripcion: desc, unidad: und, met_dia: met });
+        }
+
+        if(m3_modo_registro === 'diario' && met !== '') {
+            agregarPartidaDiaria({ item: item, descripcion: desc, unidad: und, met_dia: met });
+            const diario = window.catalogoMaestro.find(c => c.descripcion.toLowerCase() === desc.toLowerCase());
+            if(diario) diario.met_dia = '';
+            m3_render();
+            if (typeof sincronizarDatos === "function") sincronizarDatos();
         }
         
         document.getElementById('man_item').value = ''; document.getElementById('man_desc').value = '';
@@ -245,31 +310,50 @@ PARTIDAS_HTML = """
         renderizarTablaCatalogoGlobal();
     }
 
-    function limpiarCatalogo() {
-        if(confirm("¿Seguro que desea vaciar el catálogo completo?")) {
-            window.catalogoMaestro = [];
-            renderizarTablaCatalogoGlobal();
-        }
+    function pedirLimpiarCatalogo() {
+        new bootstrap.Modal(document.getElementById('m3_modal_confirm_vaciar')).show();
+    }
+
+    function confirmarLimpiarCatalogo() {
+        window.catalogoMaestro = [];
+        renderizarTablaCatalogoGlobal();
+        const modalConfirm = bootstrap.Modal.getInstance(document.getElementById('m3_modal_confirm_vaciar'));
+        if(modalConfirm) modalConfirm.hide();
+        if(typeof mostrarAlerta === "function") mostrarAlerta("La tabla de partidas fue vaciada correctamente.", "success");
     }
 
     function renderizarTablaCatalogoGlobal() {
         const tbody = document.getElementById('tbodyCatalogoGlobal');
+        if(window.catalogoMaestro.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5"><div class="m3-empty-state">No hay partidas registradas todavía.</div></td></tr>`;
+            document.getElementById('lbl_total_cat').innerText = 0;
+            return;
+        }
+
         tbody.innerHTML = window.catalogoMaestro.map((p, idx) => `
             <tr>
                 <td class="fw-bold text-center" style="color:#0263a0;">${p.item}</td>
                 <td class="fw-semibold">${p.descripcion}</td>
                 <td class="text-center"><span class="badge-unidad border border-secondary">${p.unidad}</span></td>
-                <td class="text-center">
+                <td class="text-center m3-col-metrado">
                     <input type="number" step="0.01" class="input-metrado-grid" value="${p.met_dia || ''}" placeholder="-" onchange="actualizarMetradoGrilla(${idx}, this.value)">
                 </td>
                 <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger border-0 p-1" onclick="eliminarCatalogo(${idx})"><i class="bi bi-trash-fill"></i></button></td>
             </tr>
         `).join('');
+        document.querySelectorAll('.m3-col-metrado').forEach(el => el.style.display = m3_modo_registro === 'diario' ? '' : 'none');
         document.getElementById('lbl_total_cat').innerText = window.catalogoMaestro.length;
     }
 
     // TRANSFERIR LOS METRADOS DEL CATÁLOGO AL CUADERNO DE OBRA
     function procesarTransferenciaAlCuaderno() {
+        if(m3_modo_registro === 'catalogo') {
+            bootstrap.Modal.getInstance(document.getElementById('modalCatalogoGlobal')).hide();
+            renderizarTablaCatalogoGlobal();
+            if (typeof mostrarAlerta === "function") mostrarAlerta("Catálogo de partidas guardado en memoria.", "success");
+            return;
+        }
+
         let transferidos = 0;
         
         window.catalogoMaestro.forEach(p => {
@@ -401,13 +485,13 @@ PARTIDAS_HTML = """
     function m3_render() {
         const container = document.getElementById('m3_lista_ui');
         container.innerHTML = window.m3_lista.map((p, index) => `
-            <div class="bg-white border rounded-3 p-3 d-flex justify-content-between align-items-center shadow-sm" style="border-left: 4px solid #0263a0 !important;">
-                <div class="d-flex align-items-center gap-3 text-truncate" style="max-width: 400px;">
+            <div class="bg-white border rounded-3 d-flex justify-content-between align-items-center shadow-sm m3-reg-card" style="border-left: 4px solid #0263a0 !important;">
+                <div class="d-flex align-items-center gap-2" style="max-width: 430px;">
                     <span class="badge-item">${p.item}</span>
-                    <span class="fw-semibold text-dark text-truncate" title="${p.descripcion}">${p.descripcion}</span>
+                    <span class="fw-semibold text-dark m3-desc" title="${p.descripcion}">${p.descripcion}</span>
                 </div>
-                <div class="d-flex align-items-center gap-3">
-                    <span class="fw-bold text-primary fs-5">${p.metrado ? p.metrado : '-'} <small class="text-muted fw-bold" style="font-size:11px;">${p.unidad}</small></span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold text-primary m3-met">${p.metrado ? p.metrado : '-'} <small class="text-muted fw-bold" style="font-size:10px;">${p.unidad}</small></span>
                     <button type="button" class="btn btn-sm btn-light text-danger border rounded-circle shadow-sm" onclick="m3_del(${index})"><i class="bi bi-trash-fill"></i></button>
                 </div>
             </div>

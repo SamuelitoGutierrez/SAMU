@@ -11,17 +11,17 @@ CUADERNO_OBRA_CSS = """
             .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
             .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
             .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
-            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Georgia, 'Times New Roman', serif; font-style: italic; color: var(--celeste-obra); font-size: 19px; font-weight: 600; white-space: nowrap; }
+            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 17px; font-weight: 500; white-space: nowrap; }
             .p-body-lines { position: relative; margin-top: 3px; }
-            .pagina-cuaderno { background-image: repeating-linear-gradient(transparent, transparent 27px, #cbd5e1 28px); line-height: 28px; min-height: 650px; padding-top: 0; position: relative; }
+            .pagina-cuaderno { background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px); line-height: 26px; min-height: 650px; padding-top: 0; position: relative; }
             .pagina-cuaderno + .pagina-cuaderno { margin-top: 42px; padding-top: 0; border-top: 2px dashed #94a3b8; }
-            .lapicero { font-family: Georgia, 'Times New Roman', serif; font-style: italic; color: var(--celeste-obra); font-size: 19px; line-height: 28px; padding-left: 2px; font-weight: 500; text-align: justify; word-wrap: break-word; }
-            .encabezado-asiento { position: relative; margin: 0 0 4px; min-height: 28px; font-family: Georgia, 'Times New Roman', serif; font-style: italic; color: var(--celeste-obra); font-size: 19px; line-height: 28px; font-weight: 700; }
-            .encabezado-asiento .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; color: var(--celeste-obra); font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 19px; letter-spacing: 0.2px; font-weight: 700; padding: 0 138px 0 12px; }
-            .encabezado-asiento.continuacion .titulo-asiento { text-transform: none; color: var(--celeste-obra); font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 19px; font-weight: 700; }
+            .lapicero { font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; }
+            .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 16px; line-height: 26px; font-weight: 700; }
+            .encabezado-asiento .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; color: var(--celeste-obra); font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; font-size: 16px; letter-spacing: 0.1px; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
+            .encabezado-asiento.continuacion .titulo-asiento { text-transform: none; color: var(--celeste-obra); font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; font-size: 16px; font-weight: 800; }
             .encabezado-asiento .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; color: var(--celeste-obra); }
             .modulo-redaccion { margin: 0 0 0; }
-            .modulo-titulo { display: block; font-weight: 800; color: #075985; }
+            .modulo-titulo { display: block; font-weight: 700; color: #075985; }
             .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
             .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000;}
@@ -87,7 +87,7 @@ CUADERNO_OBRA_JS = """
             function formatoItem(p) {
                 const item = p.item && p.item !== '-' ? `${p.item} ` : '';
                 const progresiva = p.prog ? ` - ${p.prog}` : '';
-                const metrado = p.metrado ? `: ${p.metrado} ${p.unidad || ''}` : '';
+                const metrado = p.metrado ? ` = ${p.metrado} ${p.unidad || ''}` : '';
                 return normalizarOracion(`${item}${p.descripcion || ''}${progresiva}${metrado}`);
             }
 
@@ -117,7 +117,7 @@ CUADERNO_OBRA_JS = """
                 }
 
                 const personal = [
-                    {k: 'Operarios', v: parseInt(valor('v_oper') || 0)},
+                    {k: 'Operario', v: parseInt(valor('v_oper') || 0)},
                     {k: 'Oficiales', v: parseInt(valor('v_ofic') || 0)},
                     {k: 'Peones', v: parseInt(valor('v_peon') || 0)},
                     {k: 'Mecánicos', v: parseInt(valor('v_meca') || 0)},
@@ -126,8 +126,8 @@ CUADERNO_OBRA_JS = """
                 ].filter(x => x.v > 0);
 
                 if (personal.length > 0) {
-                    const primeraLinea = personal.slice(0, 3).map(x => cantidadPersonal(x.v, x.k)).join('    ');
-                    const segundaLinea = personal.slice(3).map(x => cantidadPersonal(x.v, x.k)).join('    ');
+                    const primeraLinea = personal.slice(0, 4).map(x => cantidadPersonal(x.v, x.k)).join('    ');
+                    const segundaLinea = personal.slice(4).map(x => cantidadPersonal(x.v, x.k)).join('    ');
                     agregarModulo(modulos, '2. Personal de obra', [primeraLinea, segundaLinea].filter(Boolean).join('\\n'));
                 }
 
