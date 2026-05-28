@@ -141,7 +141,8 @@ def redaccion_asiento_residente():
             }}
             @media (max-width: 992px) {{
                 body {{ padding-bottom: 112px; }}
-                .stepper-container {{ padding: 12px 12px 15px; grid-template-columns: repeat(11, minmax(118px, 1fr)); }}
+                .stepper-container {{ padding: 12px 12px 15px; display: flex; gap: 8px; overflow-x: auto; }}
+                .step-btn {{ flex: 0 0 auto; min-width: max-content; padding-right: 18px; }}
                 .step-btn:hover {{ transform: translateY(-2px) scale(1.03); }}
                 .step-btn.active {{ transform: scale(1.05); margin: 0 3px; }}
                 .split-layout {{ display: block; max-width: 760px; margin-top: 132px; padding: 0 14px; }}
