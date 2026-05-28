@@ -66,15 +66,17 @@ MAQUINARIA_HTML = """
                 <h6><i class="bi bi-bookmark-plus-fill me-1"></i> Base de maquinarias, vehículos y equipos</h6>
                 <button type="button" class="m8-btn secondary" onclick="m8_limpiar_base_categoria()"><i class="bi bi-eraser me-1"></i> Limpiar base seleccionada</button>
             </div>
+            <div class="m8-base-grid">
+                <div class="m8-field m8-class-field"><label>Clasificación</label><select id="m8_base_cat" onchange="m8_base_categoria_cambio()"><option value="maq_gore">Maquinarias del Gobierno Regional Puno</option><option value="maq_serv">Maquinarias por servicio y/o contrato</option><option value="mov_gore">Movilidades del Gobierno Regional Puno</option><option value="mov_serv">Movilidades por servicio y/o contrato</option><option value="eq_gore">Equipo liviano del Gobierno Regional Puno</option><option value="eq_serv">Equipo liviano por servicio y/o contrato</option></select></div>
+            </div>
             <div class="m8-entity-grid" id="m8_entidad_registro_box">
                 <div class="m8-field"><label>Datos de la entidad</label><input id="m8_nueva_entidad" list="m8_entidades_list" placeholder="Nombre de la entidad / empresa" oninput="m8_entidad_base_cambiada()" onkeydown="m8_enter(event, 'm8_base_nombre')"></div>
             </div>
-            <div class="m8-base-grid">
-                <div class="m8-field m8-class-field"><label>Clasificación</label><select id="m8_base_cat" onchange="m8_base_categoria_cambio()"><option value="maq_gore">Maquinarias del Gobierno Regional Puno</option><option value="maq_serv">Maquinarias por servicio y/o contrato</option><option value="mov_gore">Movilidades del Gobierno Regional Puno</option><option value="mov_serv">Movilidades por servicio y/o contrato</option><option value="eq_gore">Equipo liviano del Gobierno Regional Puno</option><option value="eq_serv">Equipo liviano por servicio y/o contrato</option></select></div>
+            <div class="m8-base-grid mt-2">
                 <div class="m8-field"><label>Maquinaria / vehículo / equipo</label><input id="m8_base_nombre" placeholder="Camión volquete" onkeydown="m8_enter(event, 'm8_base_marca')"></div>
                 <div class="m8-field"><label>Marca</label><input id="m8_base_marca" placeholder="Volvo" onkeydown="m8_enter(event, 'm8_base_modelo')"></div>
                 <div class="m8-field"><label>Modelo, placa o serie</label><input id="m8_base_modelo" placeholder="FMX 6X4 R / EGK-176" onkeydown="m8_enter_guardar_base(event)"></div>
-                <button type="button" class="m8-btn purple" onclick="m8_agregar_base()"><i class="bi bi-plus-lg me-1"></i> Registrar maquinaria</button>
+                <button type="button" class="m8-btn purple" onclick="m8_registrar_maquinaria_base()"><i class="bi bi-plus-lg me-1"></i> Registrar maquinaria</button>
             </div>
             <div class="m8-paste mt-3">
                 <div><i class="bi bi-clipboard-check me-1"></i> Pegado masivo para la base: maquinaria | marca | modelo, placa o serie. En servicio use primero la entidad seleccionada.</div>
@@ -82,12 +84,11 @@ MAQUINARIA_HTML = """
             </div>
             <div class="m8-table-wrap m8-hidden mt-3" id="m8_base_preview_box">
                 <table class="m8-table">
-                    <thead><tr><th>Entidad</th><th>Maquinaria</th><th>Marca</th><th>Modelo, placa o serie</th><th></th></tr></thead>
+                    <thead><tr><th>Maquinaria</th><th>Marca</th><th>Modelo, placa o serie</th><th></th></tr></thead>
                     <tbody id="m8_base_preview_tbody"></tbody>
                 </table>
                 <div class="m8-preview-actions">
                     <button type="button" class="m8-btn secondary" onclick="m8_cancelar_base_preview()">Cancelar</button>
-                    <button type="button" class="m8-btn purple" onclick="m8_confirmar_base_preview()">Agregar a la base</button>
                 </div>
             </div>
         </div>
@@ -363,21 +364,29 @@ MAQUINARIA_HTML = """
         m8_render_base();
     }
 
+    function m8_registrar_maquinaria_base() {
+        if(window.m8_base_pendientes.length > 0) {
+            m8_confirmar_base_preview();
+            return;
+        }
+        m8_agregar_base();
+    }
+
     function m8_pegar_base(event) {
         event.preventDefault();
         const data = (event.clipboardData || window.clipboardData).getData('text');
         const cat = document.getElementById('m8_base_cat').value;
+        const entidadActual = m8_texto(document.getElementById('m8_nueva_entidad').value);
+        if(m8_es_servicio(cat) && !entidadActual) {
+            document.getElementById('m8_base_paste').value = 'Primero complete Datos de la entidad.';
+            return;
+        }
         window.m8_base_pendientes = [];
         data.split('\\n').forEach(row => {
             const cols = row.split('\\t').map(m8_texto);
             if(cols[0]) {
                 if(m8_es_servicio(cat)) {
-                    const entidadActual = m8_texto(document.getElementById('m8_nueva_entidad').value);
-                    if(entidadActual) {
-                        window.m8_base_pendientes.push(m8_item({ entidad: entidadActual, nombre: cols[0], marca: cols[1], modelo: cols[2] }));
-                    } else {
-                        window.m8_base_pendientes.push(m8_item({ entidad: cols[0], nombre: cols[1], marca: cols[2], modelo: cols[3] }));
-                    }
+                    window.m8_base_pendientes.push(m8_item({ entidad: entidadActual, nombre: cols[0], marca: cols[1], modelo: cols[2] }));
                 } else {
                     window.m8_base_pendientes.push(m8_item({ nombre: cols[0], marca: cols[1], modelo: cols[2] }));
                 }
@@ -548,7 +557,7 @@ MAQUINARIA_HTML = """
     function m8_enter_guardar_base(event) {
         if(event.key !== 'Enter') return;
         event.preventDefault();
-        m8_agregar_base();
+        m8_registrar_maquinaria_base();
     }
     function m8_enter_guardar_entidad(event) {
         if(event.key !== 'Enter') return;
@@ -575,11 +584,9 @@ MAQUINARIA_HTML = """
     function m8_render_base_preview() {
         const box = document.getElementById('m8_base_preview_box');
         const tbody = document.getElementById('m8_base_preview_tbody');
-        const esServicio = m8_base_es_servicio();
         box.classList.toggle('m8-hidden', window.m8_base_pendientes.length === 0);
         tbody.innerHTML = window.m8_base_pendientes.map((item, idx) => `
             <tr>
-                <td><input ${esServicio ? '' : 'disabled'} value="${m8_escape(item.entidad)}" oninput="m8_actualizar_pendiente('base', ${idx}, 'entidad', this.value)"></td>
                 <td><input value="${m8_escape(item.nombre)}" oninput="m8_actualizar_pendiente('base', ${idx}, 'nombre', this.value)"></td>
                 <td><input value="${m8_escape(item.marca)}" oninput="m8_actualizar_pendiente('base', ${idx}, 'marca', this.value)"></td>
                 <td><input value="${m8_escape(item.modelo)}" oninput="m8_actualizar_pendiente('base', ${idx}, 'modelo', this.value)"></td>
