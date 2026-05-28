@@ -31,7 +31,6 @@ CUADERNO_OBRA_CSS = """
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
 """
 
-
 def obtener_cuaderno_obra_html(numero_hoja):
     return f"""
                 <div class="papel-fisico" id="papelOficial">
@@ -202,15 +201,28 @@ CUADERNO_OBRA_JS = """
 
             function htmlAlmacen(texto) {
                 if (!texto || texto === '-') return '<span class="modulo-contenido">-</span>';
+                
                 const lineas = String(texto).split('\\n').map(linea => normalizarOracion(linea)).filter(Boolean);
+                
                 return lineas.map((limpia, index) => {
                     const siguiente = lineas[index + 1] || '';
-                    const espacio = limpia.startsWith('-') || (limpia.startsWith('*') && siguiente.startsWith('*'))
-                        ? '<span class="almacen-espacio"></span>'
-                        : '';
-                    if (limpia.startsWith('*')) return `<div class="almacen-principal">${escaparHtml(limpia)}</div>${espacio}`;
-                    if (limpia.startsWith('-')) return `<div class="almacen-sub">${escaparHtml(limpia)}</div>${espacio}`;
-                    return `<div class="almacen-sub">${escaparHtml(limpia)}</div>${espacio}`;
+                    const esUltimaLinea = index === lineas.length - 1;
+                    
+                    // Lógica para forzar el renglón en blanco:
+                    // 1. Después de cualquier línea de detalle (- INGRESO, - SALIDA)
+                    // 2. Antes de cambiar de asterisco principal
+                    // 3. Obligatorio en la última línea para separarlo del módulo 8
+                    const llevaEspacio = limpia.startsWith('-') || 
+                                         (limpia.startsWith('*') && siguiente.startsWith('*')) || 
+                                         esUltimaLinea;
+                                         
+                    const espacio = llevaEspacio ? '<span class="almacen-espacio"></span>' : '';
+                    
+                    if (limpia.startsWith('*')) {
+                        return `<div class="almacen-principal">${escaparHtml(limpia)}</div>${espacio}`;
+                    } else {
+                        return `<div class="almacen-sub">${escaparHtml(limpia)}</div>${espacio}`;
+                    }
                 }).join('');
             }
 
