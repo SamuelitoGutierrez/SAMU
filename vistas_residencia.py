@@ -180,6 +180,11 @@ def redaccion_asiento_residente():
             .confirm-seat-btn {{ border: 0; border-radius: 999px; padding: 11px 16px; font-size: 12px; font-weight: 900; }}
             .confirm-seat-btn.cancel {{ color: #334155; background: #f1f5f9; }}
             .confirm-seat-btn.close-seat {{ color: #fff; background: linear-gradient(135deg, #166534, #22c55e); box-shadow: 0 14px 28px rgba(34,197,94,.22); }}
+            .save-success-toast {{ position: fixed; top: 28px; right: 28px; z-index: 1000000; min-width: 280px; max-width: calc(100vw - 32px); display: none; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 22px; background: rgba(255,255,255,.96); border: 1px solid rgba(255,255,255,.9); box-shadow: 0 24px 54px rgba(15,23,42,.22); backdrop-filter: blur(18px); }}
+            .save-success-toast.show {{ display: flex; animation: floatInUp .28s ease both; }}
+            .save-success-icon {{ width: 42px; height: 42px; border-radius: 16px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #16a34a, #22c55e); font-size: 22px; box-shadow: 0 12px 24px rgba(34,197,94,.24); }}
+            .save-success-title {{ margin: 0; font-size: 13px; font-weight: 900; color: #0f172a; }}
+            .save-success-text {{ margin: 2px 0 0; font-size: 11px; font-weight: 700; color: #64748b; }}
             .form-column.asiento-cerrado input,
             .form-column.asiento-cerrado textarea,
             .form-column.asiento-cerrado select {{ pointer-events: none; background-color: #f8fafc !important; opacity: .72; }}
@@ -231,6 +236,13 @@ def redaccion_asiento_residente():
         {{{{ menu_superior | safe }}}}
 
         <div id="elegantAlert" class="elegant-alert"><div class="alert-icon" id="alertIcon"></div><div class="alert-text" id="alertText">Mensaje</div></div>
+        <div class="save-success-toast" id="saveSuccessToast">
+            <div class="save-success-icon"><i class="bi bi-check-lg"></i></div>
+            <div>
+                <p class="save-success-title" id="saveSuccessTitle">Guardado exitosamente</p>
+                <p class="save-success-text" id="saveSuccessText">Abriendo resumen del cuaderno...</p>
+            </div>
+        </div>
 
         <div class="modal fade" id="modalConfigInicial" data-bs-backdrop="static" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
@@ -1249,15 +1261,28 @@ def redaccion_asiento_residente():
                             return;
                         }}
                         try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
-                        if (typeof mostrarAlerta === 'function') mostrarAlerta(estado === 'Cerrado' ? 'Asiento cerrado correctamente.' : 'Borrador guardado correctamente.', 'success');
-                        setTimeout(() => {{
-                            window.redirigirCuadernoAlCerrarResumen = true;
-                            if (typeof abrirResumenCuaderno === 'function') abrirResumenCuaderno();
-                        }}, 450);
+                        mostrarVentanaExitoGuardado(estado);
                     }} catch (error) {{
                         console.error('Error guardando asiento:', error);
                         if (typeof mostrarAlerta === 'function') mostrarAlerta('No se pudo conectar con el servidor para guardar.', 'error');
                     }}
+                }}
+
+                function mostrarVentanaExitoGuardado(estado) {{
+                    const toast = document.getElementById('saveSuccessToast');
+                    const titulo = document.getElementById('saveSuccessTitle');
+                    const texto = document.getElementById('saveSuccessText');
+                    if (titulo) titulo.innerText = estado === 'Cerrado' ? 'Cerrado exitosamente' : 'Guardado exitosamente';
+                    if (texto) texto.innerText = 'Abriendo resumen del cuaderno de obra...';
+                    if (toast) {{
+                        toast.classList.add('show');
+                        clearTimeout(window.__samuSaveToastTimer);
+                        window.__samuSaveToastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+                    }}
+                    setTimeout(() => {{
+                        window.redirigirCuadernoAlCerrarResumen = true;
+                        if (typeof abrirResumenCuaderno === 'function') abrirResumenCuaderno();
+                    }}, 950);
                 }}
 
                 window.guardarBorradorAsiento = function() {{ guardarAsientoSeguro('Borrador'); }};
