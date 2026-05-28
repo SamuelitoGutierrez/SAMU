@@ -25,6 +25,7 @@ CUADERNO_OBRA_CSS = """
             .almacen-bloque { display: block; padding-left: 22px; }
             .almacen-principal { display: block; padding-left: 18px; font-weight: 600; }
             .almacen-sub { display: block; padding-left: 44px; }
+            .almacen-espacio { display: block; height: 26px; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
             .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000;}
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
@@ -201,12 +202,15 @@ CUADERNO_OBRA_JS = """
 
             function htmlAlmacen(texto) {
                 if (!texto || texto === '-') return '<span class="modulo-contenido">-</span>';
-                return String(texto).split('\\n').map(linea => {
-                    const limpia = normalizarOracion(linea);
-                    if (!limpia) return '';
-                    if (limpia.startsWith('*')) return `<span class="almacen-principal">${escaparHtml(limpia)}</span>`;
-                    if (limpia.startsWith('-')) return `<span class="almacen-sub">${escaparHtml(limpia)}</span>`;
-                    return `<span class="almacen-sub">${escaparHtml(limpia)}</span>`;
+                const lineas = String(texto).split('\\n').map(linea => normalizarOracion(linea)).filter(Boolean);
+                return lineas.map((limpia, index) => {
+                    const siguiente = lineas[index + 1] || '';
+                    const espacio = limpia.startsWith('-') || (limpia.startsWith('*') && siguiente.startsWith('*'))
+                        ? '<span class="almacen-espacio"></span>'
+                        : '';
+                    if (limpia.startsWith('*')) return `<span class="almacen-principal">${escaparHtml(limpia)}</span>${espacio}`;
+                    if (limpia.startsWith('-')) return `<span class="almacen-sub">${escaparHtml(limpia)}</span>${espacio}`;
+                    return `<span class="almacen-sub">${escaparHtml(limpia)}</span>${espacio}`;
                 }).join('');
             }
 
