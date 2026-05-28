@@ -163,7 +163,7 @@ def redaccion_asiento_residente():
             
             .bottom-bar {{ position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border-top: 1px solid rgba(0,0,0,0.08); padding: 15px 30px; z-index: 900; display: flex; justify-content: space-between; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s;}}
             .bottom-bar.unlocked {{ opacity: 1; pointer-events: all; }}
-            .asiento-actions {{ display: none; gap: 8px; flex-wrap: wrap; align-items: center; }}
+            .asiento-actions {{ display: none; gap: 8px; flex-wrap: wrap; align-items: center; margin-left: auto; }}
             .asiento-actions.visible {{ display: flex; }}
             .asiento-lock-banner {{ display: none; position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%); z-index: 930; border-radius: 999px; padding: 10px 16px; background: #0f172a; color: #fff; font-size: 12px; font-weight: 800; box-shadow: 0 18px 34px rgba(15,23,42,.22); }}
             .asiento-lock-banner.visible {{ display: inline-flex; gap: 8px; align-items: center; }}
@@ -647,6 +647,8 @@ def redaccion_asiento_residente():
                 if (acciones) acciones.classList.toggle('visible', currentStep === 10 || asientoCerrado);
                 const navegacion = document.getElementById('moduloNavActions');
                 if (navegacion) navegacion.classList.toggle('d-none', currentStep === 10);
+                const btnAtras = document.getElementById('btnAtras');
+                if (btnAtras) btnAtras.classList.toggle('d-none', currentStep <= 1 || currentStep === 10);
                 const btnDueno = document.getElementById('btnEditarComoDueno');
                 if (btnDueno) btnDueno.classList.toggle('d-none', !(asientoCerrado && rolUsuario === 'Admin'));
             }}
@@ -987,7 +989,7 @@ def redaccion_asiento_residente():
                     document.querySelectorAll('.step-btn').forEach(btn => btn.classList.remove('active'));
                     document.getElementById(`step${{step}}`)?.classList.add('active');
                     document.getElementById(`btnStep${{step}}`)?.classList.add('active');
-                    document.getElementById('btnAtras')?.classList.toggle('d-none', step <= 1);
+                    document.getElementById('btnAtras')?.classList.toggle('d-none', step <= 1 || step === 10);
                     document.getElementById('asientoActions')?.classList.toggle('visible', step === 10);
                     document.getElementById('moduloNavActions')?.classList.toggle('d-none', step === 10);
                     setTimeout(window.samuActualizarCuaderno, 30);
@@ -1082,6 +1084,7 @@ def redaccion_asiento_residente():
                     }}
                     if (typeof mostrarAlerta === 'function') mostrarAlerta(estado === 'Cerrado' ? 'Asiento cerrado correctamente.' : 'Borrador guardado correctamente.', 'success');
                     setTimeout(() => {{
+                        window.redirigirCuadernoAlCerrarResumen = true;
                         if (typeof abrirResumenCuaderno === 'function') abrirResumenCuaderno();
                     }}, 450);
                 }}

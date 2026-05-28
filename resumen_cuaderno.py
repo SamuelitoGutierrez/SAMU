@@ -94,6 +94,10 @@ RESUMEN_CUADERNO_HTML = """
     function cerrarResumenCuaderno(event) {
         if (event && event.target && event.target.id !== 'resumenCuadernoOverlay') return;
         document.getElementById('resumenCuadernoOverlay').classList.remove('active');
+        if (window.redirigirCuadernoAlCerrarResumen) {
+            window.redirigirCuadernoAlCerrarResumen = false;
+            window.location.href = '/cuaderno';
+        }
     }
 </script>
 """
