@@ -377,13 +377,15 @@ def redaccion_asiento_residente():
                         : null;
                     if (instancia) {{
                         instancia.hide();
-                        return;
                     }}
                 }} catch (e) {{}}
                 modalInicial.classList.remove('show');
                 modalInicial.style.display = 'none';
                 modalInicial.setAttribute('aria-hidden', 'true');
+                modalInicial.removeAttribute('aria-modal');
                 document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
                 document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
             }}
             abrirModalInicialSeguro();
@@ -428,7 +430,16 @@ def redaccion_asiento_residente():
                 if(!g_numAsiento || !rawDate) {{ mostrarAlerta("Complete los datos para iniciar.", "error"); return; }} 
                 g_fechaRaw = rawDate; g_fechaAsiento = formatearFecha(rawDate); document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento; 
                 cerrarModalInicialSeguro(); 
-                document.getElementById('mainLayout').classList.add('unlocked'); document.getElementById('stepperBar').style.opacity = '1'; document.getElementById('stepperBar').style.pointerEvents = 'all'; document.getElementById('bottomBarUI').classList.add('unlocked'); document.getElementById('mobilePreviewBtn').classList.add('unlocked'); sincronizarDatos(); actualizarAccionesAsiento(); verificarEstadoAsientoGuardado();
+                requestAnimationFrame(() => {{
+                    document.getElementById('mainLayout').classList.add('unlocked');
+                    document.getElementById('stepperBar').style.opacity = '1';
+                    document.getElementById('stepperBar').style.pointerEvents = 'all';
+                    document.getElementById('bottomBarUI').classList.add('unlocked');
+                    document.getElementById('mobilePreviewBtn').classList.add('unlocked');
+                    sincronizarDatos();
+                    actualizarAccionesAsiento();
+                    verificarEstadoAsientoGuardado();
+                }});
             }}
 
             function porcentajePaso(step) {{
