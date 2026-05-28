@@ -706,7 +706,9 @@ def panel_cuaderno():
             const nombreSupervisor = "{{ nombre_completo }}";
 
             function prepararAnimacionScrollCuaderno() {
-                const elementos = document.querySelectorAll('.stat-card, .glass-panel, .portal-card');
+                const elementos = document.querySelectorAll(
+                    '.stat-card, .panel-head, .last-seat, .supervisor-tools, .calendar-grid, .calendar-legend, .postit, .empty-state, .portal-card'
+                );
                 elementos.forEach(el => el.classList.add('scroll-reveal'));
                 const actualizar = () => {
                     const alto = window.innerHeight || document.documentElement.clientHeight;

@@ -234,9 +234,9 @@ def redaccion_asiento_residente():
                         </div>
                         <div class="mb-4">
                             <label class="form-label fw-bold text-muted">Fecha del Asiento</label>
-                            <input type="date" id="initFecha" class="form-control form-control-lg inicio-input" value="{fecha_hoy_iso}" onkeydown="if(event.key==='Enter'){{event.preventDefault(); iniciarAsiento();}}">
+                            <input type="date" id="initFecha" class="form-control form-control-lg inicio-input" value="{fecha_hoy_iso}">
                         </div>
-                        <button type="button" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold shadow-sm" onclick="iniciarAsiento()">Comenzar registro <i class="bi bi-arrow-right ms-1"></i></button>
+                        <button type="button" id="btnComenzarRegistro" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold shadow-sm">Comenzar registro <i class="bi bi-arrow-right ms-1"></i></button>
                         <div class="text-center text-muted small mt-3">También puede presionar <b>Enter</b> para avanzar.</div>
                     </div>
                 </div>
@@ -388,6 +388,79 @@ def redaccion_asiento_residente():
                 document.body.style.removeProperty('padding-right');
                 document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
             }}
+            window.iniciarAsiento = function() {{
+                const inputNumero = document.getElementById('initNumAsiento');
+                const inputFecha = document.getElementById('initFecha');
+                const numero = (inputNumero && inputNumero.value ? inputNumero.value : '').trim();
+                const fecha = inputFecha ? inputFecha.value : '';
+                if (!numero || !fecha) {{
+                    const alerta = document.getElementById('elegantAlert');
+                    const texto = document.getElementById('alertText');
+                    const icono = document.getElementById('alertIcon');
+                    if (texto) texto.innerText = 'Complete los datos para iniciar.';
+                    if (icono) icono.innerHTML = '<i class="bi bi-exclamation-circle-fill text-danger"></i>';
+                    if (alerta) {{
+                        alerta.classList.add('show');
+                        setTimeout(() => alerta.classList.remove('show'), 3000);
+                    }} else {{
+                        alert('Complete los datos para iniciar.');
+                    }}
+                    return;
+                }}
+
+                const dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"];
+                const partes = fecha.split('-');
+                const fechaObj = new Date(partes[0], partes[1] - 1, partes[2]);
+                let diaIndex = fechaObj.getDay() - 1;
+                if (diaIndex === -1) diaIndex = 6;
+
+                window.g_numAsiento = numero;
+                window.g_fechaRaw = fecha;
+                window.g_fechaAsiento = `${{dias[diaIndex]}}, ${{partes[2]}}/${{partes[1]}}/${{partes[0]}}`;
+
+                const fechaCuaderno = document.getElementById('lbl_hoja_fecha');
+                if (fechaCuaderno) fechaCuaderno.innerText = window.g_fechaAsiento;
+                document.dispatchEvent(new CustomEvent('asiento:init', {{
+                    detail: {{
+                        numero: window.g_numAsiento,
+                        fechaRaw: window.g_fechaRaw,
+                        fechaTexto: window.g_fechaAsiento
+                    }}
+                }}));
+
+                cerrarModalInicialSeguro();
+
+                const activarRegistro = () => {{
+                    document.getElementById('mainLayout')?.classList.add('unlocked');
+                    const stepper = document.getElementById('stepperBar');
+                    if (stepper) {{
+                        stepper.style.opacity = '1';
+                        stepper.style.pointerEvents = 'all';
+                    }}
+                    document.getElementById('bottomBarUI')?.classList.add('unlocked');
+                    document.getElementById('mobilePreviewBtn')?.classList.add('unlocked');
+                    document.getElementById('step1')?.classList.add('active');
+                    document.getElementById('btnStep1')?.classList.add('active');
+                    if (typeof sincronizarDatos === 'function') sincronizarDatos();
+                    if (typeof actualizarAccionesAsiento === 'function') actualizarAccionesAsiento();
+                    if (typeof verificarEstadoAsientoGuardado === 'function') verificarEstadoAsientoGuardado();
+                }};
+                requestAnimationFrame(activarRegistro);
+                setTimeout(activarRegistro, 80);
+            }};
+            window.iniciarAsientoSeguro = window.iniciarAsiento;
+            document.addEventListener('DOMContentLoaded', function() {{
+                document.getElementById('btnComenzarRegistro')?.addEventListener('click', function(event) {{
+                    event.preventDefault();
+                    window.iniciarAsientoSeguro();
+                }});
+                document.getElementById('initFecha')?.addEventListener('keydown', function(event) {{
+                    if (event.key === 'Enter') {{
+                        event.preventDefault();
+                        window.iniciarAsientoSeguro();
+                    }}
+                }});
+            }});
             abrirModalInicialSeguro();
         </script>
         
@@ -398,6 +471,13 @@ def redaccion_asiento_residente():
             const rolUsuario = "{session.get('rol', '')}";
             let asientoCerrado = false;
             let edicionDuenoActiva = false;
+            document.addEventListener('asiento:init', function(event) {{
+                const detalle = event.detail || {{}};
+                g_numAsiento = detalle.numero || "";
+                g_fechaRaw = detalle.fechaRaw || "";
+                g_fechaAsiento = detalle.fechaTexto || "";
+                currentStep = 1;
+            }});
             const stepLabels = {{
                 1: 'Jornal de trabajo', 2: 'Personal de obra', 3: 'Partidas ejecutadas',
                 4: 'Mayor metrado', 5: 'Sub partidas', 6: 'Actividades',
