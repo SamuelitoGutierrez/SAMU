@@ -1,4 +1,5 @@
 from contextlib import suppress
+import json
 
 from database import get_connection, release_connection
 
@@ -148,6 +149,77 @@ def obtener_panel_cuaderno():
         return datos
     except Exception:
         return datos
+    finally:
+        if conn:
+            release_connection(conn)
+
+
+def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None):
+    conectado = asegurar_tablas_cuaderno()
+    if not conectado:
+        return {"ok": False, "error": "Base de datos no conectada"}
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        contenido_texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
+        firmado_por = usuario if estado in ("Cerrado", "Firmado") else None
+        cur.execute(
+            """
+            INSERT INTO cuaderno_asientos (numero, fecha, estado, avance, firmado_por, firmado_en, contenido, updated_at)
+            VALUES (%s, %s, %s, %s, %s, CASE WHEN %s IN ('Cerrado', 'Firmado') THEN NOW() ELSE NULL END, %s, NOW())
+            ON CONFLICT (numero) DO UPDATE SET
+                fecha = EXCLUDED.fecha,
+                estado = EXCLUDED.estado,
+                avance = EXCLUDED.avance,
+                firmado_por = COALESCE(EXCLUDED.firmado_por, cuaderno_asientos.firmado_por),
+                firmado_en = CASE
+                    WHEN EXCLUDED.estado IN ('Cerrado', 'Firmado') THEN NOW()
+                    ELSE cuaderno_asientos.firmado_en
+                END,
+                contenido = EXCLUDED.contenido,
+                updated_at = NOW()
+            RETURNING numero, estado, avance
+            """,
+            (numero, fecha, estado, avance, firmado_por, estado, contenido_texto),
+        )
+        row = cur.fetchone()
+        conn.commit()
+        cur.close()
+        return {"ok": True, "numero": row[0], "estado": row[1], "avance": row[2]}
+    except Exception as exc:
+        if conn:
+            with suppress(Exception):
+                conn.rollback()
+        return {"ok": False, "error": str(exc)}
+    finally:
+        if conn:
+            release_connection(conn)
+
+
+def obtener_asiento(numero):
+    if not asegurar_tablas_cuaderno():
+        return None
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT numero, fecha::TEXT AS fecha, estado, avance, contenido
+            FROM cuaderno_asientos
+            WHERE numero = %s
+            """,
+            (numero,),
+        )
+        row = cur.fetchone()
+        cur.close()
+        if not row:
+            return None
+        return {"numero": row[0], "fecha": row[1], "estado": row[2], "avance": row[3], "contenido": row[4]}
+    except Exception:
+        return None
     finally:
         if conn:
             release_connection(conn)

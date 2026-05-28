@@ -290,6 +290,8 @@ def panel_cuaderno():
             .cal-day.signed { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
             .cal-day.observed { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
             .cal-day.pending { background: #eff6ff; border-color: #bfdbfe; color: #075985; }
+            .cal-day.draft { background: #fef9c3; border-color: #fde68a; color: #854d0e; box-shadow: inset 0 0 0 1px rgba(245,158,11,.18); }
+            .cal-day.closed { background: #f8fafc; border-color: #94a3b8; color: #334155; }
 
             .cal-day:hover {
                 transform: translateY(-3px) scale(1.06);
@@ -319,6 +321,34 @@ def panel_cuaderno():
             .cal-day:hover .cal-tooltip {
                 opacity: 1;
                 transform: translateX(-50%) translateY(0);
+            }
+
+            .calendar-legend {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+                margin-top: 14px;
+                font-size: 11px;
+                font-weight: 800;
+                color: #64748b;
+            }
+
+            .legend-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                border: 1px solid #e2e8f0;
+                border-radius: 999px;
+                padding: 7px 10px;
+                background: rgba(255,255,255,.74);
+            }
+
+            .legend-dot {
+                width: 11px;
+                height: 11px;
+                border-radius: 999px;
+                display: inline-block;
+                border: 1px solid rgba(15,23,42,.08);
             }
 
             .observation-list {
@@ -601,7 +631,7 @@ def panel_cuaderno():
                             {% for d in range(1, 32) %}
                                 {% set asiento = (asientos | selectattr('dia', 'equalto', d) | list | first) %}
                                 {% if asiento %}
-                                    <div class="cal-day has-seat {% if asiento.estado == 'Firmado' %}signed{% elif asiento.estado == 'Observado' %}observed{% else %}pending{% endif %}" onclick="irAAsiento({{ asiento.numero }})">
+                                    <div class="cal-day has-seat {% if asiento.estado == 'Firmado' %}signed{% elif asiento.estado == 'Observado' %}observed{% elif asiento.estado == 'Borrador' %}draft{% elif asiento.estado == 'Cerrado' %}closed{% else %}pending{% endif %}" onclick="irAAsiento({{ asiento.numero }})">
                                         {{ d }}
                                         <div class="cal-tooltip">
                                             <b>Asiento N° {{ asiento.numero }}</b><br>
@@ -615,6 +645,12 @@ def panel_cuaderno():
                                     <div class="cal-day">{{ d }}</div>
                                 {% endif %}
                             {% endfor %}
+                        </div>
+                        <div class="calendar-legend">
+                            <span class="legend-item"><span class="legend-dot" style="background:#fef9c3;"></span>Amarillo: borrador / en proceso</span>
+                            <span class="legend-item"><span class="legend-dot" style="background:#f8fafc;"></span>Gris: asiento cerrado</span>
+                            <span class="legend-item"><span class="legend-dot" style="background:#f0fdf4;"></span>Verde: firmado por supervisión</span>
+                            <span class="legend-item"><span class="legend-dot" style="background:#fff7ed;"></span>Naranja: observado</span>
                         </div>
                     </div>
 

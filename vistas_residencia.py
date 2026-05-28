@@ -3,11 +3,12 @@
 # Módulo Maestro: Ensamblador Final del Cuaderno de Obra
 # =========================================================
 
-from flask import Blueprint, render_template_string, session, redirect, url_for
+from flask import Blueprint, render_template_string, session, redirect, url_for, request, jsonify
 from navbar import obtener_navbar
 from datetime import datetime
 from cuaderno_obra import CUADERNO_OBRA_CSS, CUADERNO_OBRA_JS, obtener_cuaderno_obra_html
 from resumen_cuaderno import RESUMEN_CUADERNO_HTML
+from cuaderno_store import guardar_asiento, obtener_asiento
 
 # ==============================================================================
 # IMPORTACIÓN DINÁMICA
@@ -43,6 +44,47 @@ try: from mod_10_ocurrencias import OCURRENCIAS_HTML
 except: OCURRENCIAS_HTML = "<div class='step-view' id='step10'><p>En construcción...</p></div>"
 
 residencia_bp = Blueprint('residencia', __name__)
+
+
+@residencia_bp.route('/residencia/api/asiento/<int:numero>')
+def api_obtener_asiento(numero):
+    if 'usuario_id' not in session:
+        return jsonify({"ok": False, "error": "No autorizado"}), 401
+    asiento = obtener_asiento(numero)
+    return jsonify({"ok": True, "asiento": asiento})
+
+
+@residencia_bp.route('/residencia/api/asiento', methods=['POST'])
+def api_guardar_asiento():
+    if 'usuario_id' not in session:
+        return jsonify({"ok": False, "error": "No autorizado"}), 401
+
+    data = request.get_json(silent=True) or {}
+    try:
+        numero = int(data.get("numero"))
+        avance = max(0, min(100, int(data.get("avance", 0))))
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "Número de asiento o avance inválido"}), 400
+
+    estado = data.get("estado") or "Borrador"
+    if estado not in ("Borrador", "Cerrado"):
+        estado = "Borrador"
+
+    if estado == "Borrador":
+        existente = obtener_asiento(numero)
+        if existente and existente.get("estado") == "Cerrado" and session.get("rol") != "Admin":
+            return jsonify({"ok": False, "error": "El asiento está cerrado. Solo el dueño/Admin puede editarlo."}), 403
+
+    resultado = guardar_asiento(
+        numero=numero,
+        fecha=data.get("fecha") or datetime.now().strftime('%Y-%m-%d'),
+        estado=estado,
+        avance=avance,
+        contenido=data.get("contenido") or {},
+        usuario=session.get("nombre", "Sistema"),
+    )
+    status = 200 if resultado.get("ok") else 500
+    return jsonify(resultado), status
 
 @residencia_bp.route('/residencia')
 def redaccion_asiento_residente():
@@ -121,6 +163,14 @@ def redaccion_asiento_residente():
             
             .bottom-bar {{ position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border-top: 1px solid rgba(0,0,0,0.08); padding: 15px 30px; z-index: 900; display: flex; justify-content: space-between; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s;}}
             .bottom-bar.unlocked {{ opacity: 1; pointer-events: all; }}
+            .asiento-actions {{ display: none; gap: 8px; flex-wrap: wrap; align-items: center; }}
+            .asiento-actions.visible {{ display: flex; }}
+            .asiento-lock-banner {{ display: none; position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%); z-index: 930; border-radius: 999px; padding: 10px 16px; background: #0f172a; color: #fff; font-size: 12px; font-weight: 800; box-shadow: 0 18px 34px rgba(15,23,42,.22); }}
+            .asiento-lock-banner.visible {{ display: inline-flex; gap: 8px; align-items: center; }}
+            .form-column.asiento-cerrado input,
+            .form-column.asiento-cerrado textarea,
+            .form-column.asiento-cerrado select {{ pointer-events: none; background-color: #f8fafc !important; opacity: .72; }}
+            .form-column.asiento-cerrado button:not(#btnEditarComoDueno):not(#btnResumenCuaderno):not(.step-btn) {{ pointer-events: none; opacity: .55; }}
 
             /* Estilos del Panel de Pegado Inteligente */
             .col-header {{ background: #f8fafc; border: 1px solid #cbd5e1; border-bottom: none; border-radius: 8px 8px 0 0; padding: 8px; text-align: center; font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 0.5px; }}
@@ -152,6 +202,7 @@ def redaccion_asiento_residente():
                 .step-view {{ padding: 22px; border-radius: 22px; }}
                 .bottom-bar {{ padding: 12px 14px; gap: 10px; }}
                 .bottom-bar .btn {{ padding-left: 16px !important; padding-right: 16px !important; font-size: 12px; }}
+                .asiento-lock-banner {{ bottom: 90px; max-width: calc(100vw - 24px); border-radius: 18px; }}
             }}
             @media (max-width: 576px) {{
                 .split-layout {{ margin-top: 126px; padding: 0 10px; }}
@@ -272,11 +323,17 @@ def redaccion_asiento_residente():
 
         <div class="bottom-bar shadow-lg" id="bottomBarUI">
             <button type="button" id="btnAtras" class="btn btn-light border fw-bold rounded-pill px-4 text-dark shadow-sm d-none" onclick="anteriorPaso()"><i class="bi bi-arrow-left"></i> Anterior</button>
+            <div class="asiento-actions" id="asientoActions">
+                <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm" onclick="guardarBorradorAsiento()"><i class="bi bi-save2"></i> Guardar borrador</button>
+                <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" onclick="cerrarAsiento()"><i class="bi bi-lock-fill"></i> Cerrar asiento</button>
+                <button type="button" class="btn btn-dark fw-bold rounded-pill px-4 shadow-sm d-none" id="btnEditarComoDueno" onclick="habilitarEdicionComoDueno()"><i class="bi bi-unlock-fill"></i> Editar como dueño</button>
+            </div>
             <div class="d-flex gap-2 align-items-center ms-auto">
                 <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill px-4" onclick="omitirPaso()">Omitir</button>
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4" onclick="siguientePaso()">Guardar y Continuar <i class="bi bi-arrow-right"></i></button>
             </div>
         </div>
+        <div class="asiento-lock-banner" id="asientoLockBanner"><i class="bi bi-lock-fill"></i> Asiento cerrado. La edición está bloqueada.</div>
 
         <button type="button" class="mobile-preview-btn" id="mobilePreviewBtn" onclick="abrirResumenCuaderno()">
             <i class="bi bi-journal-text"></i> Ver cuaderno
@@ -290,6 +347,9 @@ def redaccion_asiento_residente():
             // CONFIGURACIÓN GLOBAL
             let g_numAsiento = ""; let g_fechaAsiento = ""; let g_fechaRaw = "";
             let currentStep = 1; const totalSteps = 10; let isAnimating = false;
+            const rolUsuario = "{session.get('rol', '')}";
+            let asientoCerrado = false;
+            let edicionDuenoActiva = false;
             const stepLabels = {{
                 1: 'Jornal de trabajo', 2: 'Personal de obra', 3: 'Partidas ejecutadas',
                 4: 'Mayor metrado', 5: 'Sub partidas', 6: 'Actividades',
@@ -322,7 +382,7 @@ def redaccion_asiento_residente():
                 if(!g_numAsiento || !rawDate) {{ mostrarAlerta("Complete los datos para iniciar.", "error"); return; }} 
                 g_fechaRaw = rawDate; g_fechaAsiento = formatearFecha(rawDate); document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento; 
                 bootstrap.Modal.getInstance(document.getElementById('modalConfigInicial')).hide(); 
-                document.getElementById('mainLayout').classList.add('unlocked'); document.getElementById('stepperBar').style.opacity = '1'; document.getElementById('stepperBar').style.pointerEvents = 'all'; document.getElementById('bottomBarUI').classList.add('unlocked'); document.getElementById('mobilePreviewBtn').classList.add('unlocked'); sincronizarDatos(); 
+                document.getElementById('mainLayout').classList.add('unlocked'); document.getElementById('stepperBar').style.opacity = '1'; document.getElementById('stepperBar').style.pointerEvents = 'all'; document.getElementById('bottomBarUI').classList.add('unlocked'); document.getElementById('mobilePreviewBtn').classList.add('unlocked'); sincronizarDatos(); actualizarAccionesAsiento(); verificarEstadoAsientoGuardado();
             }}
 
             function porcentajePaso(step) {{
@@ -424,8 +484,136 @@ def redaccion_asiento_residente():
             }}
 
             // NAVEGACIÓN Y UX
-            function jumpToStep(stepIndex) {{ if (isAnimating || currentStep === stepIndex) return; isAnimating = true; const currentView = document.getElementById(`step${{currentStep}}`); currentView.classList.remove('active'); currentView.classList.add('exit'); document.getElementById(`btnStep${{currentStep}}`).classList.remove('active'); setTimeout(() => {{ currentView.classList.remove('exit'); currentStep = stepIndex; document.getElementById(`step${{currentStep}}`).classList.add('active'); document.getElementById(`btnStep${{currentStep}}`).classList.add('active'); const btnAtras = document.getElementById('btnAtras'); if (currentStep > 1) btnAtras.classList.remove('d-none'); else btnAtras.classList.add('d-none'); if (typeof sincronizarDatos === "function") sincronizarDatos(); isAnimating = false; }}, 300); }}
-            function siguientePaso() {{ if(currentStep < totalSteps) jumpToStep(currentStep + 1); }} function anteriorPaso() {{ if(currentStep > 1) jumpToStep(currentStep - 1); }} function omitirPaso() {{ siguientePaso(); }}
+            function jumpToStep(stepIndex) {{ if (isAnimating || currentStep === stepIndex) return; isAnimating = true; const currentView = document.getElementById(`step${{currentStep}}`); currentView.classList.remove('active'); currentView.classList.add('exit'); document.getElementById(`btnStep${{currentStep}}`).classList.remove('active'); setTimeout(() => {{ currentView.classList.remove('exit'); currentStep = stepIndex; document.getElementById(`step${{currentStep}}`).classList.add('active'); document.getElementById(`btnStep${{currentStep}}`).classList.add('active'); const btnAtras = document.getElementById('btnAtras'); if (currentStep > 1) btnAtras.classList.remove('d-none'); else btnAtras.classList.add('d-none'); actualizarAccionesAsiento(); if (typeof sincronizarDatos === "function") sincronizarDatos(); isAnimating = false; }}, 300); }}
+            function siguientePaso() {{ if (g_numAsiento && !asientoCerrado) autoGuardarBorrador(); if(currentStep < totalSteps) jumpToStep(currentStep + 1); }} function anteriorPaso() {{ if(currentStep > 1) jumpToStep(currentStep - 1); }} function omitirPaso() {{ siguientePaso(); }}
+
+            function actualizarAccionesAsiento() {{
+                const acciones = document.getElementById('asientoActions');
+                if (acciones) acciones.classList.toggle('visible', currentStep === 10 || asientoCerrado);
+                const btnDueno = document.getElementById('btnEditarComoDueno');
+                if (btnDueno) btnDueno.classList.toggle('d-none', !(asientoCerrado && rolUsuario === 'Admin'));
+            }}
+
+            function avanceAsiento() {{
+                let suma = 0;
+                for (let i = 1; i <= totalSteps; i++) suma += porcentajePaso(i);
+                return Math.round(suma / totalSteps);
+            }}
+
+            function contenidoAsiento() {{
+                const modulos = typeof redactarModulosCuaderno === 'function' ? redactarModulosCuaderno() : [];
+                return {{
+                    numero: g_numAsiento,
+                    fecha: g_fechaRaw,
+                    fecha_texto: g_fechaAsiento,
+                    avance: avanceAsiento(),
+                    modulos: modulos,
+                    texto_html: document.getElementById('contenedorLineasCuaderno')?.innerHTML || '',
+                    datos: {{
+                        jornal_m: document.getElementById('v_jornal_m')?.value || '',
+                        jornal_t: document.getElementById('v_jornal_t')?.value || '',
+                        clima: document.getElementById('v_clima')?.value || '',
+                        personal: {{
+                            operario: document.getElementById('v_oper')?.value || '',
+                            oficiales: document.getElementById('v_ofic')?.value || '',
+                            peones: document.getElementById('v_peon')?.value || '',
+                            mecanicos: document.getElementById('v_meca')?.value || '',
+                            controladores: document.getElementById('v_ctrl')?.value || '',
+                            operadores: document.getElementById('v_ope_maq')?.value || ''
+                        }},
+                        m3: window.m3_lista || [],
+                        m4: window.m4_lista || [],
+                        m5: window.m5_lista || [],
+                        m6: window.m6_lista || [],
+                        almacen: document.getElementById('v_almacen')?.value || '',
+                        maquinaria: document.getElementById('v_maquina')?.value || '',
+                        herramientas: document.getElementById('v_herram')?.value || '',
+                        ocurrencia: document.getElementById('v_ocurrencia')?.value || ''
+                    }}
+                }};
+            }}
+
+            async function enviarAsiento(estado, silencioso=false) {{
+                if (!g_numAsiento || !g_fechaRaw) {{
+                    if (!silencioso) mostrarAlerta("Primero inicie el asiento con número y fecha.", "error");
+                    return null;
+                }}
+                if (asientoCerrado && !edicionDuenoActiva && rolUsuario !== 'Admin') {{
+                    if (!silencioso) mostrarAlerta("Este asiento ya está cerrado y no puede modificarse.", "error");
+                    return null;
+                }}
+                if (typeof sincronizarDatos === "function") sincronizarDatos();
+                const payload = {{
+                    numero: g_numAsiento,
+                    fecha: g_fechaRaw,
+                    estado: estado,
+                    avance: avanceAsiento(),
+                    contenido: contenidoAsiento()
+                }};
+                const resp = await fetch('/residencia/api/asiento', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify(payload)
+                }});
+                const data = await resp.json().catch(() => ({{ ok: false, error: 'Respuesta inválida del servidor' }}));
+                if (!resp.ok || !data.ok) {{
+                    if (!silencioso) mostrarAlerta(data.error || "No se pudo guardar el asiento.", "error");
+                    return null;
+                }}
+                return data;
+            }}
+
+            async function autoGuardarBorrador() {{
+                try {{ await enviarAsiento('Borrador', true); }} catch (e) {{ /* El guardado manual mostrará cualquier problema de conexión. */ }}
+            }}
+
+            async function guardarBorradorAsiento() {{
+                const data = await enviarAsiento('Borrador');
+                if (!data) return;
+                asientoCerrado = false;
+                mostrarAlerta(`Borrador guardado. Avance ${{data.avance}}%.`, "success");
+            }}
+
+            async function cerrarAsiento() {{
+                if (!confirm("Al cerrar el asiento ya no se podrá modificar. Solo el dueño/Admin podrá editarlo. ¿Desea cerrar el asiento?")) return;
+                const data = await enviarAsiento('Cerrado');
+                if (!data) return;
+                asientoCerrado = true;
+                edicionDuenoActiva = false;
+                bloquearEdicionAsiento();
+                mostrarAlerta("Asiento cerrado y guardado correctamente.", "success");
+            }}
+
+            function bloquearEdicionAsiento() {{
+                document.querySelector('.form-column')?.classList.add('asiento-cerrado');
+                document.getElementById('asientoLockBanner')?.classList.add('visible');
+                actualizarAccionesAsiento();
+            }}
+
+            function habilitarEdicionComoDueno() {{
+                if (rolUsuario !== 'Admin') return;
+                edicionDuenoActiva = true;
+                asientoCerrado = false;
+                document.querySelector('.form-column')?.classList.remove('asiento-cerrado');
+                document.getElementById('asientoLockBanner')?.classList.remove('visible');
+                actualizarAccionesAsiento();
+                mostrarAlerta("Edición de dueño habilitada para este asiento.", "success");
+            }}
+
+            async function verificarEstadoAsientoGuardado() {{
+                if (!g_numAsiento) return;
+                const resp = await fetch(`/residencia/api/asiento/${{encodeURIComponent(g_numAsiento)}}`);
+                const data = await resp.json().catch(() => null);
+                const asiento = data && data.ok ? data.asiento : null;
+                if (!asiento) return;
+                if (asiento.estado === 'Cerrado') {{
+                    asientoCerrado = true;
+                    bloquearEdicionAsiento();
+                    mostrarAlerta("Este asiento ya fue cerrado. Se abrió en modo solo lectura.", "success");
+                }} else {{
+                    mostrarAlerta(`Borrador existente encontrado. Avance guardado ${{asiento.avance || 0}}%.`, "success");
+                }}
+            }}
 
             let t_m = true; let t_t = true;
             function toggleTurno(turno) {{ if(turno === 'm') {{ t_m = !t_m; document.getElementById('card_m').classList.toggle('active', t_m); document.getElementById('hora_jornal_m').style.opacity = t_m ? "1" : "0.3"; }} else {{ t_t = !t_t; document.getElementById('card_t').classList.toggle('active', t_t); document.getElementById('hora_jornal_t').style.opacity = t_t ? "1" : "0.3"; }} if (typeof m1_actualizar_jornal === "function") m1_actualizar_jornal(); else sincronizarDatos(); }}
