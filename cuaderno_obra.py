@@ -174,7 +174,7 @@ CUADERNO_OBRA_JS = """
                 }
 
                 agregarModulo(modulos, '7. Movimiento de almacén', valorConSaltos('v_almacen'));
-                agregarModulo(modulos, '8. Maquinarias y equipos', valor('v_maquina'));
+                agregarModulo(modulos, '8. Maquinarias y equipos', valorConSaltos('v_maquina'));
                 agregarModulo(modulos, '9. Herramientas manuales', valor('v_herram'));
                 agregarModulo(modulos, '10. Ocurrencias y otros', valor('v_ocurrencia'));
 
