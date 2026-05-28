@@ -7,6 +7,7 @@ from flask import Blueprint, render_template_string, session, redirect, url_for
 from navbar import obtener_navbar
 from datetime import datetime
 from cuaderno_obra import CUADERNO_OBRA_CSS, CUADERNO_OBRA_JS, obtener_cuaderno_obra_html
+from resumen_cuaderno import RESUMEN_CUADERNO_HTML
 
 # ==============================================================================
 # IMPORTACIÓN DINÁMICA
@@ -71,7 +72,7 @@ def redaccion_asiento_residente():
             @keyframes floatInUp {{ from {{ opacity: 0; transform: translateY(30px); }} to {{ opacity: 1; transform: translateY(0); }} }}
             @keyframes floatOutDown {{ from {{ opacity: 1; transform: translateY(0); }} to {{ opacity: 0; transform: translateY(30px); }} }}
             
-            .stepper-container {{ position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.84); backdrop-filter: blur(22px); border-bottom: 1px solid rgba(15,23,42,0.08); z-index: 900; padding: 14px 20px 16px; overflow-x: auto; white-space: nowrap; display: flex; align-items: center; gap: 10px; opacity: 0; pointer-events: none; transition: opacity 0.5s; box-shadow: 0 14px 35px rgba(15,23,42,0.05); }}
+            .stepper-container {{ position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.84); backdrop-filter: blur(22px); border-bottom: 1px solid rgba(15,23,42,0.08); z-index: 900; padding: 14px 18px 16px; overflow-x: auto; white-space: nowrap; display: grid; grid-template-columns: repeat(11, minmax(106px, 1fr)); align-items: center; gap: 10px; opacity: 0; pointer-events: none; transition: opacity 0.5s; box-shadow: 0 14px 35px rgba(15,23,42,0.05); }}
             .stepper-container::-webkit-scrollbar {{ display: none; }}
             .step-btn {{ position: relative; border: 1px solid #dbeafe; border-radius: 999px; padding: 10px 18px 10px 34px; min-width: 104px; font-size: 11px; font-weight: 800; color: #475569; background: rgba(255,255,255,0.92); cursor: pointer; transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease; transform-origin: center; box-shadow: 0 8px 20px rgba(15,23,42,0.04); }}
             .step-btn::before {{ content: attr(data-percent); position: absolute; left: 7px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #f1f5f9; color: #64748b; font-size: 8px; font-weight: 900; box-shadow: inset 0 0 0 1px #e2e8f0; }}
@@ -82,6 +83,9 @@ def redaccion_asiento_residente():
             .step-btn.completed::before {{ content: "✓"; background: #22c55e; color: #fff; box-shadow: 0 6px 14px rgba(34,197,94,.25); }}
             .step-btn.missing {{ border-color: #fed7aa; color: #9a3412; background: #fff7ed; }}
             .step-btn.missing::before {{ background: #ffedd5; color: #9a3412; }}
+            .step-btn.resumen {{ color: #fff; background: linear-gradient(135deg, #0f172a, #0263a0); border-color: #0263a0; }}
+            .step-btn.resumen::before {{ content: "Ver"; width: 24px; background: rgba(255,255,255,.16); color: #fff; box-shadow: none; }}
+            .step-btn.resumen::after {{ background: linear-gradient(90deg, #38bdf8 100%, #38bdf8 0); }}
             
             #globalTooltip {{ position: fixed; background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(10px); color: #ffffff; padding: 10px 14px; border-radius: 14px; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 18px 35px rgba(15,23,42,0.25); pointer-events: none; z-index: 999999; opacity: 0; transform: translateY(10px) scale(.96); transition: opacity 0.2s ease, transform 0.2s ease; border: 1px solid rgba(255,255,255,.12); }}
             #globalTooltip.visible {{ opacity: 1; transform: translateY(0); }}
@@ -212,6 +216,7 @@ def redaccion_asiento_residente():
             <button type="button" class="step-btn" id="btnStep8" data-step="8" data-percent="0%" onclick="jumpToStep(8)">8. Maquinaria</button>
             <button type="button" class="step-btn" id="btnStep9" data-step="9" data-percent="0%" onclick="jumpToStep(9)">9. Herramientas</button>
             <button type="button" class="step-btn" id="btnStep10" data-step="10" data-percent="0%" onclick="jumpToStep(10)">10. Ocurrencias</button>
+            <button type="button" class="step-btn resumen" id="btnResumenCuaderno" data-percent="Ver" data-tooltip="Resumen del cuaderno · Vista previa completa" onclick="abrirResumenCuaderno()">Resumen</button>
         </div>
         <div id="globalTooltip"></div>
 
@@ -243,6 +248,8 @@ def redaccion_asiento_residente():
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4" onclick="siguientePaso()">Guardar y Continuar <i class="bi bi-arrow-right"></i></button>
             </div>
         </div>
+
+        {RESUMEN_CUADERNO_HTML}
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         
