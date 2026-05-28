@@ -864,6 +864,247 @@ def redaccion_asiento_residente():
                 setInterval(window.samuSincronizarCuaderno, 700);
             }});
         </script>
+
+        <script>
+            // Motor de seguridad independiente: si un script anterior falla, este mantiene vivo el cuaderno.
+            (function() {{
+                const totalModulos = 10;
+                window.samuCurrentStep = window.samuCurrentStep || 1;
+
+                function texto(id, saltos=false) {{
+                    const el = document.getElementById(id);
+                    const valor = el ? String(el.value || '').trim() : '';
+                    return saltos ? valor : valor.replace(/\\s+/g, ' ');
+                }}
+
+                function escapar(valor) {{
+                    return String(valor || '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                }}
+
+                function lista(nombre) {{
+                    return Array.isArray(window[nombre]) ? window[nombre] : [];
+                }}
+
+                function itemPartida(p) {{
+                    const item = p && p.item && p.item !== '-' ? `${{p.item}} ` : '';
+                    const descripcion = p && p.descripcion ? p.descripcion : '';
+                    const prog = p && p.prog ? ` - ${{p.prog}}` : '';
+                    const metrado = p && p.metrado ? ` = ${{p.metrado}} ${{p.unidad || ''}}` : '';
+                    return `${{item}}${{descripcion}}${{prog}}${{metrado}}`.replace(/\\s+/g, ' ').trim();
+                }}
+
+                function agregar(modulos, titulo, contenido) {{
+                    const limpio = String(contenido || '')
+                        .split('\\n')
+                        .map(linea => String(linea || '').trimEnd())
+                        .filter(linea => linea.trim())
+                        .join('\\n');
+                    modulos.push({{ titulo, contenido: limpio || '-' }});
+                }}
+
+                function modulosCuaderno() {{
+                    const modulos = [];
+                    const jornal = [];
+                    if (texto('v_jornal_m')) jornal.push(`Mañana: ${{texto('v_jornal_m')}}`);
+                    if (texto('v_jornal_t')) jornal.push(`Tarde: ${{texto('v_jornal_t')}}`);
+                    if (texto('v_clima')) jornal.push(`Clima: ${{texto('v_clima')}}`);
+                    agregar(modulos, '1. Jornal de trabajo', jornal.join(', '));
+
+                    const personal = [
+                        ['Operario', texto('v_oper')],
+                        ['Oficiales', texto('v_ofic')],
+                        ['Peones', texto('v_peon')],
+                        ['Mecánicos', texto('v_meca')],
+                        ['Controladores de maquinaria', texto('v_ctrl')],
+                        ['Operadores de maquinaria', texto('v_ope_maq')]
+                    ].filter(([_, cantidad]) => parseInt(cantidad || 0) > 0)
+                     .map(([nombre, cantidad]) => `(${{String(parseInt(cantidad || 0)).padStart(2, '0')}}) ${{nombre}}`);
+                    agregar(modulos, '2. Personal de obra', personal.join('    '));
+
+                    agregar(modulos, '3. Partidas ejecutadas', lista('m3_lista').map(itemPartida).join('\\n'));
+                    agregar(modulos, '4. Partidas de mayor metrado', lista('m4_lista').map(itemPartida).join('\\n'));
+                    agregar(modulos, '5. Sub partidas ejecutadas', lista('m5_lista').map(itemPartida).join('\\n'));
+                    agregar(modulos, '6. Actividades ejecutadas', lista('m6_lista').map(itemPartida).join('\\n'));
+                    agregar(modulos, '7. Movimiento de almacén', texto('v_almacen', true));
+                    agregar(modulos, '8. Maquinarias y equipos', texto('v_maquina', true));
+                    agregar(modulos, '9. Herramientas manuales', texto('v_herram', true));
+                    agregar(modulos, '10. Ocurrencias y otros', texto('v_ocurrencia', true));
+                    return modulos;
+                }}
+
+                function htmlContenidoModulo(modulo) {{
+                    if (modulo.titulo.startsWith('7.') && typeof htmlAlmacen === 'function') {{
+                        return `<div class="almacen-bloque">${{htmlAlmacen(modulo.contenido)}}</div>`;
+                    }}
+                    if (modulo.titulo.startsWith('8.') && typeof htmlMaquinaria === 'function') {{
+                        return `<div class="maquinaria-bloque">${{htmlMaquinaria(modulo.contenido)}}</div>`;
+                    }}
+                    return `<span class="modulo-contenido">${{escapar(modulo.contenido).replace(/\\n/g, '<br>')}}</span>`;
+                }}
+
+                function htmlCuaderno(asiento, fecha, modulos) {{
+                    const contenido = modulos.map(modulo => `
+                        <div class="modulo-redaccion">
+                            <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
+                            ${{htmlContenidoModulo(modulo)}}
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="pagina-cuaderno">
+                            <div class="lapicero">
+                                <div class="encabezado-asiento">
+                                    <div class="titulo-asiento">ASIENTO N° ${{escapar(asiento)}} DEL RESIDENTE DE OBRA</div>
+                                    <div class="fecha-asiento">${{escapar(fecha)}}</div>
+                                </div>
+                                ${{contenido}}
+                            </div>
+                        </div>
+                    `;
+                }}
+
+                window.samuActualizarCuaderno = function() {{
+                    const numero = String(window.g_numAsiento || (typeof g_numAsiento !== 'undefined' ? g_numAsiento : '') || '').trim();
+                    const fecha = String(window.g_fechaAsiento || (typeof g_fechaAsiento !== 'undefined' ? g_fechaAsiento : '') || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
+                    const contenedor = document.getElementById('contenedorLineasCuaderno');
+                    if (!contenedor || !numero) return;
+                    contenedor.innerHTML = htmlCuaderno(numero.padStart(4, '0'), fecha, modulosCuaderno());
+                }};
+
+                window.irModulo = function(stepIndex) {{
+                    const step = Math.max(1, Math.min(totalModulos, parseInt(stepIndex, 10) || 1));
+                    window.samuCurrentStep = step;
+                    if (typeof currentStep !== 'undefined') currentStep = step;
+                    document.querySelectorAll('.step-view').forEach(vista => vista.classList.remove('active', 'exit'));
+                    document.querySelectorAll('.step-btn').forEach(btn => btn.classList.remove('active'));
+                    document.getElementById(`step${{step}}`)?.classList.add('active');
+                    document.getElementById(`btnStep${{step}}`)?.classList.add('active');
+                    document.getElementById('btnAtras')?.classList.toggle('d-none', step <= 1);
+                    document.getElementById('asientoActions')?.classList.toggle('visible', step === 10);
+                    setTimeout(window.samuActualizarCuaderno, 30);
+                }};
+
+                window.siguienteModulo = function() {{
+                    window.irModulo((window.samuCurrentStep || 1) + 1);
+                }};
+
+                window.anteriorModulo = function() {{
+                    window.irModulo((window.samuCurrentStep || 1) - 1);
+                }};
+
+                window.iniciarAsientoSeguro = function() {{
+                    const numero = String(document.getElementById('initNumAsiento')?.value || '').trim();
+                    const fecha = String(document.getElementById('initFecha')?.value || '').trim();
+                    if (!numero || !fecha) {{
+                        if (typeof mostrarAlerta === 'function') mostrarAlerta('Complete los datos para iniciar.', 'error');
+                        else alert('Complete los datos para iniciar.');
+                        return;
+                    }}
+
+                    const dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"];
+                    const [y, m, d] = fecha.split('-');
+                    const dateObj = new Date(y, m - 1, d);
+                    let dayIndex = dateObj.getDay() - 1;
+                    if (dayIndex === -1) dayIndex = 6;
+
+                    window.g_numAsiento = numero;
+                    window.g_fechaRaw = fecha;
+                    window.g_fechaAsiento = `${{dias[dayIndex]}}, ${{d}}/${{m}}/${{y}}`;
+                    if (typeof g_numAsiento !== 'undefined') g_numAsiento = window.g_numAsiento;
+                    if (typeof g_fechaRaw !== 'undefined') g_fechaRaw = window.g_fechaRaw;
+                    if (typeof g_fechaAsiento !== 'undefined') g_fechaAsiento = window.g_fechaAsiento;
+
+                    const fechaCuaderno = document.getElementById('lbl_hoja_fecha');
+                    if (fechaCuaderno) fechaCuaderno.innerText = window.g_fechaAsiento;
+
+                    document.getElementById('modalConfigInicial')?.classList.remove('show');
+                    const modal = document.getElementById('modalConfigInicial');
+                    if (modal) {{
+                        modal.style.display = 'none';
+                        modal.setAttribute('aria-hidden', 'true');
+                    }}
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('overflow');
+                    document.body.style.removeProperty('padding-right');
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+
+                    document.getElementById('mainLayout')?.classList.add('unlocked');
+                    const stepper = document.getElementById('stepperBar');
+                    if (stepper) {{
+                        stepper.style.opacity = '1';
+                        stepper.style.pointerEvents = 'all';
+                    }}
+                    document.getElementById('bottomBarUI')?.classList.add('unlocked');
+                    document.getElementById('mobilePreviewBtn')?.classList.add('unlocked');
+                    window.irModulo(1);
+                    window.samuActualizarCuaderno();
+                }};
+
+                async function guardarAsientoSeguro(estado) {{
+                    window.samuActualizarCuaderno();
+                    const numero = String(window.g_numAsiento || '').trim();
+                    const fecha = String(window.g_fechaRaw || '').trim();
+                    if (!numero || !fecha) {{
+                        if (typeof mostrarAlerta === 'function') mostrarAlerta('Primero inicie el asiento.', 'error');
+                        return;
+                    }}
+                    const payload = {{
+                        numero,
+                        fecha,
+                        estado,
+                        avance: 100,
+                        contenido: {{
+                            numero,
+                            fecha,
+                            fecha_texto: window.g_fechaAsiento || '',
+                            modulos: modulosCuaderno(),
+                            texto_html: document.getElementById('contenedorLineasCuaderno')?.innerHTML || ''
+                        }}
+                    }};
+                    const resp = await fetch('/residencia/api/asiento', {{
+                        method: 'POST',
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        body: JSON.stringify(payload)
+                    }});
+                    const data = await resp.json().catch(() => ({{ ok: false, error: 'Respuesta inválida' }}));
+                    if (!resp.ok || !data.ok) {{
+                        if (typeof mostrarAlerta === 'function') mostrarAlerta(data.error || 'No se pudo guardar.', 'error');
+                        return;
+                    }}
+                    if (typeof mostrarAlerta === 'function') mostrarAlerta(estado === 'Cerrado' ? 'Asiento cerrado correctamente.' : 'Borrador guardado correctamente.', 'success');
+                }}
+
+                window.guardarBorradorAsiento = function() {{ guardarAsientoSeguro('Borrador'); }};
+                window.cerrarAsiento = function() {{
+                    if (confirm('Al cerrar el asiento ya no se podrá modificar. ¿Desea cerrar el asiento?')) guardarAsientoSeguro('Cerrado');
+                }};
+
+                document.addEventListener('DOMContentLoaded', function() {{
+                    document.getElementById('btnComenzarRegistro')?.addEventListener('click', function(event) {{
+                        event.preventDefault();
+                        window.iniciarAsientoSeguro();
+                    }});
+                    document.getElementById('initFecha')?.addEventListener('keydown', function(event) {{
+                        if (event.key === 'Enter') {{
+                            event.preventDefault();
+                            window.iniciarAsientoSeguro();
+                        }}
+                    }});
+                    const form = document.getElementById('formResidencia');
+                    if (form) {{
+                        ['input', 'change', 'click', 'keyup'].forEach(evento => {{
+                            form.addEventListener(evento, () => setTimeout(window.samuActualizarCuaderno, 40));
+                        }});
+                    }}
+                    setInterval(window.samuActualizarCuaderno, 800);
+                }});
+            }})();
+        </script>
     </body>
     </html>
     """
