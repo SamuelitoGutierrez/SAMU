@@ -17,6 +17,11 @@ OCURRENCIAS_HTML = """
     .m10-card h6 { margin: 0 0 6px; font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: .35px; }
     .m10-card p { margin: 0; font-size: 12px; color: #64748b; line-height: 1.45; white-space: pre-wrap; }
     .m10-preview { border-radius: 16px; min-height: 96px; resize: vertical; font-size: 12px; background: #f8fafc; }
+    .m10-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .m10-action-btn { border: none; border-radius: 18px; padding: 14px 16px; color: #fff; font-size: 12px; font-weight: 900; box-shadow: 0 14px 30px rgba(15,23,42,.12); transition: .2s ease; }
+    .m10-action-btn:hover { transform: translateY(-2px); }
+    .m10-action-btn.draft { background: linear-gradient(135deg, #b45309, #f59e0b); }
+    .m10-action-btn.close-seat { background: linear-gradient(135deg, #166534, #22c55e); }
     @media (max-width: 768px) { .m10-tabs, .m10-history { grid-template-columns: 1fr; } }
 </style>
 
@@ -46,6 +51,17 @@ OCURRENCIAS_HTML = """
 
         <label class="form-label small fw-bold text-muted">Texto que pasará al cuaderno</label>
         <textarea class="form-control border-danger req-step10 m10-preview" id="v_ocurrencia" readonly placeholder="Aquí se generará la ocurrencia o conocimiento..."></textarea>
+
+        <div class="m10-panel">
+            <div class="m10-actions">
+                <button type="button" class="m10-action-btn draft" onclick="if(typeof guardarBorradorAsiento === 'function') guardarBorradorAsiento();">
+                    <i class="bi bi-save2 me-1"></i> Guardar como borrador
+                </button>
+                <button type="button" class="m10-action-btn close-seat" onclick="if(typeof cerrarAsiento === 'function') cerrarAsiento();">
+                    <i class="bi bi-lock-fill me-1"></i> Cerrar asiento
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -728,6 +728,7 @@ def redaccion_asiento_residente():
                 asientoCerrado = false;
                 mostrarAlerta(`Borrador guardado. Avance ${{data.avance}}%.`, "success");
             }}
+            window.guardarBorradorAsiento = guardarBorradorAsiento;
 
             async function cerrarAsiento() {{
                 if (!confirm("Al cerrar el asiento ya no se podrá modificar. Solo el dueño/Admin podrá editarlo. ¿Desea cerrar el asiento?")) return;
@@ -738,6 +739,7 @@ def redaccion_asiento_residente():
                 bloquearEdicionAsiento();
                 mostrarAlerta("Asiento cerrado y guardado correctamente.", "success");
             }}
+            window.cerrarAsiento = cerrarAsiento;
 
             function bloquearEdicionAsiento() {{
                 document.querySelector('.form-column')?.classList.add('asiento-cerrado');
@@ -775,6 +777,92 @@ def redaccion_asiento_residente():
             function evaluarTarjeta(id) {{ const val = document.getElementById('v_' + id).value; document.getElementById('c_' + id).classList.toggle('active', val > 0); sincronizarDatos(); }}
 
             {CUADERNO_OBRA_JS}
+
+            function samuListaModulo(nombre) {{
+                const lista = window[nombre];
+                return Array.isArray(lista) ? lista : [];
+            }}
+
+            function samuValor(id, saltos=false) {{
+                const el = document.getElementById(id);
+                if (!el) return '';
+                const texto = String(el.value || '').trim();
+                return saltos ? texto : texto.replace(/\\s+/g, ' ');
+            }}
+
+            function samuFormatoItem(p) {{
+                const item = p && p.item && p.item !== '-' ? `${{p.item}} ` : '';
+                const descripcion = p && p.descripcion ? p.descripcion : '';
+                const prog = p && p.prog ? ` - ${{p.prog}}` : '';
+                const metrado = p && p.metrado ? ` = ${{p.metrado}} ${{p.unidad || ''}}` : '';
+                return `${{item}}${{descripcion}}${{prog}}${{metrado}}`.replace(/\\s+/g, ' ').trim();
+            }}
+
+            function samuAgregarModulo(lista, titulo, contenido, conservarSaltos=false) {{
+                const texto = String(contenido || '')
+                    .split('\\n')
+                    .map(linea => conservarSaltos ? String(linea || '').trimEnd() : String(linea || '').replace(/\\s+/g, ' ').trim())
+                    .filter(linea => linea.trim())
+                    .join('\\n');
+                lista.push({{ titulo, contenido: texto || '-' }});
+            }}
+
+            function samuRedactarCuadernoCompleto() {{
+                const modulos = [];
+
+                const jornal = [];
+                if (samuValor('v_jornal_m')) jornal.push(`Mañana: ${{samuValor('v_jornal_m')}}`);
+                if (samuValor('v_jornal_t')) jornal.push(`Tarde: ${{samuValor('v_jornal_t')}}`);
+                if (samuValor('v_clima')) jornal.push(`Clima: ${{samuValor('v_clima')}}`);
+                samuAgregarModulo(modulos, '1. Jornal de trabajo', jornal.join(', '));
+
+                const personal = [
+                    ['Operario', samuValor('v_oper')],
+                    ['Oficiales', samuValor('v_ofic')],
+                    ['Peones', samuValor('v_peon')],
+                    ['Mecánicos', samuValor('v_meca')],
+                    ['Controladores de maquinaria', samuValor('v_ctrl')],
+                    ['Operadores de maquinaria', samuValor('v_ope_maq')]
+                ].filter(([_, cantidad]) => parseInt(cantidad || 0) > 0)
+                 .map(([nombre, cantidad]) => `(${{String(parseInt(cantidad || 0)).padStart(2, '0')}}) ${{nombre}}`);
+                samuAgregarModulo(modulos, '2. Personal de obra', personal.join('    '));
+
+                samuAgregarModulo(modulos, '3. Partidas ejecutadas', samuListaModulo('m3_lista').map(samuFormatoItem).join('\\n'));
+                samuAgregarModulo(modulos, '4. Partidas de mayor metrado', samuListaModulo('m4_lista').map(samuFormatoItem).join('\\n'));
+                samuAgregarModulo(modulos, '5. Sub partidas ejecutadas', samuListaModulo('m5_lista').map(samuFormatoItem).join('\\n'));
+                samuAgregarModulo(modulos, '6. Actividades ejecutadas', samuListaModulo('m6_lista').map(samuFormatoItem).join('\\n'));
+                samuAgregarModulo(modulos, '7. Movimiento de almacén', samuValor('v_almacen', true), true);
+                samuAgregarModulo(modulos, '8. Maquinarias y equipos', samuValor('v_maquina', true), true);
+                samuAgregarModulo(modulos, '9. Herramientas manuales', samuValor('v_herram', true), true);
+                samuAgregarModulo(modulos, '10. Ocurrencias y otros', samuValor('v_ocurrencia', true), true);
+
+                return modulos;
+            }}
+
+            window.samuSincronizarCuaderno = function() {{
+                try {{
+                    if (typeof actualizarStepper === 'function') actualizarStepper();
+                    const numero = String(g_numAsiento || window.g_numAsiento || '').trim();
+                    const fecha = String(g_fechaAsiento || window.g_fechaAsiento || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
+                    const contenedor = document.getElementById('contenedorLineasCuaderno');
+                    if (!contenedor || !numero) return;
+                    const asiento = numero.padStart(4, '0');
+                    const modulos = samuRedactarCuadernoCompleto();
+                    contenedor.innerHTML = paginaHtml(asiento, fecha, modulos, false, false);
+                }} catch (error) {{
+                    console.error('No se pudo sincronizar el cuaderno:', error);
+                }}
+            }};
+
+            sincronizarDatos = window.samuSincronizarCuaderno;
+
+            document.addEventListener('DOMContentLoaded', function() {{
+                const refrescar = () => setTimeout(window.samuSincronizarCuaderno, 30);
+                document.getElementById('formResidencia')?.addEventListener('input', refrescar);
+                document.getElementById('formResidencia')?.addEventListener('change', refrescar);
+                document.getElementById('formResidencia')?.addEventListener('click', refrescar);
+                setInterval(window.samuSincronizarCuaderno, 700);
+            }});
         </script>
     </body>
     </html>
