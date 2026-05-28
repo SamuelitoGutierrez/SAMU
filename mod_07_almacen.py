@@ -8,7 +8,7 @@ ALMACEN_HTML = """
     #step7 { border-radius: 24px; padding: 18px; border: 1px solid #dbeafe; transition: 0.25s ease; }
     #step7.m7-materiales { background: linear-gradient(180deg, #eff6ff 0%, #ffffff 44%); border-color: #bfdbfe; }
     #step7.m7-combustible { background: linear-gradient(180deg, #fff7ed 0%, #ffffff 44%); border-color: #fed7aa; }
-    .m7-toolbar { display: grid; grid-template-columns: 1.35fr 0.85fr; gap: 14px; align-items: stretch; margin-bottom: 14px; }
+    .m7-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; margin-bottom: 14px; }
     .m7-panel { border: 1px solid rgba(148,163,184,0.25); border-radius: 24px; background: rgba(255,255,255,0.82); padding: 13px; box-shadow: 0 16px 34px rgba(15,23,42,0.07); backdrop-filter: blur(8px); }
     .m7-panel-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; color: #475569; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
     .m7-pill { border-radius: 999px; padding: 4px 9px; background: #e0f2fe; color: #0369a1; font-size: 10px; font-weight: 900; text-transform: none; letter-spacing: 0; }
@@ -66,7 +66,6 @@ ALMACEN_HTML = """
         <div class="m7-panel">
             <div class="m7-panel-title">
                 <span><i class="bi bi-grid-1x2-fill me-1"></i> Seleccione el movimiento</span>
-                <span class="m7-pill" id="m7_contexto">Materiales</span>
             </div>
             <div class="m7-tabs m7-category-tabs">
                 <button type="button" class="m7-tab materiales active" id="m7_cat_materiales" onclick="m7_cambiar_categoria('materiales')"><i class="bi bi-bricks"></i> Materiales de construcción<small>Control de ingreso y salida de obra</small></button>
@@ -77,7 +76,6 @@ ALMACEN_HTML = """
             <div>
                 <div class="m7-panel-title">
                     <span><i class="bi bi-arrow-left-right me-1"></i> Operación</span>
-                    <span class="m7-pill" id="m7_operacion">Ingreso</span>
                 </div>
                 <div class="m7-tabs m7-mov-tabs">
                     <button type="button" class="m7-tab mov-ingreso active" id="m7_tab_ingreso" onclick="m7_cambiar_tipo('ingreso')"><i class="bi bi-box-arrow-in-down"></i> Ingreso<small>Entradas al almacén</small></button>
