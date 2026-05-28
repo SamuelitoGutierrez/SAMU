@@ -17,17 +17,28 @@ MAQUINARIA_HTML = """
     .m8-btn.secondary { background: linear-gradient(135deg, #475569, #94a3b8); }
     .m8-btn.purple { background: linear-gradient(135deg, #6d28d9, #a78bfa); }
     .m8-category-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .m8-cat { border: 1px solid #cbd5e1; background: #fff; border-radius: 18px; padding: 12px 13px 12px 44px; min-height: 62px; position: relative; text-align: left; color: #475569; font-size: 12px; font-weight: 900; box-shadow: 0 10px 24px rgba(15,23,42,0.05); transition: 0.2s ease; }
+    .m8-cat { border: 1px solid #cbd5e1; background: #fff; border-radius: 18px; padding: 12px 14px 12px 48px; min-height: 72px; position: relative; text-align: left; color: #475569; font-size: 12px; font-weight: 900; box-shadow: 0 10px 24px rgba(15,23,42,0.05); transition: 0.2s ease; line-height: 1.18; overflow: hidden; }
     .m8-cat i { position: absolute; top: 14px; left: 13px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 12px; background: #f1f5f9; font-size: 14px; }
     .m8-cat small { display: block; margin-top: 2px; font-size: 10px; line-height: 1.2; font-weight: 700; opacity: 0.72; }
     .m8-cat.active { color: #fff; transform: translateY(-1px); box-shadow: 0 16px 32px rgba(15,23,42,0.16); }
     .m8-cat.active i { background: rgba(255,255,255,0.18); }
-    .m8-cat.gov.active { background: linear-gradient(135deg, #075985, #0ea5e9); border-color: #0ea5e9; }
-    .m8-cat.srv.active { background: linear-gradient(135deg, #7c3aed, #a78bfa); border-color: #a78bfa; }
+    .m8-cat.maq-gore { border-color: #bfdbfe; color: #075985; background: #eff6ff; }
+    .m8-cat.maq-serv { border-color: #dbeafe; color: #0369a1; background: #f0f9ff; }
+    .m8-cat.mov-gore { border-color: #bbf7d0; color: #166534; background: #f0fdf4; }
+    .m8-cat.mov-serv { border-color: #d9f99d; color: #3f6212; background: #f7fee7; }
+    .m8-cat.eq-gore { border-color: #fde68a; color: #92400e; background: #fffbeb; }
+    .m8-cat.eq-serv { border-color: #fef3c7; color: #a16207; background: #fefce8; }
+    .m8-cat.maq-gore.active { background: linear-gradient(135deg, #075985, #0ea5e9); border-color: #0ea5e9; }
+    .m8-cat.maq-serv.active { background: linear-gradient(135deg, #38bdf8, #7dd3fc); border-color: #7dd3fc; color: #0f172a; }
+    .m8-cat.mov-gore.active { background: linear-gradient(135deg, #166534, #22c55e); border-color: #22c55e; }
+    .m8-cat.mov-serv.active { background: linear-gradient(135deg, #84cc16, #bef264); border-color: #bef264; color: #1f2937; }
+    .m8-cat.eq-gore.active { background: linear-gradient(135deg, #ca8a04, #facc15); border-color: #facc15; color: #1f2937; }
+    .m8-cat.eq-serv.active { background: linear-gradient(135deg, #fde047, #fef08a); border-color: #fef08a; color: #1f2937; }
     .m8-form-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 9px; align-items: end; }
     .m8-span-3 { grid-column: span 3; }
     .m8-span-2 { grid-column: span 2; }
     .m8-span-1 { grid-column: span 1; }
+    .m8-span-add { grid-column: span 2; }
     .m8-base-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1.1fr auto; gap: 9px; align-items: end; }
     .m8-class-field { grid-column: 1 / -1; }
     .m8-entity-grid { display: none; grid-template-columns: 1fr; gap: 9px; margin-bottom: 12px; }
@@ -54,7 +65,7 @@ MAQUINARIA_HTML = """
     .m8-toast { position: fixed; top: 82px; right: 28px; z-index: 99999; display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, rgba(15,23,42,0.96), rgba(2,99,160,0.96)); color: #fff; border: 1px solid rgba(255,255,255,0.18); border-radius: 18px; padding: 13px 18px; font-size: 12px; font-weight: 900; box-shadow: 0 20px 45px rgba(15,23,42,0.30); opacity: 0; transform: translate(18px, -14px) scale(0.96); pointer-events: none; transition: 0.25s ease; }
     .m8-toast i { font-size: 18px; color: #86efac; }
     .m8-toast.show { opacity: 1; transform: translate(0, 0) scale(1); }
-    @media (max-width: 992px) { .m8-category-grid, .m8-base-grid, .m8-contract-grid { grid-template-columns: 1fr; } .m8-form-grid { grid-template-columns: 1fr; } .m8-span-3, .m8-span-2, .m8-span-1 { grid-column: auto; } }
+    @media (max-width: 992px) { .m8-category-grid, .m8-base-grid, .m8-contract-grid { grid-template-columns: 1fr; } .m8-form-grid { grid-template-columns: 1fr; } .m8-span-3, .m8-span-2, .m8-span-1, .m8-span-add { grid-column: auto; } }
 </style>
 
 <div class="step-view" id="step8">
@@ -107,12 +118,12 @@ MAQUINARIA_HTML = """
                 <button type="button" class="m8-btn secondary" onclick="m8_limpiar_categoria()"><i class="bi bi-eraser me-1"></i> Limpiar diario</button>
             </div>
             <div class="m8-category-grid">
-                <button type="button" class="m8-cat gov active" id="m8_cat_maq_gore" onclick="m8_cambiar_categoria('maq_gore')"><i class="bi bi-truck"></i> Maquinarias<small>Gobierno Regional Puno</small></button>
-                <button type="button" class="m8-cat srv" id="m8_cat_maq_serv" onclick="m8_cambiar_categoria('maq_serv')"><i class="bi bi-file-earmark-text"></i> Maquinarias<small>Servicio y/o contrato</small></button>
-                <button type="button" class="m8-cat gov" id="m8_cat_mov_gore" onclick="m8_cambiar_categoria('mov_gore')"><i class="bi bi-car-front"></i> Movilidades<small>Gobierno Regional Puno</small></button>
-                <button type="button" class="m8-cat srv" id="m8_cat_mov_serv" onclick="m8_cambiar_categoria('mov_serv')"><i class="bi bi-file-earmark-check"></i> Movilidades<small>Servicio y/o contrato</small></button>
-                <button type="button" class="m8-cat gov" id="m8_cat_eq_gore" onclick="m8_cambiar_categoria('eq_gore')"><i class="bi bi-tools"></i> Equipo liviano<small>Gobierno Regional Puno</small></button>
-                <button type="button" class="m8-cat srv" id="m8_cat_eq_serv" onclick="m8_cambiar_categoria('eq_serv')"><i class="bi bi-clipboard2-check"></i> Equipo liviano<small>Servicio y/o contrato</small></button>
+                <button type="button" class="m8-cat maq-gore active" id="m8_cat_maq_gore" onclick="m8_cambiar_categoria('maq_gore')"><i class="bi bi-truck"></i> Maquinarias<small>Gobierno Regional Puno</small></button>
+                <button type="button" class="m8-cat maq-serv" id="m8_cat_maq_serv" onclick="m8_cambiar_categoria('maq_serv')"><i class="bi bi-file-earmark-text"></i> Maquinarias<small>Servicio y/o contrato</small></button>
+                <button type="button" class="m8-cat mov-gore" id="m8_cat_mov_gore" onclick="m8_cambiar_categoria('mov_gore')"><i class="bi bi-car-front"></i> Movilidades<small>Gobierno Regional Puno</small></button>
+                <button type="button" class="m8-cat mov-serv" id="m8_cat_mov_serv" onclick="m8_cambiar_categoria('mov_serv')"><i class="bi bi-file-earmark-check"></i> Movilidades<small>Servicio y/o contrato</small></button>
+                <button type="button" class="m8-cat eq-gore" id="m8_cat_eq_gore" onclick="m8_cambiar_categoria('eq_gore')"><i class="bi bi-tools"></i> Equipo liviano<small>Gobierno Regional Puno</small></button>
+                <button type="button" class="m8-cat eq-serv" id="m8_cat_eq_serv" onclick="m8_cambiar_categoria('eq_serv')"><i class="bi bi-clipboard2-check"></i> Equipo liviano<small>Por alquiler</small></button>
             </div>
         </div>
 
@@ -131,7 +142,7 @@ MAQUINARIA_HTML = """
                 <div class="m8-field m8-span-2"><label id="m8_medida_label">HM</label><input id="m8_hm" class="m8-upper" placeholder="08:00 HM" oninput="m8_mayus(this)" onkeydown="m8_enter(event, 'm8_combustible')"></div>
                 <div class="m8-field m8-span-2"><label>Combustible</label><input id="m8_combustible" class="m8-upper" placeholder="20 GLN Diesel" oninput="m8_mayus(this)" onkeydown="m8_enter_guardar(event)"></div>
                 <div class="m8-field m8-span-1 m8-service-field" id="m8_combustible_tipo_box"><label>Tipo</label><select id="m8_combustible_tipo"><option value="Gasohol">Gasohol</option><option value="Diesel">Diesel</option></select></div>
-                <button type="button" class="m8-btn m8-span-1" onclick="m8_agregar_actual()"><i class="bi bi-plus-lg me-1"></i> Agregar</button>
+                <button type="button" class="m8-btn m8-span-add" onclick="m8_agregar_actual()"><i class="bi bi-plus-lg me-1"></i> Agregar</button>
             </div>
             <div class="m8-paste mt-3">
                 <div id="m8_paste_help"><i class="bi bi-clipboard-check me-1"></i> Pegado masivo diario: maquinaria | marca | placa/serie | HM | combustible</div>
