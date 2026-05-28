@@ -3,6 +3,13 @@ MAQUINARIA_HTML = """
     #step8 { border-radius: 24px; padding: 18px; border: 1px solid #cbd5e1; background: linear-gradient(180deg, #f8fafc 0%, #ffffff 46%); }
     .m8-layout { display: grid; gap: 14px; }
     .m8-panel { border: 1px solid #e2e8f0; border-radius: 22px; background: rgba(255,255,255,0.9); padding: 14px; box-shadow: 0 16px 34px rgba(15,23,42,0.06); }
+    .m8-register-toggle { width: 100%; border: none; border-radius: 24px; padding: 18px 20px; color: #fff; background: linear-gradient(135deg, #0f172a, #075985, #0ea5e9); box-shadow: 0 18px 38px rgba(15,23,42,0.18); display: flex; align-items: center; justify-content: space-between; gap: 14px; text-align: left; transition: 0.22s ease; }
+    .m8-register-toggle:hover { transform: translateY(-1px); box-shadow: 0 22px 42px rgba(15,23,42,0.22); }
+    .m8-register-toggle strong { display: block; font-size: 14px; font-weight: 900; }
+    .m8-register-toggle small { display: block; margin-top: 3px; color: rgba(255,255,255,0.78); font-size: 11px; font-weight: 700; }
+    .m8-register-toggle i { font-size: 24px; }
+    .m8-collapsible { overflow: hidden; max-height: 0; opacity: 0; transform: translateY(-14px); padding-top: 0; padding-bottom: 0; border-width: 0; margin-top: -8px; transition: max-height 0.35s ease, opacity 0.25s ease, transform 0.25s ease, padding 0.25s ease, margin 0.25s ease; }
+    .m8-collapsible.active { max-height: 1400px; opacity: 1; transform: translateY(0); padding-top: 14px; padding-bottom: 14px; border-width: 1px; margin-top: 0; }
     .m8-titlebar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
     .m8-titlebar h6 { margin: 0; font-size: 12px; font-weight: 900; color: #334155; text-transform: uppercase; letter-spacing: 0.45px; }
     .m8-actions { display: flex; gap: 9px; flex-wrap: wrap; }
@@ -19,6 +26,7 @@ MAQUINARIA_HTML = """
     .m8-cat.srv.active { background: linear-gradient(135deg, #7c3aed, #a78bfa); border-color: #a78bfa; }
     .m8-form-grid { display: grid; grid-template-columns: 1.25fr 1fr 1fr 1fr 0.65fr 0.95fr auto; gap: 9px; align-items: end; }
     .m8-base-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1.1fr auto; gap: 9px; align-items: end; }
+    .m8-class-field { grid-column: 1 / -1; }
     .m8-entity-grid { display: none; grid-template-columns: 1fr; gap: 9px; margin-bottom: 12px; }
     .m8-entity-grid.active { display: grid; }
     .m8-service-field { display: none; }
@@ -45,7 +53,15 @@ MAQUINARIA_HTML = """
 <div class="step-view" id="step8">
     <div class="step-title">8.- Maquinarias, vehículos y equipos</div>
     <div class="m8-layout">
-        <div class="m8-panel">
+        <button type="button" class="m8-register-toggle" id="m8_registro_toggle" onclick="m8_toggle_registro_base()">
+            <span>
+                <strong><i class="bi bi-plus-square-fill me-2"></i>Registrar maquinarias, vehículos y equipos</strong>
+                <small>Abra este panel para crear la base por clasificación, entidad y pegado masivo.</small>
+            </span>
+            <i class="bi bi-chevron-down" id="m8_registro_icono"></i>
+        </button>
+
+        <div class="m8-panel m8-collapsible" id="m8_registro_base_panel">
             <div class="m8-titlebar">
                 <h6><i class="bi bi-bookmark-plus-fill me-1"></i> Base de maquinarias, vehículos y equipos</h6>
                 <button type="button" class="m8-btn secondary" onclick="m8_limpiar_base_categoria()"><i class="bi bi-eraser me-1"></i> Limpiar base seleccionada</button>
@@ -54,7 +70,7 @@ MAQUINARIA_HTML = """
                 <div class="m8-field"><label>Datos de la entidad</label><input id="m8_nueva_entidad" list="m8_entidades_list" placeholder="Nombre de la entidad / empresa" oninput="m8_entidad_base_cambiada()" onkeydown="m8_enter(event, 'm8_base_nombre')"></div>
             </div>
             <div class="m8-base-grid">
-                <div class="m8-field"><label>Clasificación</label><select id="m8_base_cat" onchange="m8_base_categoria_cambio()"><option value="maq_gore">Maquinarias del Gobierno Regional Puno</option><option value="maq_serv">Maquinarias por servicio y/o contrato</option><option value="mov_gore">Movilidades del Gobierno Regional Puno</option><option value="mov_serv">Movilidades por servicio y/o contrato</option><option value="eq_gore">Equipo liviano del Gobierno Regional Puno</option><option value="eq_serv">Equipo liviano por servicio y/o contrato</option></select></div>
+                <div class="m8-field m8-class-field"><label>Clasificación</label><select id="m8_base_cat" onchange="m8_base_categoria_cambio()"><option value="maq_gore">Maquinarias del Gobierno Regional Puno</option><option value="maq_serv">Maquinarias por servicio y/o contrato</option><option value="mov_gore">Movilidades del Gobierno Regional Puno</option><option value="mov_serv">Movilidades por servicio y/o contrato</option><option value="eq_gore">Equipo liviano del Gobierno Regional Puno</option><option value="eq_serv">Equipo liviano por servicio y/o contrato</option></select></div>
                 <div class="m8-field"><label>Maquinaria / vehículo / equipo</label><input id="m8_base_nombre" placeholder="Camión volquete" onkeydown="m8_enter(event, 'm8_base_marca')"></div>
                 <div class="m8-field"><label>Marca</label><input id="m8_base_marca" placeholder="Volvo" onkeydown="m8_enter(event, 'm8_base_modelo')"></div>
                 <div class="m8-field"><label>Modelo, placa o serie</label><input id="m8_base_modelo" placeholder="FMX 6X4 R / EGK-176" onkeydown="m8_enter_guardar_base(event)"></div>
@@ -263,6 +279,16 @@ MAQUINARIA_HTML = """
         m8_refrescar_select();
         m8_render_base();
         m8_render();
+    }
+
+    function m8_toggle_registro_base() {
+        const panel = document.getElementById('m8_registro_base_panel');
+        const icono = document.getElementById('m8_registro_icono');
+        const abierto = panel.classList.toggle('active');
+        icono.className = abierto ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+        if(abierto) {
+            setTimeout(() => document.getElementById('m8_base_cat').focus(), 220);
+        }
     }
 
     function m8_guardar_entidad() {
