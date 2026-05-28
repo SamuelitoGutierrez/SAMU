@@ -328,7 +328,7 @@ def redaccion_asiento_residente():
                 <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" onclick="cerrarAsiento()"><i class="bi bi-lock-fill"></i> Cerrar asiento</button>
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4 shadow-sm d-none" id="btnEditarComoDueno" onclick="habilitarEdicionComoDueno()"><i class="bi bi-unlock-fill"></i> Editar como dueño</button>
             </div>
-            <div class="d-flex gap-2 align-items-center ms-auto">
+            <div class="d-flex gap-2 align-items-center ms-auto" id="moduloNavActions">
                 <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill px-4" onclick="window.siguienteModulo()">Omitir</button>
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4" onclick="window.siguienteModulo()">Guardar y Continuar <i class="bi bi-arrow-right"></i></button>
             </div>
@@ -645,6 +645,8 @@ def redaccion_asiento_residente():
             function actualizarAccionesAsiento() {{
                 const acciones = document.getElementById('asientoActions');
                 if (acciones) acciones.classList.toggle('visible', currentStep === 10 || asientoCerrado);
+                const navegacion = document.getElementById('moduloNavActions');
+                if (navegacion) navegacion.classList.toggle('d-none', currentStep === 10);
                 const btnDueno = document.getElementById('btnEditarComoDueno');
                 if (btnDueno) btnDueno.classList.toggle('d-none', !(asientoCerrado && rolUsuario === 'Admin'));
             }}
@@ -934,7 +936,8 @@ def redaccion_asiento_residente():
                     agregar(modulos, '8. Maquinarias y equipos', texto('v_maquina', true));
                     agregar(modulos, '9. Herramientas manuales', texto('v_herram', true));
                     agregar(modulos, '10. Ocurrencias y otros', texto('v_ocurrencia', true));
-                    return modulos;
+                    const paso = Math.max(1, Math.min(totalModulos, parseInt(window.samuCurrentStep || 1, 10) || 1));
+                    return modulos.slice(0, paso);
                 }}
 
                 function htmlContenidoModulo(modulo) {{
@@ -986,6 +989,7 @@ def redaccion_asiento_residente():
                     document.getElementById(`btnStep${{step}}`)?.classList.add('active');
                     document.getElementById('btnAtras')?.classList.toggle('d-none', step <= 1);
                     document.getElementById('asientoActions')?.classList.toggle('visible', step === 10);
+                    document.getElementById('moduloNavActions')?.classList.toggle('d-none', step === 10);
                     setTimeout(window.samuActualizarCuaderno, 30);
                 }};
 
@@ -1077,6 +1081,9 @@ def redaccion_asiento_residente():
                         return;
                     }}
                     if (typeof mostrarAlerta === 'function') mostrarAlerta(estado === 'Cerrado' ? 'Asiento cerrado correctamente.' : 'Borrador guardado correctamente.', 'success');
+                    setTimeout(() => {{
+                        if (typeof abrirResumenCuaderno === 'function') abrirResumenCuaderno();
+                    }}, 450);
                 }}
 
                 window.guardarBorradorAsiento = function() {{ guardarAsientoSeguro('Borrador'); }};
