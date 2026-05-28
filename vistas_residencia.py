@@ -538,22 +538,7 @@ def redaccion_asiento_residente():
             }});
             function formatearFecha(fechaStr) {{ const dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]; const [y, m, d] = fechaStr.split('-'); const dateObj = new Date(y, m-1, d); let dayIndex = dateObj.getDay() - 1; if(dayIndex === -1) dayIndex = 6; return `${{dias[dayIndex]}}, ${{d}}/${{m}}/${{y}}`; }}
             
-            function iniciarAsiento() {{ 
-                g_numAsiento = document.getElementById('initNumAsiento').value; let rawDate = document.getElementById('initFecha').value; 
-                if(!g_numAsiento || !rawDate) {{ mostrarAlerta("Complete los datos para iniciar.", "error"); return; }} 
-                g_fechaRaw = rawDate; g_fechaAsiento = formatearFecha(rawDate); document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento; 
-                cerrarModalInicialSeguro(); 
-                requestAnimationFrame(() => {{
-                    document.getElementById('mainLayout').classList.add('unlocked');
-                    document.getElementById('stepperBar').style.opacity = '1';
-                    document.getElementById('stepperBar').style.pointerEvents = 'all';
-                    document.getElementById('bottomBarUI').classList.add('unlocked');
-                    document.getElementById('mobilePreviewBtn').classList.add('unlocked');
-                    sincronizarDatos();
-                    actualizarAccionesAsiento();
-                    verificarEstadoAsientoGuardado();
-                }});
-            }}
+            function iniciarAsiento() {{ window.iniciarAsientoSeguro(); }}
 
             function porcentajePaso(step) {{
                 const scope = document.getElementById(`step${{step}}`);

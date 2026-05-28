@@ -133,7 +133,8 @@ CUADERNO_OBRA_JS = """
 
             function redactarModulosCuaderno() {
                 const modulos = [];
-                const pasoMaximo = Math.max(1, Math.min(typeof currentStep === 'number' ? currentStep : 1, 10));
+                const pasoActual = Number(window.samuCurrentStep || currentStep || 1);
+                const pasoMaximo = Math.max(1, Math.min(pasoActual, 10));
 
                 const vJ1 = valor('v_jornal_m');
                 const vJ2 = valor('v_jornal_t');
@@ -412,20 +413,21 @@ CUADERNO_OBRA_JS = """
 
             function sincronizarDatos() {
                 if (typeof actualizarStepper === 'function') actualizarStepper();
-                if (!g_numAsiento && window.g_numAsiento) g_numAsiento = window.g_numAsiento;
-                if (!g_fechaAsiento && window.g_fechaAsiento) g_fechaAsiento = window.g_fechaAsiento;
+                const numeroActivo = String(g_numAsiento || window.g_numAsiento || '').trim();
+                const fechaActiva = String(g_fechaAsiento || window.g_fechaAsiento || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
                 if (typeof window.samuCurrentStep === 'number') currentStep = window.samuCurrentStep;
-                if (!g_numAsiento) return;
+                if (!numeroActivo) return;
 
-                const asiento = g_numAsiento.padStart(4, '0');
+                const asiento = numeroActivo.padStart(4, '0');
                 const modulos = redactarModulosCuaderno();
                 const contenedor = document.getElementById('contenedorLineasCuaderno');
+                if (!contenedor) return;
 
                 if (modulos.length === 0) {
-                    contenedor.innerHTML = paginaHtml(asiento, g_fechaAsiento, [], false, false);
+                    contenedor.innerHTML = paginaHtml(asiento, fechaActiva, [], false, false);
                     return;
                 }
 
-                contenedor.innerHTML = paginaHtml(asiento, g_fechaAsiento, modulos, false, false);
+                contenedor.innerHTML = paginaHtml(asiento, fechaActiva, modulos, false, false);
             }
 """
