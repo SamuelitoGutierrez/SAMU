@@ -411,6 +411,7 @@ CUADERNO_OBRA_JS = """
             }
 
             function sincronizarDatos() {
+                if (typeof actualizarStepper === 'function') actualizarStepper();
                 if (!g_numAsiento) return;
 
                 const asiento = g_numAsiento.padStart(4, '0');

@@ -48,9 +48,9 @@ HERRAMIENTAS_HTML = """
         'Martillos', 'Cinceles', 'Winchas', 'Niveles de mano', 'Cordeles', 'Plomadas',
         'Badilejos', 'Frotachos', 'Llanas', 'Baldes', 'Cizallas', 'Alicates',
         'Llaves mixtas', 'Destornilladores', 'Arcos de sierra', 'Amoladora',
-        'Sierra circular', 'Taladro', 'Extensiones electricas', 'Conos de seguridad'
+        'Sierra circular', 'Taladro', 'Extensiones electricas', 'Conos de seguridad', 'Otros'
     ];
-    window.m9_seleccionadas = window.m9_seleccionadas || [...window.m9_herramientas];
+    window.m9_seleccionadas = window.m9_seleccionadas || ['Palas', 'Picos', 'Buguies', 'Amoladora', 'Sierra circular', 'Otros'];
 
     function m9_escape(texto) {
         return String(texto || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');

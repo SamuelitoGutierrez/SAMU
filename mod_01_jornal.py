@@ -19,6 +19,9 @@ JORNAL_HTML = """
     .m1-lluvia { background: linear-gradient(135deg, #0369a1, #38bdf8); }
     .m1-clima strong { display: block; font-size: 12px; color: #334155; }
     .m1-clima small { display: block; font-size: 10px; color: #64748b; font-weight: 700; }
+    .m1-hora-input { border: 1px solid #dbeafe; border-radius: 12px; padding: 8px 10px; font-weight: 900; color: #0f172a; background: #f8fafc; width: 100%; outline: none; }
+    .m1-hora-input:focus { border-color: #0284c7; box-shadow: 0 0 0 3px rgba(2,132,199,.12); background: #fff; }
+    .m1-clima-clear { border: 1px solid #cbd5e1; background: #fff; color: #475569; border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 900; }
     @media (max-width: 768px) { .m1-clima-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 
@@ -31,7 +34,7 @@ JORNAL_HTML = """
                 <div class="clock-icon"><i class="bi bi-sunrise-fill"></i></div>
                 <div class="w-100">
                     <label class="form-label mb-1">Mañana</label>
-                    <div class="fw-bold fs-6 text-dark" id="lbl_jornal_m">07:00 - 12:00</div>
+                    <input class="m1-hora-input" id="hora_jornal_m" value="07:00 - 12:00" onclick="event.stopPropagation()" oninput="m1_actualizar_jornal()">
                 </div>
             </div>
         </div>
@@ -40,7 +43,7 @@ JORNAL_HTML = """
                 <div class="clock-icon"><i class="bi bi-sunset-fill"></i></div>
                 <div class="w-100">
                     <label class="form-label mb-1">Tarde</label>
-                    <div class="fw-bold fs-6 text-dark" id="lbl_jornal_t">13:00 - 17:00</div>
+                    <input class="m1-hora-input" id="hora_jornal_t" value="13:00 - 17:00" onclick="event.stopPropagation()" oninput="m1_actualizar_jornal()">
                 </div>
             </div>
         </div>
@@ -48,10 +51,10 @@ JORNAL_HTML = """
     <div class="m1-clima-wrap">
         <div class="m1-clima-title">
             <h6><i class="bi bi-cloud-sun-fill me-1"></i> Factor climático del día</h6>
-            <span class="text-muted small fw-bold">Seleccione cómo estuvo el clima</span>
+            <button type="button" class="m1-clima-clear" onclick="m1_set_clima('')">Sin clima</button>
         </div>
         <div class="m1-clima-grid">
-            <div class="m1-clima active" id="m1_clima_soleado" onclick="m1_set_clima('Soleado')"><div class="m1-clima-icon m1-sol"><i class="bi bi-sun-fill"></i></div><div><strong>Soleado</strong><small>Cielo despejado</small></div></div>
+            <div class="m1-clima" id="m1_clima_soleado" onclick="m1_set_clima('Soleado')"><div class="m1-clima-icon m1-sol"><i class="bi bi-sun-fill"></i></div><div><strong>Soleado</strong><small>Cielo despejado</small></div></div>
             <div class="m1-clima" id="m1_clima_nublado" onclick="m1_set_clima('Nublado')"><div class="m1-clima-icon m1-nube"><i class="bi bi-cloud-fill"></i></div><div><strong>Nublado</strong><small>Cielo cubierto</small></div></div>
             <div class="m1-clima" id="m1_clima_mixto" onclick="m1_set_clima('Parcialmente nublado')"><div class="m1-clima-icon m1-mixto"><i class="bi bi-cloud-sun-fill"></i></div><div><strong>Nube y sol</strong><small>Clima variable</small></div></div>
             <div class="m1-clima" id="m1_clima_lluvia" onclick="m1_set_clima('Lluvioso')"><div class="m1-clima-icon m1-lluvia"><i class="bi bi-cloud-rain-fill"></i></div><div><strong>Lluvioso</strong><small>Precipitación</small></div></div>
@@ -59,9 +62,17 @@ JORNAL_HTML = """
     </div>
     <input type="hidden" id="v_jornal_m" class="req-step1" value="07:00 - 12:00">
     <input type="hidden" id="v_jornal_t" class="req-step1" value="13:00 - 17:00">
-    <input type="hidden" id="v_clima" value="Soleado">
+    <input type="hidden" id="v_clima" value="">
 </div>
 <script>
+    function m1_actualizar_jornal() {
+        const manana = document.getElementById('hora_jornal_m').value.trim();
+        const tarde = document.getElementById('hora_jornal_t').value.trim();
+        document.getElementById('v_jornal_m').value = document.getElementById('card_m').classList.contains('active') ? manana : '';
+        document.getElementById('v_jornal_t').value = document.getElementById('card_t').classList.contains('active') ? tarde : '';
+        if (typeof sincronizarDatos === 'function') sincronizarDatos();
+    }
+
     function m1_set_clima(clima) {
         document.getElementById('v_clima').value = clima;
         ['soleado', 'nublado', 'mixto', 'lluvia'].forEach(id => {
@@ -69,8 +80,10 @@ JORNAL_HTML = """
             if(card) card.classList.remove('active');
         });
         const mapa = {'Soleado': 'soleado', 'Nublado': 'nublado', 'Parcialmente nublado': 'mixto', 'Lluvioso': 'lluvia'};
-        const activo = document.getElementById(`m1_clima_${mapa[clima]}`);
-        if(activo) activo.classList.add('active');
+        if(clima) {
+            const activo = document.getElementById(`m1_clima_${mapa[clima]}`);
+            if(activo) activo.classList.add('active');
+        }
         if (typeof sincronizarDatos === 'function') sincronizarDatos();
     }
 </script>

@@ -71,12 +71,19 @@ def redaccion_asiento_residente():
             @keyframes floatInUp {{ from {{ opacity: 0; transform: translateY(30px); }} to {{ opacity: 1; transform: translateY(0); }} }}
             @keyframes floatOutDown {{ from {{ opacity: 1; transform: translateY(0); }} to {{ opacity: 0; transform: translateY(30px); }} }}
             
-            .stepper-container {{ position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); z-index: 900; padding: 15px 20px; overflow-x: auto; white-space: nowrap; display: flex; align-items: center; gap: 8px; opacity: 0; pointer-events: none; transition: opacity 0.5s; }}
+            .stepper-container {{ position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.84); backdrop-filter: blur(22px); border-bottom: 1px solid rgba(15,23,42,0.08); z-index: 900; padding: 14px 20px 16px; overflow-x: auto; white-space: nowrap; display: flex; align-items: center; gap: 10px; opacity: 0; pointer-events: none; transition: opacity 0.5s; box-shadow: 0 14px 35px rgba(15,23,42,0.05); }}
             .stepper-container::-webkit-scrollbar {{ display: none; }}
-            .step-btn {{ border: 1px solid #cbd5e1; border-radius: 30px; padding: 10px 20px; font-size: 12px; font-weight: 600; color: #475569; background: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.3s; transform-origin: center; }}
-            .step-btn.active {{ background: #ffffff !important; color: #000000 !important; font-weight: 800 !important; transform: scale(1.15); box-shadow: 0 10px 25px rgba(0,0,0,0.12); border-color: #000000 !important; margin: 0 10px; }}
+            .step-btn {{ position: relative; border: 1px solid #dbeafe; border-radius: 999px; padding: 10px 18px 10px 34px; min-width: 104px; font-size: 11px; font-weight: 800; color: #475569; background: rgba(255,255,255,0.92); cursor: pointer; transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease; transform-origin: center; box-shadow: 0 8px 20px rgba(15,23,42,0.04); }}
+            .step-btn::before {{ content: attr(data-percent); position: absolute; left: 7px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #f1f5f9; color: #64748b; font-size: 8px; font-weight: 900; box-shadow: inset 0 0 0 1px #e2e8f0; }}
+            .step-btn::after {{ content: ""; position: absolute; left: 12px; right: 12px; bottom: -7px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, #0284c7 var(--pct, 0%), #e2e8f0 0); opacity: .9; }}
+            .step-btn:hover {{ transform: translateY(-3px) scale(1.08); border-color: #0284c7; box-shadow: 0 16px 30px rgba(2,132,199,0.15); z-index: 3; }}
+            .step-btn.active {{ background: #ffffff !important; color: #020617 !important; font-weight: 900 !important; transform: scale(1.13); box-shadow: 0 16px 35px rgba(15,23,42,0.15); border-color: #020617 !important; margin: 0 8px; }}
+            .step-btn.completed {{ border-color: #22c55e; color: #166534; background: #f0fdf4; }}
+            .step-btn.completed::before {{ content: "✓"; background: #22c55e; color: #fff; box-shadow: 0 6px 14px rgba(34,197,94,.25); }}
+            .step-btn.missing {{ border-color: #fed7aa; color: #9a3412; background: #fff7ed; }}
+            .step-btn.missing::before {{ background: #ffedd5; color: #9a3412; }}
             
-            #globalTooltip {{ position: fixed; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); color: #ffffff; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: 0 10px 25px rgba(0,0,0,0.2); pointer-events: none; z-index: 999999; opacity: 0; transform: translateY(10px); transition: opacity 0.2s ease, transform 0.2s ease; }}
+            #globalTooltip {{ position: fixed; background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(10px); color: #ffffff; padding: 10px 14px; border-radius: 14px; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 18px 35px rgba(15,23,42,0.25); pointer-events: none; z-index: 999999; opacity: 0; transform: translateY(10px) scale(.96); transition: opacity 0.2s ease, transform 0.2s ease; border: 1px solid rgba(255,255,255,.12); }}
             #globalTooltip.visible {{ opacity: 1; transform: translateY(0); }}
 
             .elegant-alert {{ position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 50px; padding: 12px 25px; display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,1); z-index: 9999999; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; pointer-events: none; }}
@@ -195,16 +202,16 @@ def redaccion_asiento_residente():
         </div>
 
         <div class="stepper-container" id="stepperBar">
-            <button type="button" class="step-btn active" id="btnStep1" onclick="jumpToStep(1)">1. Jornal</button>
-            <button type="button" class="step-btn" id="btnStep2" onclick="jumpToStep(2)">2. Personal</button>
-            <button type="button" class="step-btn" id="btnStep3" onclick="jumpToStep(3)">3. Partidas</button>
-            <button type="button" class="step-btn" id="btnStep4" onclick="jumpToStep(4)">4. Mayor Metrado</button>
-            <button type="button" class="step-btn" id="btnStep5" onclick="jumpToStep(5)">5. Sub Partidas</button>
-            <button type="button" class="step-btn" id="btnStep6" onclick="jumpToStep(6)">6. Actividades</button>
-            <button type="button" class="step-btn" id="btnStep7" onclick="jumpToStep(7)">7. Almacén</button>
-            <button type="button" class="step-btn" id="btnStep8" onclick="jumpToStep(8)">8. Maquinaria</button>
-            <button type="button" class="step-btn" id="btnStep9" onclick="jumpToStep(9)">9. Herramientas</button>
-            <button type="button" class="step-btn" id="btnStep10" onclick="jumpToStep(10)">10. Ocurrencias</button>
+            <button type="button" class="step-btn active" id="btnStep1" data-step="1" data-percent="0%" onclick="jumpToStep(1)">1. Jornal</button>
+            <button type="button" class="step-btn" id="btnStep2" data-step="2" data-percent="0%" onclick="jumpToStep(2)">2. Personal</button>
+            <button type="button" class="step-btn" id="btnStep3" data-step="3" data-percent="0%" onclick="jumpToStep(3)">3. Partidas</button>
+            <button type="button" class="step-btn" id="btnStep4" data-step="4" data-percent="0%" onclick="jumpToStep(4)">4. Mayor Metrado</button>
+            <button type="button" class="step-btn" id="btnStep5" data-step="5" data-percent="0%" onclick="jumpToStep(5)">5. Sub Partidas</button>
+            <button type="button" class="step-btn" id="btnStep6" data-step="6" data-percent="0%" onclick="jumpToStep(6)">6. Actividades</button>
+            <button type="button" class="step-btn" id="btnStep7" data-step="7" data-percent="0%" onclick="jumpToStep(7)">7. Almacén</button>
+            <button type="button" class="step-btn" id="btnStep8" data-step="8" data-percent="0%" onclick="jumpToStep(8)">8. Maquinaria</button>
+            <button type="button" class="step-btn" id="btnStep9" data-step="9" data-percent="0%" onclick="jumpToStep(9)">9. Herramientas</button>
+            <button type="button" class="step-btn" id="btnStep10" data-step="10" data-percent="0%" onclick="jumpToStep(10)">10. Ocurrencias</button>
         </div>
         <div id="globalTooltip"></div>
 
@@ -243,6 +250,11 @@ def redaccion_asiento_residente():
             // CONFIGURACIÓN GLOBAL
             let g_numAsiento = ""; let g_fechaAsiento = ""; let g_fechaRaw = "";
             let currentStep = 1; const totalSteps = 10; let isAnimating = false;
+            const stepLabels = {{
+                1: 'Jornal de trabajo', 2: 'Personal de obra', 3: 'Partidas ejecutadas',
+                4: 'Mayor metrado', 5: 'Sub partidas', 6: 'Actividades',
+                7: 'Almacén', 8: 'Maquinaria', 9: 'Herramientas', 10: 'Ocurrencias'
+            }};
             
             // EL CATÁLOGO MAESTRO (Accesible para todos) Y LAS LISTAS DIARIAS
             window.catalogoMaestro = [];
@@ -260,6 +272,8 @@ def redaccion_asiento_residente():
                 const modalInicial = document.getElementById('modalConfigInicial');
                 modalInicial.addEventListener('shown.bs.modal', function () {{ document.getElementById('initNumAsiento').focus(); }});
                 new bootstrap.Modal(modalInicial).show();
+                instalarTooltipStepper();
+                actualizarStepper();
             }});
             function formatearFecha(fechaStr) {{ const dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]; const [y, m, d] = fechaStr.split('-'); const dateObj = new Date(y, m-1, d); let dayIndex = dateObj.getDay() - 1; if(dayIndex === -1) dayIndex = 6; return `${{dias[dayIndex]}}, ${{d}}/${{m}}/${{y}}`; }}
             
@@ -269,6 +283,51 @@ def redaccion_asiento_residente():
                 g_fechaRaw = rawDate; g_fechaAsiento = formatearFecha(rawDate); document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento; 
                 bootstrap.Modal.getInstance(document.getElementById('modalConfigInicial')).hide(); 
                 document.getElementById('mainLayout').classList.add('unlocked'); document.getElementById('stepperBar').style.opacity = '1'; document.getElementById('stepperBar').style.pointerEvents = 'all'; document.getElementById('bottomBarUI').classList.add('unlocked'); sincronizarDatos(); 
+            }}
+
+            function porcentajePaso(step) {{
+                const scope = document.getElementById(`step${{step}}`);
+                if(!scope) return 0;
+                const reqs = Array.from(scope.querySelectorAll(`[class*="req-step${{step}}"]`));
+                if(reqs.length === 0) return step < currentStep ? 100 : 0;
+                const llenos = reqs.filter(el => String(el.value || '').trim().length > 0).length;
+                return Math.round((llenos / reqs.length) * 100);
+            }}
+
+            function actualizarStepper() {{
+                for(let i = 1; i <= totalSteps; i++) {{
+                    const btn = document.getElementById(`btnStep${{i}}`);
+                    if(!btn) continue;
+                    const pct = porcentajePaso(i);
+                    btn.dataset.percent = `${{pct}}%`;
+                    btn.style.setProperty('--pct', `${{pct}}%`);
+                    btn.classList.toggle('completed', pct >= 100);
+                    btn.classList.toggle('missing', pct > 0 && pct < 100);
+                    const estado = pct >= 100 ? 'Completo' : (pct > 0 ? `Falta ${{100 - pct}}%` : 'Sin registrar');
+                    btn.dataset.tooltip = `${{stepLabels[i]}} · ${{estado}} · Avance ${{pct}}%`;
+                }}
+            }}
+
+            function instalarTooltipStepper() {{
+                const tooltip = document.getElementById('globalTooltip');
+                document.querySelectorAll('.step-btn').forEach(btn => {{
+                    btn.addEventListener('mouseenter', () => {{
+                        tooltip.innerText = btn.dataset.tooltip || '';
+                        const rect = btn.getBoundingClientRect();
+                        tooltip.style.left = `${{rect.left + rect.width / 2}}px`;
+                        tooltip.style.top = `${{rect.bottom + 12}}px`;
+                        tooltip.style.transform = 'translateX(-50%) translateY(0) scale(1)';
+                        tooltip.classList.add('visible');
+                    }});
+                    btn.addEventListener('mousemove', () => {{
+                        const rect = btn.getBoundingClientRect();
+                        tooltip.style.left = `${{rect.left + rect.width / 2}}px`;
+                        tooltip.style.top = `${{rect.bottom + 12}}px`;
+                    }});
+                    btn.addEventListener('mouseleave', () => {{
+                        tooltip.classList.remove('visible');
+                    }});
+                }});
             }}
 
             // LÓGICA DEL CATÁLOGO GLOBAL (PEGADO DE 4 COLUMNAS)
@@ -329,7 +388,7 @@ def redaccion_asiento_residente():
             function siguientePaso() {{ if(currentStep < totalSteps) jumpToStep(currentStep + 1); }} function anteriorPaso() {{ if(currentStep > 1) jumpToStep(currentStep - 1); }} function omitirPaso() {{ siguientePaso(); }}
 
             let t_m = true; let t_t = true;
-            function toggleTurno(turno) {{ if(turno === 'm') {{ t_m = !t_m; document.getElementById('card_m').classList.toggle('active', t_m); document.getElementById('v_jornal_m').value = t_m ? "07:00 - 12:00" : ""; document.getElementById('lbl_jornal_m').style.opacity = t_m ? "1" : "0.3"; }} else {{ t_t = !t_t; document.getElementById('card_t').classList.toggle('active', t_t); document.getElementById('v_jornal_t').value = t_t ? "13:00 - 17:00" : ""; document.getElementById('lbl_jornal_t').style.opacity = t_t ? "1" : "0.3"; }} sincronizarDatos(); }}
+            function toggleTurno(turno) {{ if(turno === 'm') {{ t_m = !t_m; document.getElementById('card_m').classList.toggle('active', t_m); document.getElementById('hora_jornal_m').style.opacity = t_m ? "1" : "0.3"; }} else {{ t_t = !t_t; document.getElementById('card_t').classList.toggle('active', t_t); document.getElementById('hora_jornal_t').style.opacity = t_t ? "1" : "0.3"; }} if (typeof m1_actualizar_jornal === "function") m1_actualizar_jornal(); else sincronizarDatos(); }}
             function evaluarTarjeta(id) {{ const val = document.getElementById('v_' + id).value; document.getElementById('c_' + id).classList.toggle('active', val > 0); sincronizarDatos(); }}
 
             {CUADERNO_OBRA_JS}
