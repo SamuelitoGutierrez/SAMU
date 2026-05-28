@@ -163,7 +163,7 @@ ALMACEN_HTML = """
     }
 
     function m7_titulo_categoria(categoria) {
-        return categoria === 'combustible' ? '7.2 MOVIMIENTO DE COMBUSTIBLE.' : '7.1 MOVIMIENTO DE MATERIALES DE CONSTRUCCIÓN.';
+        return categoria === 'combustible' ? '* MOVIMIENTO DE COMBUSTIBLE Y LUBRICANTES' : '* MOVIMIENTO DE MATERIALES DE CONSTRUCCIÓN';
     }
 
     function m7_numero_movimiento(categoria, tipo) {
@@ -203,8 +203,8 @@ ALMACEN_HTML = """
             const salida = window.m7_movimientos[cat].salida.map(m7_formato_item).filter(Boolean);
             if(ingreso.length > 0 || salida.length > 0) {
                 const bloque = [m7_titulo_categoria(cat)];
-                if(ingreso.length > 0) bloque.push(`${m7_numero_movimiento(cat, 'ingreso')} ${ingreso.join('; ')}`);
-                if(salida.length > 0) bloque.push(`${m7_numero_movimiento(cat, 'salida')} ${salida.join('; ')}`);
+                bloque.push(`- INGRESO: ${ingreso.join('; ')}`);
+                bloque.push(`- SALIDA: ${salida.join('; ')}`);
                 partes.push(bloque.join('\\n'));
             }
         });

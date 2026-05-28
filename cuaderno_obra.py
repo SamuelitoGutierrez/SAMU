@@ -164,7 +164,7 @@ CUADERNO_OBRA_JS = """
                     agregarModulo(modulos, '6. Actividades ejecutadas', valor('v_activ'));
                 }
 
-                agregarModulo(modulos, '7. Movimiento de almacén', valor('v_almacen'));
+                agregarModulo(modulos, '7.- MOVIMIENTO DE ALMACÉN', valor('v_almacen'));
                 agregarModulo(modulos, '8. Maquinarias y equipos', valor('v_maquina'));
                 agregarModulo(modulos, '9. Herramientas manuales', valor('v_herram'));
                 agregarModulo(modulos, '10. Ocurrencias y otros', valor('v_ocurrencia'));
@@ -229,10 +229,10 @@ CUADERNO_OBRA_JS = """
                     }
 
                     if (limpia.startsWith('*')) {
-                        return `<div class="almacen-principal">${escaparHtml(limpia.replace(/^\\*\\s*/, ''))}</div>${espacio}`;
+                        return `<div class="almacen-principal">${escaparHtml(limpia)}</div>${espacio}`;
                     }
 
-                    const sub = limpia.match(/^-\\s*((INGRESO|SALIDA):)(.*)$/i);
+                    const sub = limpia.match(/^(-\\s*(INGRESO|SALIDA):)(.*)$/i);
                     if (sub) {
                         return `<div class="almacen-sub"><span class="almacen-label">${escaparHtml(sub[1].toUpperCase())}</span><span class="almacen-detalle">${escaparHtml(sub[3])}</span></div>${espacio}`;
                     }
