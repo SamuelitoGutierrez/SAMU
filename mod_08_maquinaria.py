@@ -1,6 +1,12 @@
 MAQUINARIA_HTML = """
 <style>
-    #step8 { border-radius: 24px; padding: 18px; border: 1px solid #cbd5e1; background: linear-gradient(180deg, #f8fafc 0%, #ffffff 46%); }
+    #step8 { border-radius: 24px; padding: 18px; border: 1px solid #cbd5e1; background: linear-gradient(180deg, #f8fafc 0%, #ffffff 46%); transition: background .25s ease, border-color .25s ease; }
+    #step8.m8-theme-maq-gore { background: linear-gradient(180deg, #eff6ff 0%, #ffffff 48%); border-color: #bfdbfe; }
+    #step8.m8-theme-maq-serv { background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 48%); border-color: #dbeafe; }
+    #step8.m8-theme-mov-gore { background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 48%); border-color: #bbf7d0; }
+    #step8.m8-theme-mov-serv { background: linear-gradient(180deg, #f7fee7 0%, #ffffff 48%); border-color: #d9f99d; }
+    #step8.m8-theme-eq-gore { background: linear-gradient(180deg, #fffbeb 0%, #ffffff 48%); border-color: #fde68a; }
+    #step8.m8-theme-eq-serv { background: linear-gradient(180deg, #fefce8 0%, #ffffff 48%); border-color: #fef3c7; }
     .m8-layout { display: grid; gap: 14px; }
     .m8-panel { border: 1px solid #e2e8f0; border-radius: 22px; background: rgba(255,255,255,0.9); padding: 14px; box-shadow: 0 16px 34px rgba(15,23,42,0.06); }
     .m8-register-toggle { width: 100%; border: none; border-radius: 24px; padding: 18px 20px; color: #fff; background: linear-gradient(135deg, #0f172a, #075985, #0ea5e9); box-shadow: 0 18px 38px rgba(15,23,42,0.18); display: flex; align-items: center; justify-content: space-between; gap: 14px; text-align: left; transition: 0.22s ease; }
@@ -20,20 +26,20 @@ MAQUINARIA_HTML = """
     .m8-cat { border: 1px solid #cbd5e1; background: #fff; border-radius: 18px; padding: 12px 14px 12px 48px; min-height: 72px; position: relative; text-align: left; color: #475569; font-size: 12px; font-weight: 900; box-shadow: 0 10px 24px rgba(15,23,42,0.05); transition: 0.2s ease; line-height: 1.18; overflow: hidden; }
     .m8-cat i { position: absolute; top: 14px; left: 13px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 12px; background: #f1f5f9; font-size: 14px; }
     .m8-cat small { display: block; margin-top: 2px; font-size: 10px; line-height: 1.2; font-weight: 700; opacity: 0.72; }
-    .m8-cat.active { color: #fff; transform: translateY(-1px); box-shadow: 0 16px 32px rgba(15,23,42,0.16); }
-    .m8-cat.active i { background: rgba(255,255,255,0.18); }
+    .m8-cat.active { transform: scale(1.035); box-shadow: 0 18px 34px rgba(15,23,42,0.18); z-index: 2; }
+    .m8-cat.active i { transform: scale(1.08); }
     .m8-cat.maq-gore { border-color: #bfdbfe; color: #075985; background: #eff6ff; }
     .m8-cat.maq-serv { border-color: #dbeafe; color: #0369a1; background: #f0f9ff; }
     .m8-cat.mov-gore { border-color: #bbf7d0; color: #166534; background: #f0fdf4; }
     .m8-cat.mov-serv { border-color: #d9f99d; color: #3f6212; background: #f7fee7; }
     .m8-cat.eq-gore { border-color: #fde68a; color: #92400e; background: #fffbeb; }
     .m8-cat.eq-serv { border-color: #fef3c7; color: #a16207; background: #fefce8; }
-    .m8-cat.maq-gore.active { background: linear-gradient(135deg, #075985, #0ea5e9); border-color: #0ea5e9; }
-    .m8-cat.maq-serv.active { background: linear-gradient(135deg, #38bdf8, #7dd3fc); border-color: #7dd3fc; color: #0f172a; }
-    .m8-cat.mov-gore.active { background: linear-gradient(135deg, #166534, #22c55e); border-color: #22c55e; }
-    .m8-cat.mov-serv.active { background: linear-gradient(135deg, #84cc16, #bef264); border-color: #bef264; color: #1f2937; }
-    .m8-cat.eq-gore.active { background: linear-gradient(135deg, #ca8a04, #facc15); border-color: #facc15; color: #1f2937; }
-    .m8-cat.eq-serv.active { background: linear-gradient(135deg, #fde047, #fef08a); border-color: #fef08a; color: #1f2937; }
+    .m8-cat.maq-gore.active { border-color: #0284c7; }
+    .m8-cat.maq-serv.active { border-color: #38bdf8; }
+    .m8-cat.mov-gore.active { border-color: #22c55e; }
+    .m8-cat.mov-serv.active { border-color: #84cc16; }
+    .m8-cat.eq-gore.active { border-color: #facc15; }
+    .m8-cat.eq-serv.active { border-color: #fef08a; }
     .m8-form-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 9px; align-items: end; }
     .m8-span-3 { grid-column: span 3; }
     .m8-span-2 { grid-column: span 2; }
@@ -262,7 +268,6 @@ MAQUINARIA_HTML = """
         document.getElementById('m8_combustible_tipo_box').classList.toggle('active', esMovilidad);
         combustible.placeholder = esMovilidad ? '20' : (defecto ? '20 GLN Gasohol' : '20 GLN Diesel');
         if(esMovilidad && /^(gasohol|diesel)$/i.test(m8_texto(combustible.value))) combustible.value = '';
-        if(defecto && !esMovilidad && !m8_texto(combustible.value)) combustible.value = defecto;
     }
     function m8_combustible(texto, cat = m8_categoria_actual, tipo = '') {
         const t = m8_texto(texto);
@@ -304,6 +309,11 @@ MAQUINARIA_HTML = """
     function m8_cambiar_categoria(cat) {
         m8_guardar_entidad();
         m8_categoria_actual = cat;
+        const panel = document.getElementById('step8');
+        if(panel) {
+            panel.classList.remove('m8-theme-maq-gore', 'm8-theme-maq-serv', 'm8-theme-mov-gore', 'm8-theme-mov-serv', 'm8-theme-eq-gore', 'm8-theme-eq-serv');
+            panel.classList.add(`m8-theme-${cat.replace('_', '-')}`);
+        }
         document.getElementById('m8_base_cat').value = cat;
         Object.keys(m8_titulos).forEach(k => {
             const btn = document.getElementById(`m8_cat_${k}`);

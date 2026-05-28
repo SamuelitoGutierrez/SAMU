@@ -137,10 +137,12 @@ CUADERNO_OBRA_JS = """
 
                 const vJ1 = valor('v_jornal_m');
                 const vJ2 = valor('v_jornal_t');
+                const vClima = valor('v_clima');
                 if (vJ1 || vJ2) {
                     let partes = [];
                     if (vJ1) partes.push(`Mañana: ${vJ1}`);
                     if (vJ2) partes.push(`Tarde: ${vJ2}`);
+                    if (vClima) partes.push(`Clima: ${vClima}`);
                     agregarModulo(modulos, '1. Jornal de trabajo', partes.join(', '));
                 } else {
                     agregarModulo(modulos, '1. Jornal de trabajo', '');
@@ -190,7 +192,7 @@ CUADERNO_OBRA_JS = """
                 agregarModulo(modulos, '7. Movimiento de almacén', valorConSaltos('v_almacen'));
                 agregarModuloConFormato(modulos, '8. Maquinarias y equipos', valorConSaltos('v_maquina'));
                 agregarModulo(modulos, '9. Herramientas manuales', valor('v_herram'));
-                agregarModulo(modulos, '10. Ocurrencias y otros', valor('v_ocurrencia'));
+                agregarModuloConFormato(modulos, '10. Ocurrencias y otros', valorConSaltos('v_ocurrencia'));
 
                 return modulos.slice(0, pasoMaximo);
             }

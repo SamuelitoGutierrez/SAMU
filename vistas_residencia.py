@@ -35,8 +35,11 @@ except: ALMACEN_HTML = "<div class='step-view' id='step7'><p>En construcción...
 try: from mod_08_maquinaria import MAQUINARIA_HTML
 except: MAQUINARIA_HTML = "<div class='step-view' id='step8'><p>En construcción...</p></div>"
 
-HERRAMIENTAS_HTML = "<div class='step-view' id='step9'><div class='step-title'>9.- Herramientas</div><textarea class='form-control req-step9' id='v_herram' rows='4' oninput='sincronizarDatos()'></textarea></div>"
-OCURRENCIAS_HTML = "<div class='step-view' id='step10'><div class='step-title text-danger'>10.- Ocurrencias</div><textarea class='form-control border-danger req-step10' id='v_ocurrencia' rows='6' oninput='sincronizarDatos()'></textarea></div>"
+try: from mod_09_herramientas import HERRAMIENTAS_HTML
+except: HERRAMIENTAS_HTML = "<div class='step-view' id='step9'><p>En construcción...</p></div>"
+
+try: from mod_10_ocurrencias import OCURRENCIAS_HTML
+except: OCURRENCIAS_HTML = "<div class='step-view' id='step10'><p>En construcción...</p></div>"
 
 residencia_bp = Blueprint('residencia', __name__)
 
@@ -136,7 +139,7 @@ def redaccion_asiento_residente():
                     <div class="inicio-asiento-body">
                         <div class="mb-3">
                             <label class="form-label fw-bold text-muted">N° de Asiento</label>
-                            <input type="number" id="initNumAsiento" class="form-control form-control-lg inicio-input" placeholder="Ej: 88" onkeydown="if(event.key==='Enter'){{event.preventDefault(); document.getElementById('initFecha').focus();}}">
+                            <input type="number" id="initNumAsiento" class="form-control form-control-lg inicio-input" placeholder="Ej: XXXX" onkeydown="if(event.key==='Enter'){{event.preventDefault(); document.getElementById('initFecha').focus();}}">
                         </div>
                         <div class="mb-4">
                             <label class="form-label fw-bold text-muted">Fecha del Asiento</label>
