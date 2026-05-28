@@ -25,6 +25,8 @@ CUADERNO_OBRA_CSS = """
             .almacen-bloque { display: block; padding-left: 22px; }
             .almacen-principal { display: block; padding-left: 18px; font-weight: 600; line-height: 26px; }
             .almacen-sub { display: block; padding-left: 44px; line-height: 26px; }
+            .almacen-label { color: #000; font-weight: 800; }
+            .almacen-detalle { color: var(--celeste-obra); font-weight: 400; }
             .almacen-espacio { display: block; height: 26px; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
             .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000;}
@@ -220,9 +222,14 @@ CUADERNO_OBRA_JS = """
                     
                     if (limpia.startsWith('*')) {
                         return `<div class="almacen-principal">${escaparHtml(limpia)}</div>${espacio}`;
-                    } else {
-                        return `<div class="almacen-sub">${escaparHtml(limpia)}</div>${espacio}`;
                     }
+
+                    const sub = limpia.match(/^(-\\s*(INGRESO|SALIDA):)(.*)$/i);
+                    if (sub) {
+                        return `<div class="almacen-sub"><span class="almacen-label">${escaparHtml(sub[1].toUpperCase())}</span><span class="almacen-detalle">${escaparHtml(sub[3])}</span></div>${espacio}`;
+                    }
+
+                    return `<div class="almacen-sub">${escaparHtml(limpia)}</div>${espacio}`;
                 }).join('');
             }
 
