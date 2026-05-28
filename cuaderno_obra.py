@@ -23,8 +23,8 @@ CUADERNO_OBRA_CSS = """
             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
             .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; }
             .almacen-bloque { display: block; padding-left: 22px; }
-            .almacen-principal { display: block; padding-left: 18px; font-weight: 600; }
-            .almacen-sub { display: block; padding-left: 44px; }
+            .almacen-principal { display: block; padding-left: 18px; font-weight: 600; line-height: 26px; }
+            .almacen-sub { display: block; padding-left: 44px; line-height: 26px; }
             .almacen-espacio { display: block; height: 26px; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
             .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000;}
@@ -188,7 +188,7 @@ CUADERNO_OBRA_JS = """
                     return `
                         <div class="modulo-redaccion">
                             <span class="modulo-titulo">${escaparHtml(modulo.titulo)}</span>
-                            <span class="almacen-bloque">${htmlAlmacen(modulo.contenido)}</span>
+                            <div class="almacen-bloque">${htmlAlmacen(modulo.contenido)}</div>
                         </div>
                     `;
                 }
@@ -208,9 +208,9 @@ CUADERNO_OBRA_JS = """
                     const espacio = limpia.startsWith('-') || (limpia.startsWith('*') && siguiente.startsWith('*'))
                         ? '<span class="almacen-espacio"></span>'
                         : '';
-                    if (limpia.startsWith('*')) return `<span class="almacen-principal">${escaparHtml(limpia)}</span>${espacio}`;
-                    if (limpia.startsWith('-')) return `<span class="almacen-sub">${escaparHtml(limpia)}</span>${espacio}`;
-                    return `<span class="almacen-sub">${escaparHtml(limpia)}</span>${espacio}`;
+                    if (limpia.startsWith('*')) return `<div class="almacen-principal">${escaparHtml(limpia)}</div>${espacio}`;
+                    if (limpia.startsWith('-')) return `<div class="almacen-sub">${escaparHtml(limpia)}</div>${espacio}`;
+                    return `<div class="almacen-sub">${escaparHtml(limpia)}</div>${espacio}`;
                 }).join('');
             }
 
