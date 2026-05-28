@@ -32,8 +32,11 @@ MAQUINARIA_HTML = """
     .m8-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .m8-table th { background: #f1f5f9; color: #475569; padding: 9px 8px; font-size: 10px; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid #cbd5e1; }
     .m8-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .m8-table input { width: 100%; border: 1px solid #dbeafe; border-radius: 9px; padding: 6px 7px; font-size: 11px; font-weight: 700; outline: none; background: #fff; }
     .m8-empty { padding: 18px; color: #94a3b8; text-align: center; font-weight: 800; }
     .m8-preview { border-radius: 16px; min-height: 118px; resize: vertical; font-size: 12px; background: #f8fafc; }
+    .m8-hidden { display: none; }
+    .m8-preview-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 10px; background: #f8fafc; }
     @media (max-width: 992px) { .m8-category-grid, .m8-form-grid, .m8-base-grid, .m8-contract-grid { grid-template-columns: 1fr; } }
 </style>
 
@@ -45,6 +48,10 @@ MAQUINARIA_HTML = """
                 <h6><i class="bi bi-bookmark-plus-fill me-1"></i> Base de maquinarias, vehículos y equipos</h6>
                 <button type="button" class="m8-btn secondary" onclick="m8_limpiar_base_categoria()"><i class="bi bi-eraser me-1"></i> Limpiar base seleccionada</button>
             </div>
+            <div class="m8-base-grid m8-service-field" id="m8_entidad_registro_box" style="margin-bottom: 12px;">
+                <div class="m8-field"><label>Registrar entidad</label><input id="m8_nueva_entidad" placeholder="Nombre de la entidad / empresa" onkeydown="m8_enter_guardar_entidad(event)"></div>
+                <button type="button" class="m8-btn purple" onclick="m8_agregar_entidad()"><i class="bi bi-building me-1"></i> Agregar entidad</button>
+            </div>
             <div class="m8-base-grid">
                 <div class="m8-field"><label>Clasificación</label><select id="m8_base_cat" onchange="m8_base_categoria_cambio()"><option value="maq_gore">Maquinarias del Gobierno Regional Puno</option><option value="maq_serv">Maquinarias por servicio y/o contrato</option><option value="mov_gore">Movilidades del Gobierno Regional Puno</option><option value="mov_serv">Movilidades por servicio y/o contrato</option><option value="eq_gore">Equipo liviano del Gobierno Regional Puno</option><option value="eq_serv">Equipo liviano por servicio y/o contrato</option></select></div>
                 <div class="m8-field m8-service-field" id="m8_base_entidad_box"><label>Entidad</label><input id="m8_base_entidad" list="m8_entidades_list" placeholder="Entidad / empresa" onkeydown="m8_enter(event, 'm8_base_nombre')"></div>
@@ -54,8 +61,18 @@ MAQUINARIA_HTML = """
                 <button type="button" class="m8-btn purple" onclick="m8_agregar_base()"><i class="bi bi-plus-lg me-1"></i> Registrar base</button>
             </div>
             <div class="m8-paste mt-3">
-                <div><i class="bi bi-clipboard-check me-1"></i> Pegado masivo para la base: entidad | maquinaria | marca | modelo, placa o serie</div>
+                <div><i class="bi bi-clipboard-check me-1"></i> Pegado masivo para la base: maquinaria | marca | modelo, placa o serie. En servicio use primero la entidad seleccionada.</div>
                 <textarea id="m8_base_paste" placeholder="Pegar aquí..." onpaste="m8_pegar_base(event)"></textarea>
+            </div>
+            <div class="m8-table-wrap m8-hidden mt-3" id="m8_base_preview_box">
+                <table class="m8-table">
+                    <thead><tr><th>Entidad</th><th>Maquinaria</th><th>Marca</th><th>Modelo, placa o serie</th><th></th></tr></thead>
+                    <tbody id="m8_base_preview_tbody"></tbody>
+                </table>
+                <div class="m8-preview-actions">
+                    <button type="button" class="m8-btn secondary" onclick="m8_cancelar_base_preview()">Cancelar</button>
+                    <button type="button" class="m8-btn purple" onclick="m8_confirmar_base_preview()">Agregar a la base</button>
+                </div>
             </div>
         </div>
 
@@ -93,6 +110,16 @@ MAQUINARIA_HTML = """
                 <div id="m8_paste_help"><i class="bi bi-clipboard-check me-1"></i> Pegado masivo diario: maquinaria | marca | placa/serie | HM | combustible</div>
                 <textarea id="m8_paste" placeholder="Pegar aquí..." onpaste="m8_pegar_diario(event)"></textarea>
             </div>
+            <div class="m8-table-wrap m8-hidden mt-3" id="m8_diario_preview_box">
+                <table class="m8-table">
+                    <thead><tr><th>Entidad</th><th>Maquinaria</th><th>Marca</th><th>Modelo, placa o serie</th><th id="m8_preview_medida">HM</th><th>Combustible</th><th></th></tr></thead>
+                    <tbody id="m8_diario_preview_tbody"></tbody>
+                </table>
+                <div class="m8-preview-actions">
+                    <button type="button" class="m8-btn secondary" onclick="m8_cancelar_diario_preview()">Cancelar</button>
+                    <button type="button" class="m8-btn" onclick="m8_confirmar_diario_preview()">Agregar al día</button>
+                </div>
+            </div>
         </div>
 
         <div class="m8-table-wrap">
@@ -123,6 +150,9 @@ MAQUINARIA_HTML = """
     window.m8_base = window.m8_base || { maq_gore: [], maq_serv: [], mov_gore: [], mov_serv: [], eq_gore: [], eq_serv: [] };
     window.m8_registros = window.m8_registros || { maq_gore: [], maq_serv: [], mov_gore: [], mov_serv: [], eq_gore: [], eq_serv: [] };
     window.m8_entidad_actual = window.m8_entidad_actual || { maq_serv: '', mov_serv: '', eq_serv: '' };
+    window.m8_entidades_registradas = window.m8_entidades_registradas || { maq_serv: [], mov_serv: [], eq_serv: [] };
+    window.m8_base_pendientes = window.m8_base_pendientes || [];
+    window.m8_diario_pendientes = window.m8_diario_pendientes || [];
     let m8_categoria_actual = 'maq_gore';
 
     const m8_titulos = {
@@ -191,7 +221,7 @@ MAQUINARIA_HTML = """
         return m8_es_servicio(document.getElementById('m8_base_cat').value);
     }
     function m8_entidades(cat = m8_categoria_actual) {
-        return [...new Set((window.m8_base[cat] || []).map(x => m8_texto(x.entidad)).filter(Boolean))];
+        return [...new Set([...(window.m8_entidades_registradas[cat] || []), ...(window.m8_base[cat] || []).map(x => m8_texto(x.entidad))].filter(Boolean))];
     }
     function m8_actualizar_datalist() {
         const entidades = m8_entidades(m8_categoria_actual);
@@ -199,6 +229,7 @@ MAQUINARIA_HTML = """
     }
     function m8_base_categoria_cambio() {
         document.getElementById('m8_base_entidad_box').classList.toggle('active', m8_base_es_servicio());
+        document.getElementById('m8_entidad_registro_box').classList.toggle('active', m8_base_es_servicio());
         if(!m8_base_es_servicio()) document.getElementById('m8_base_entidad').value = '';
         m8_render_base();
         m8_refrescar_select();
@@ -215,6 +246,7 @@ MAQUINARIA_HTML = """
         });
         document.getElementById('m8_contrato_box').classList.toggle('active', m8_es_servicio(cat));
         document.getElementById('m8_base_entidad_box').classList.toggle('active', m8_es_servicio(cat));
+        document.getElementById('m8_entidad_registro_box').classList.toggle('active', m8_es_servicio(cat));
         document.getElementById('m8_entidad').value = window.m8_entidad_actual[cat] || '';
         document.getElementById('m8_base_entidad').value = window.m8_entidad_actual[cat] || '';
         m8_actualizar_campos();
@@ -236,6 +268,24 @@ MAQUINARIA_HTML = """
         m8_sincronizar();
     }
 
+    function m8_agregar_entidad() {
+        const cat = document.getElementById('m8_base_cat').value;
+        if(!m8_es_servicio(cat)) return;
+        const entidad = m8_texto(document.getElementById('m8_nueva_entidad').value);
+        if(!entidad) return;
+        window.m8_entidades_registradas[cat] = window.m8_entidades_registradas[cat] || [];
+        if(!window.m8_entidades_registradas[cat].some(x => x.toLowerCase() === entidad.toLowerCase())) {
+            window.m8_entidades_registradas[cat].push(entidad);
+        }
+        window.m8_entidad_actual[cat] = entidad;
+        document.getElementById('m8_base_entidad').value = entidad;
+        if(cat === m8_categoria_actual) document.getElementById('m8_entidad').value = entidad;
+        document.getElementById('m8_nueva_entidad').value = '';
+        m8_actualizar_datalist();
+        m8_refrescar_select();
+        document.getElementById('m8_base_nombre').focus();
+    }
+
     function m8_agregar_base(data = null) {
         const cat = document.getElementById('m8_base_cat').value;
         const item = data ? m8_item(data) : m8_item({
@@ -254,6 +304,10 @@ MAQUINARIA_HTML = """
             document.getElementById('m8_base_nombre').focus();
         }
         if(m8_es_servicio(cat)) {
+            window.m8_entidades_registradas[cat] = window.m8_entidades_registradas[cat] || [];
+            if(!window.m8_entidades_registradas[cat].some(x => x.toLowerCase() === item.entidad.toLowerCase())) {
+                window.m8_entidades_registradas[cat].push(item.entidad);
+            }
             window.m8_entidad_actual[cat] = item.entidad;
             if(cat === m8_categoria_actual) document.getElementById('m8_entidad').value = item.entidad;
         }
@@ -265,22 +319,26 @@ MAQUINARIA_HTML = """
     function m8_pegar_base(event) {
         event.preventDefault();
         const data = (event.clipboardData || window.clipboardData).getData('text');
-        let count = 0;
+        const cat = document.getElementById('m8_base_cat').value;
+        window.m8_base_pendientes = [];
         data.split('\\n').forEach(row => {
             const cols = row.split('\\t').map(m8_texto);
             if(cols[0]) {
-                const cat = document.getElementById('m8_base_cat').value;
                 if(m8_es_servicio(cat)) {
-                    m8_agregar_base({ entidad: cols[0], nombre: cols[1], marca: cols[2], modelo: cols[3] });
+                    const entidadActual = m8_texto(document.getElementById('m8_base_entidad').value);
+                    if(entidadActual) {
+                        window.m8_base_pendientes.push(m8_item({ entidad: entidadActual, nombre: cols[0], marca: cols[1], modelo: cols[2] }));
+                    } else {
+                        window.m8_base_pendientes.push(m8_item({ entidad: cols[0], nombre: cols[1], marca: cols[2], modelo: cols[3] }));
+                    }
                 } else {
-                    m8_agregar_base({ nombre: cols[0], marca: cols[1], modelo: cols[2] });
+                    window.m8_base_pendientes.push(m8_item({ nombre: cols[0], marca: cols[1], modelo: cols[2] }));
                 }
-                count++;
             }
         });
         const paste = document.getElementById('m8_base_paste');
-        paste.value = count ? `Se registraron ${count} equipos en la base.` : '';
-        setTimeout(() => paste.value = '', 1200);
+        paste.value = window.m8_base_pendientes.length ? `Revise ${window.m8_base_pendientes.length} registros antes de agregar.` : '';
+        m8_render_base_preview();
     }
 
     function m8_refrescar_select() {
@@ -289,6 +347,7 @@ MAQUINARIA_HTML = """
         const lista = (window.m8_base[m8_categoria_actual] || []).filter(item => !m8_es_servicio() || m8_texto(item.entidad) === entidad);
         if(m8_es_servicio() && !entidad) {
             select.innerHTML = '<option value="">Primero escriba o seleccione una entidad...</option>';
+            select.dataset.items = '[]';
             return;
         }
         select.innerHTML = '<option value="">Seleccione o escriba manualmente...</option>' + lista.map((item, idx) => `<option value="${idx}">${m8_escape(item.nombre)} | ${m8_escape(item.marca)} | ${m8_escape(item.modelo)}</option>`).join('');
@@ -334,17 +393,16 @@ MAQUINARIA_HTML = """
     function m8_pegar_diario(event) {
         event.preventDefault();
         const data = (event.clipboardData || window.clipboardData).getData('text');
-        let count = 0;
+        window.m8_diario_pendientes = [];
         data.split('\\n').forEach(row => {
             const cols = row.split('\\t').map(m8_texto);
             if(cols[0]) {
-                m8_agregar_actual({ entidad: document.getElementById('m8_entidad').value, nombre: cols[0], marca: cols[1], modelo: cols[2], hm: cols[3], combustible: cols[4] || m8_combustible_defecto() });
-                count++;
+                window.m8_diario_pendientes.push(m8_item({ entidad: document.getElementById('m8_entidad').value, nombre: cols[0], marca: cols[1], modelo: cols[2], hm: cols[3], combustible: cols[4] || m8_combustible_defecto() }));
             }
         });
         const paste = document.getElementById('m8_paste');
-        paste.value = count ? `Se agregaron ${count} registros al día.` : '';
-        setTimeout(() => paste.value = '', 1200);
+        paste.value = window.m8_diario_pendientes.length ? `Revise ${window.m8_diario_pendientes.length} registros antes de agregar.` : '';
+        m8_render_diario_preview();
     }
 
     function m8_formatear(item, cat = m8_categoria_actual) {
@@ -444,6 +502,89 @@ MAQUINARIA_HTML = """
         if(event.key !== 'Enter') return;
         event.preventDefault();
         m8_agregar_base();
+    }
+    function m8_enter_guardar_entidad(event) {
+        if(event.key !== 'Enter') return;
+        event.preventDefault();
+        m8_agregar_entidad();
+    }
+
+    function m8_actualizar_pendiente(tipo, idx, campo, valor) {
+        const lista = tipo === 'base' ? window.m8_base_pendientes : window.m8_diario_pendientes;
+        if(!lista[idx]) return;
+        lista[idx][campo] = m8_texto(valor);
+    }
+
+    function m8_eliminar_pendiente(tipo, idx) {
+        if(tipo === 'base') {
+            window.m8_base_pendientes.splice(idx, 1);
+            m8_render_base_preview();
+        } else {
+            window.m8_diario_pendientes.splice(idx, 1);
+            m8_render_diario_preview();
+        }
+    }
+
+    function m8_render_base_preview() {
+        const box = document.getElementById('m8_base_preview_box');
+        const tbody = document.getElementById('m8_base_preview_tbody');
+        const esServicio = m8_base_es_servicio();
+        box.classList.toggle('m8-hidden', window.m8_base_pendientes.length === 0);
+        tbody.innerHTML = window.m8_base_pendientes.map((item, idx) => `
+            <tr>
+                <td><input ${esServicio ? '' : 'disabled'} value="${m8_escape(item.entidad)}" oninput="m8_actualizar_pendiente('base', ${idx}, 'entidad', this.value)"></td>
+                <td><input value="${m8_escape(item.nombre)}" oninput="m8_actualizar_pendiente('base', ${idx}, 'nombre', this.value)"></td>
+                <td><input value="${m8_escape(item.marca)}" oninput="m8_actualizar_pendiente('base', ${idx}, 'marca', this.value)"></td>
+                <td><input value="${m8_escape(item.modelo)}" oninput="m8_actualizar_pendiente('base', ${idx}, 'modelo', this.value)"></td>
+                <td class="text-end"><button type="button" class="btn btn-sm text-danger border-0" onclick="m8_eliminar_pendiente('base', ${idx})"><i class="bi bi-trash"></i></button></td>
+            </tr>
+        `).join('');
+    }
+
+    function m8_confirmar_base_preview() {
+        const pendientes = [...window.m8_base_pendientes];
+        pendientes.forEach(item => m8_agregar_base(item));
+        window.m8_base_pendientes = [];
+        document.getElementById('m8_base_paste').value = '';
+        m8_render_base_preview();
+    }
+
+    function m8_cancelar_base_preview() {
+        window.m8_base_pendientes = [];
+        document.getElementById('m8_base_paste').value = '';
+        m8_render_base_preview();
+    }
+
+    function m8_render_diario_preview() {
+        const box = document.getElementById('m8_diario_preview_box');
+        const tbody = document.getElementById('m8_diario_preview_tbody');
+        document.getElementById('m8_preview_medida').innerText = m8_es_movilidad() ? 'Día' : 'HM';
+        box.classList.toggle('m8-hidden', window.m8_diario_pendientes.length === 0);
+        tbody.innerHTML = window.m8_diario_pendientes.map((item, idx) => `
+            <tr>
+                <td><input ${m8_es_servicio() ? '' : 'disabled'} value="${m8_escape(item.entidad)}" oninput="m8_actualizar_pendiente('diario', ${idx}, 'entidad', this.value)"></td>
+                <td><input value="${m8_escape(item.nombre)}" oninput="m8_actualizar_pendiente('diario', ${idx}, 'nombre', this.value)"></td>
+                <td><input value="${m8_escape(item.marca)}" oninput="m8_actualizar_pendiente('diario', ${idx}, 'marca', this.value)"></td>
+                <td><input value="${m8_escape(item.modelo)}" oninput="m8_actualizar_pendiente('diario', ${idx}, 'modelo', this.value)"></td>
+                <td><input value="${m8_escape(item.hm)}" oninput="m8_actualizar_pendiente('diario', ${idx}, 'hm', this.value)"></td>
+                <td><input value="${m8_escape(item.combustible)}" oninput="m8_actualizar_pendiente('diario', ${idx}, 'combustible', this.value)"></td>
+                <td class="text-end"><button type="button" class="btn btn-sm text-danger border-0" onclick="m8_eliminar_pendiente('diario', ${idx})"><i class="bi bi-trash"></i></button></td>
+            </tr>
+        `).join('');
+    }
+
+    function m8_confirmar_diario_preview() {
+        const pendientes = [...window.m8_diario_pendientes];
+        pendientes.forEach(item => m8_agregar_actual(item));
+        window.m8_diario_pendientes = [];
+        document.getElementById('m8_paste').value = '';
+        m8_render_diario_preview();
+    }
+
+    function m8_cancelar_diario_preview() {
+        window.m8_diario_pendientes = [];
+        document.getElementById('m8_paste').value = '';
+        m8_render_diario_preview();
     }
 
     setTimeout(() => m8_cambiar_categoria('maq_gore'), 300);
