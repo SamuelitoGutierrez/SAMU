@@ -97,6 +97,8 @@ def redaccion_asiento_residente():
             .split-layout.unlocked {{ filter: blur(0); pointer-events: all; }}
             .form-column {{ flex: 1; max-width: 600px; }}
             .preview-column {{ flex: 1; position: sticky; top: 140px; height: calc(100vh - 240px); overflow-y: auto; }}
+            .mobile-preview-btn {{ position: fixed; right: 18px; bottom: 88px; z-index: 920; border: none; border-radius: 999px; padding: 13px 16px; color: #fff; background: linear-gradient(135deg, #0f172a, #0263a0); box-shadow: 0 18px 38px rgba(15,23,42,.26); font-size: 12px; font-weight: 900; display: none; align-items: center; gap: 8px; opacity: 0; pointer-events: none; transform: translateY(12px); transition: .25s ease; }}
+            .mobile-preview-btn.unlocked {{ opacity: 1; pointer-events: all; transform: translateY(0); }}
             
             .step-view {{ display: none; opacity: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(25px); padding: 30px; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,1);}}
             .step-view.active {{ display: block; animation: floatInUp 0.35s forwards; }}
@@ -132,6 +134,32 @@ def redaccion_asiento_residente():
             .inicio-asiento-body {{ padding: 30px 34px 34px; }}
             .inicio-input {{ border-radius: 16px !important; border: 1px solid #dbeafe !important; background: #f8fafc !important; font-weight: 800; }}
             .inicio-input:focus {{ border-color: #0263a0 !important; box-shadow: 0 0 0 4px rgba(2,99,160,0.12) !important; background: #fff !important; }}
+            @media (max-width: 1200px) {{
+                .stepper-container {{ grid-template-columns: repeat(11, minmax(116px, 1fr)); }}
+                .split-layout {{ gap: 22px; padding: 0 16px; }}
+                .form-column {{ max-width: 560px; }}
+            }}
+            @media (max-width: 992px) {{
+                body {{ padding-bottom: 112px; }}
+                .stepper-container {{ padding: 12px 12px 15px; grid-template-columns: repeat(11, minmax(118px, 1fr)); }}
+                .step-btn:hover {{ transform: translateY(-2px) scale(1.03); }}
+                .step-btn.active {{ transform: scale(1.05); margin: 0 3px; }}
+                .split-layout {{ display: block; max-width: 760px; margin-top: 132px; padding: 0 14px; }}
+                .form-column {{ max-width: none; width: 100%; }}
+                .preview-column {{ display: none; }}
+                .mobile-preview-btn {{ display: inline-flex; }}
+                .step-view {{ padding: 22px; border-radius: 22px; }}
+                .bottom-bar {{ padding: 12px 14px; gap: 10px; }}
+                .bottom-bar .btn {{ padding-left: 16px !important; padding-right: 16px !important; font-size: 12px; }}
+            }}
+            @media (max-width: 576px) {{
+                .split-layout {{ margin-top: 126px; padding: 0 10px; }}
+                .step-view {{ padding: 18px 14px; border-radius: 20px; }}
+                .step-title {{ font-size: 18px; margin-bottom: 18px; }}
+                .mobile-preview-btn {{ right: 12px; bottom: 82px; padding: 12px 14px; }}
+                .bottom-bar {{ align-items: center; }}
+                .bottom-bar .d-flex {{ gap: 6px !important; }}
+            }}
         </style>
     </head>
     <body>
@@ -150,7 +178,7 @@ def redaccion_asiento_residente():
                     <div class="inicio-asiento-body">
                         <div class="mb-3">
                             <label class="form-label fw-bold text-muted">N° de Asiento</label>
-                            <input type="number" id="initNumAsiento" class="form-control form-control-lg inicio-input" placeholder="Ej: XXXX" onkeydown="if(event.key==='Enter'){{event.preventDefault(); document.getElementById('initFecha').focus();}}">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" id="initNumAsiento" class="form-control form-control-lg inicio-input" placeholder="Ej: XXXX" oninput="this.value=this.value.replace(/\\D/g,'')" onkeydown="if(event.key==='Enter'){{event.preventDefault(); document.getElementById('initFecha').focus();}}">
                         </div>
                         <div class="mb-4">
                             <label class="form-label fw-bold text-muted">Fecha del Asiento</label>
@@ -249,6 +277,10 @@ def redaccion_asiento_residente():
             </div>
         </div>
 
+        <button type="button" class="mobile-preview-btn" id="mobilePreviewBtn" onclick="abrirResumenCuaderno()">
+            <i class="bi bi-journal-text"></i> Ver cuaderno
+        </button>
+
         {RESUMEN_CUADERNO_HTML}
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -289,7 +321,7 @@ def redaccion_asiento_residente():
                 if(!g_numAsiento || !rawDate) {{ mostrarAlerta("Complete los datos para iniciar.", "error"); return; }} 
                 g_fechaRaw = rawDate; g_fechaAsiento = formatearFecha(rawDate); document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento; 
                 bootstrap.Modal.getInstance(document.getElementById('modalConfigInicial')).hide(); 
-                document.getElementById('mainLayout').classList.add('unlocked'); document.getElementById('stepperBar').style.opacity = '1'; document.getElementById('stepperBar').style.pointerEvents = 'all'; document.getElementById('bottomBarUI').classList.add('unlocked'); sincronizarDatos(); 
+                document.getElementById('mainLayout').classList.add('unlocked'); document.getElementById('stepperBar').style.opacity = '1'; document.getElementById('stepperBar').style.pointerEvents = 'all'; document.getElementById('bottomBarUI').classList.add('unlocked'); document.getElementById('mobilePreviewBtn').classList.add('unlocked'); sincronizarDatos(); 
             }}
 
             function porcentajePaso(step) {{

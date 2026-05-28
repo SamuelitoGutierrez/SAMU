@@ -12,6 +12,19 @@ RESUMEN_CUADERNO_HTML = """
     .resumen-body { overflow: auto; padding: 24px; background: linear-gradient(135deg, #f8fafc, #eff6ff); }
     .resumen-paper { width: min(760px, 100%); margin: 0 auto; transform-origin: top center; }
     .resumen-paper .papel-fisico { margin: 0 auto; }
+    @media (max-width: 768px) {
+        .resumen-overlay { padding: 8px; align-items: stretch; }
+        .resumen-modal { width: 100%; max-height: none; height: 100%; border-radius: 22px; }
+        .resumen-head { padding: 14px; align-items: flex-start; flex-direction: column; }
+        .resumen-actions { width: 100%; justify-content: flex-end; }
+        .resumen-body { padding: 12px; }
+        .resumen-paper { width: 100%; overflow-x: auto; }
+        .resumen-paper .papel-fisico { min-width: 720px; }
+    }
+    @media (max-width: 480px) {
+        .resumen-head h5 { font-size: 13px; }
+        .resumen-btn { padding: 8px 11px; font-size: 11px; }
+    }
     @keyframes resumenFade { from { opacity: 0; } to { opacity: 1; } }
 </style>
 
