@@ -5,6 +5,7 @@
 
 from flask import Blueprint, render_template_string, session, redirect, url_for
 from navbar import obtener_navbar
+from cuaderno_store import obtener_panel_cuaderno
 
 cuaderno_bp = Blueprint('cuaderno', __name__)
 
@@ -22,27 +23,12 @@ def panel_cuaderno():
     # Obtenemos la barra de navegación superior renderizada
     menu_superior = obtener_navbar(es_admin, nombre_completo)
 
-    # Datos estadísticos para el panel gerencial
-    estadisticas = { 
-        "total_asientos": 88, 
-        "dias_lluvia": 14, 
-        "consultas_pendientes": 3, 
-        "avance_porcentaje": 38.5,
-        "ultimo_asiento": 88,
-        "llenado_ultimo": 82,
-        "firmados": 76,
-        "observaciones": 5
-    }
-
-    asientos = [
-        {"dia": 24, "numero": 84, "estado": "Firmado", "avance": 100, "supervisor": "Ing. Supervisor", "observacion": "Asiento conforme y firmado."},
-        {"dia": 25, "numero": 85, "estado": "Firmado", "avance": 100, "supervisor": "Ing. Supervisor", "observacion": "Sin observaciones."},
-        {"dia": 26, "numero": 86, "estado": "Observado", "avance": 72, "supervisor": "Ing. Supervisor", "observacion": "Precisar metrados ejecutados en partidas de drenaje."},
-        {"dia": 27, "numero": 87, "estado": "Pendiente", "avance": 64, "supervisor": "-", "observacion": "Pendiente de revisión por supervisión."},
-        {"dia": 28, "numero": 88, "estado": "En redacción", "avance": 82, "supervisor": "-", "observacion": "Último asiento registrado por residencia."}
-    ]
-
     rol_usuario = session.get('rol', '')
+    panel = obtener_panel_cuaderno()
+    estadisticas = panel["estadisticas"]
+    asientos = panel["asientos"]
+    observaciones = panel["observaciones"]
+    conectado = panel["conectado"]
 
     return render_template_string("""
     <!DOCTYPE html>
@@ -119,30 +105,39 @@ def panel_cuaderno():
             .view-section { 
                 width: 100%; 
                 min-height: 100vh; 
-                padding: 100px 20px 40px; 
+                padding: 96px 28px 44px; 
             }
             
             .main-container { 
-                max-width: 1000px; 
+                max-width: 1380px; 
                 margin: 0 auto; 
             }
             
             .project-title { 
-                text-align: center; 
-                margin-bottom: 40px; 
+                text-align: left; 
+                margin-bottom: 34px; 
+                animation: heroFloatIn .7s cubic-bezier(.2,.8,.2,1) both;
             }
             
             .project-title h1 { 
-                font-size: 32px; 
-                font-weight: 700; 
-                letter-spacing: -1px; 
-                margin-bottom: 6px; 
+                font-size: clamp(52px, 8vw, 108px); 
+                font-weight: 800; 
+                letter-spacing: -5px; 
+                line-height: .92;
+                margin-bottom: 12px; 
             }
             
             .project-title p { 
                 color: var(--apple-gray); 
                 font-size: 15px; 
                 margin: 0; 
+                max-width: 720px;
+                font-weight: 500;
+            }
+
+            @keyframes heroFloatIn {
+                from { opacity: 0; transform: translateY(44px) scale(.98); filter: blur(8px); }
+                to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
             }
             
             /* --- DASHBOARD ESTADÍSTICO --- */
@@ -150,7 +145,7 @@ def panel_cuaderno():
                 display: grid; 
                 grid-template-columns: repeat(4, 1fr); 
                 gap: 16px; 
-                margin-bottom: 40px; 
+                margin-bottom: 28px; 
             }
             
             .stat-card { 
@@ -189,7 +184,11 @@ def panel_cuaderno():
                 display: grid;
                 grid-template-columns: 1.15fr 0.85fr;
                 gap: 22px;
-                margin-bottom: 34px;
+                margin-bottom: 24px;
+            }
+
+            .dashboard-grid.wide {
+                grid-template-columns: 1fr 1fr;
             }
 
             .glass-panel {
@@ -381,6 +380,40 @@ def panel_cuaderno():
             .tool-btn.warn { background: linear-gradient(135deg, #b45309, #f59e0b); }
             .tool-btn.ok { background: linear-gradient(135deg, #166534, #22c55e); }
 
+            .empty-state {
+                border: 1px dashed #cbd5e1;
+                border-radius: 24px;
+                padding: 26px;
+                background: rgba(248,250,252,.72);
+                text-align: center;
+                color: #64748b;
+            }
+
+            .empty-state i {
+                font-size: 34px;
+                color: #94a3b8;
+                display: block;
+                margin-bottom: 10px;
+            }
+
+            .connection-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                border-radius: 999px;
+                padding: 8px 12px;
+                font-size: 12px;
+                font-weight: 800;
+                background: #f0fdf4;
+                color: #166534;
+                margin-top: 14px;
+            }
+
+            .connection-pill.offline {
+                background: #fff7ed;
+                color: #9a3412;
+            }
+
             /* --- PORTALES DE ACCESO DIRECTO --- */
             .portals-grid { 
                 display: grid; 
@@ -487,8 +520,12 @@ def panel_cuaderno():
             <div class="main-container">
                 
                 <div class="project-title">
-                    <h1>Carretera PU N-110</h1>
-                    <p>Tramo: Asiruni — Rosaspata — Huayrapata &bull; Cuaderno de Obra Digital</p>
+                    <h1>Cuaderno de Obra</h1>
+                    <p>Tramo: Asiruni — Rosaspata — Huayrapata &bull; Panel digital para residencia, supervisión, firmas, observaciones y seguimiento de asientos.</p>
+                    <span class="connection-pill {% if not conectado %}offline{% endif %}">
+                        <i class="bi {% if conectado %}bi-database-check{% else %}bi-database-exclamation{% endif %}"></i>
+                        {% if conectado %}Persistencia activa{% else %}Base de datos no conectada{% endif %}
+                    </span>
                 </div>
                 
                 <div class="stats-grid">
@@ -529,6 +566,13 @@ def panel_cuaderno():
                                 <p class="text-muted small mb-0">Último asiento registrado por residencia. Supervisión puede revisar, observar o firmar sin modificar el contenido principal.</p>
                             </div>
                         </div>
+                        {% if estadisticas.total_asientos == 0 %}
+                            <div class="empty-state mt-3">
+                                <i class="bi bi-journal-plus"></i>
+                                <strong>Aún no hay asientos registrados.</strong>
+                                <div>Cuando empecemos a guardar asientos reales desde residencia, aparecerán aquí sin perderse en redeploy.</div>
+                            </div>
+                        {% endif %}
                     </div>
 
                     <div class="glass-panel">
@@ -547,7 +591,7 @@ def panel_cuaderno():
                     </div>
                 </div>
 
-                <div class="dashboard-grid">
+                <div class="dashboard-grid wide">
                     <div class="glass-panel">
                         <div class="panel-head">
                             <h3><i class="bi bi-calendar3 me-2"></i>Calendario de asientos</h3>
@@ -586,6 +630,13 @@ def panel_cuaderno():
                                     <p>{{ asiento.observacion }}</p>
                                 </div>
                             {% endfor %}
+                            {% if observaciones|length == 0 and (asientos|selectattr('estado', 'ne', 'Firmado')|list|length) == 0 %}
+                                <div class="empty-state">
+                                    <i class="bi bi-sticky"></i>
+                                    <strong>Sin observaciones activas.</strong>
+                                    <div>Los post-it de supervisión aparecerán aquí cuando se registren.</div>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -638,4 +689,4 @@ def panel_cuaderno():
 
     </body>
     </html>
-    """, estadisticas=estadisticas, asientos=asientos, rol_usuario=rol_usuario, menu_superior=menu_superior)
+    """, estadisticas=estadisticas, asientos=asientos, observaciones=observaciones, conectado=conectado, rol_usuario=rol_usuario, menu_superior=menu_superior)
