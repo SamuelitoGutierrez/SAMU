@@ -24,7 +24,7 @@ CUADERNO_OBRA_CSS = """
             .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; }
             .almacen-bloque { display: block; padding-left: 22px; }
             .almacen-principal { display: block; padding-left: 18px; font-weight: 600; line-height: 26px; }
-            .almacen-sub { display: block; padding-left: 44px; line-height: 26px; }
+            .almacen-sub { display: block; padding-left: 48px; line-height: 26px; }
             .almacen-label { color: #000; font-weight: 800; }
             .almacen-detalle { color: var(--celeste-obra); font-weight: 400; }
             .almacen-espacio { display: block; height: 26px; }
@@ -210,21 +210,29 @@ CUADERNO_OBRA_JS = """
                     const siguiente = lineas[index + 1] || '';
                     const esUltimaLinea = index === lineas.length - 1;
                     
-                    // Lógica para forzar el renglón en blanco:
-                    // 1. Después de cualquier línea de detalle (- INGRESO, - SALIDA)
-                    // 2. Antes de cambiar de asterisco principal
-                    // 3. Obligatorio en la última línea para separarlo del módulo 8
-                    const llevaEspacio = limpia.startsWith('-') || 
-                                         (limpia.startsWith('*') && siguiente.startsWith('*')) || 
+                    const esSubMovimiento = /^7\\.\\d+\\.\\d+\\s+(INGRESO|SALIDA):/i.test(limpia) || /^-\\s*(INGRESO|SALIDA):/i.test(limpia);
+                    const esCategoria = /^7\\.\\d+\\s+/.test(limpia) || limpia.startsWith('*');
+                    const siguienteEsCategoria = /^7\\.\\d+\\s+/.test(siguiente) || siguiente.startsWith('*');
+                    const llevaEspacio = esSubMovimiento ||
+                                         (esCategoria && siguienteEsCategoria) ||
                                          esUltimaLinea;
                                          
                     const espacio = llevaEspacio ? '<span class="almacen-espacio"></span>' : '';
                     
-                    if (limpia.startsWith('*')) {
+                    if (/^7\\.\\d+\\s+/.test(limpia)) {
                         return `<div class="almacen-principal">${escaparHtml(limpia)}</div>${espacio}`;
                     }
 
-                    const sub = limpia.match(/^(-\\s*(INGRESO|SALIDA):)(.*)$/i);
+                    const subNumerado = limpia.match(/^(7\\.\\d+\\.\\d+\\s+(INGRESO|SALIDA):)(.*)$/i);
+                    if (subNumerado) {
+                        return `<div class="almacen-sub"><span class="almacen-label">${escaparHtml(subNumerado[1].toUpperCase())}</span><span class="almacen-detalle">${escaparHtml(subNumerado[3])}</span></div>${espacio}`;
+                    }
+
+                    if (limpia.startsWith('*')) {
+                        return `<div class="almacen-principal">${escaparHtml(limpia.replace(/^\\*\\s*/, ''))}</div>${espacio}`;
+                    }
+
+                    const sub = limpia.match(/^-\\s*((INGRESO|SALIDA):)(.*)$/i);
                     if (sub) {
                         return `<div class="almacen-sub"><span class="almacen-label">${escaparHtml(sub[1].toUpperCase())}</span><span class="almacen-detalle">${escaparHtml(sub[3])}</span></div>${espacio}`;
                     }
