@@ -92,6 +92,11 @@ CUADERNO_OBRA_JS = """
                 return el ? normalizarOracion(el.value) : '';
             }
 
+            function valorConSaltos(id) {
+                const el = document.getElementById(id);
+                return el ? String(el.value || '').trim() : '';
+            }
+
             function formatoItem(p) {
                 const item = p.item && p.item !== '-' ? `${p.item} ` : '';
                 const progresiva = p.prog ? ` - ${p.prog}` : '';
@@ -168,7 +173,7 @@ CUADERNO_OBRA_JS = """
                     agregarModulo(modulos, '6. Actividades ejecutadas', valor('v_activ'));
                 }
 
-                agregarModulo(modulos, '7. Movimiento de almacén', valor('v_almacen'));
+                agregarModulo(modulos, '7. Movimiento de almacén', valorConSaltos('v_almacen'));
                 agregarModulo(modulos, '8. Maquinarias y equipos', valor('v_maquina'));
                 agregarModulo(modulos, '9. Herramientas manuales', valor('v_herram'));
                 agregarModulo(modulos, '10. Ocurrencias y otros', valor('v_ocurrencia'));
@@ -209,7 +214,12 @@ CUADERNO_OBRA_JS = """
                 if (!texto || texto === '-') return '<span class="modulo-contenido">-</span>';
                 
                 let categoriaActual = 'materiales';
-                const lineas = String(texto).split('\\n').map(linea => {
+                const textoConCortes = String(texto)
+                    .replace(/\\s+(?=7\\.[12]\\s+Movimiento)/gi, '\\n')
+                    .replace(/\\s+(?=7\\.[12]\\.\\d+\\s+(?:Ingreso|Salida):)/gi, '\\n')
+                    .replace(/\\s+(?=\\*\\s*Movimiento)/gi, '\\n')
+                    .replace(/\\s+(?=-\\s*(?:Ingreso|Salida):)/gi, '\\n');
+                const lineas = textoConCortes.split('\\n').map(linea => {
                     const limpia = normalizarOracion(linea);
                     const mayuscula = limpia.toLocaleUpperCase('es-PE');
 
