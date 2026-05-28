@@ -25,7 +25,7 @@ CUADERNO_OBRA_CSS = """
             .almacen-bloque { display: block; padding-left: 22px; }
             .almacen-principal { display: block; padding-left: 18px; font-weight: 600; line-height: 26px; }
             .almacen-sub { display: block; padding-left: 48px; line-height: 26px; }
-            .almacen-label { color: #000; font-weight: 800; }
+            .almacen-label { color: var(--celeste-obra); font-weight: 800; }
             .almacen-detalle { color: var(--celeste-obra); font-weight: 400; }
             .almacen-espacio { display: block; height: 26px; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }

@@ -5,22 +5,35 @@ from navbar import obtener_navbar
 
 ALMACEN_HTML = """
 <style>
-    .m7-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .m7-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
-    .m7-tab { border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 999px; padding: 9px 16px; font-size: 12px; font-weight: 800; transition: 0.2s; }
-    .m7-tab.active { background: #0f172a; color: #fff; border-color: #0f172a; box-shadow: 0 10px 24px rgba(15,23,42,0.16); }
-    .m7-tab.materiales.active { background: linear-gradient(135deg, #0369a1, #0ea5e9); border-color: #0ea5e9; }
-    .m7-tab.combustible.active { background: linear-gradient(135deg, #b45309, #f59e0b); border-color: #f59e0b; }
-    .m7-btn { border: none; border-radius: 999px; padding: 9px 14px; font-size: 12px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #0263a0, #0ea5e9); box-shadow: 0 10px 24px rgba(2,99,160,0.15); }
-    .m7-paste-zone { border: 2px dashed #cbd5e1; border-radius: 16px; background: #f8fafc; padding: 12px; color: #64748b; text-align: center; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
-    .m7-paste-zone:focus-within, .m7-paste-zone:hover { border-color: #0263a0; background: #f0f9ff; color: #0263a0; }
+    #step7 { border-radius: 24px; padding: 18px; border: 1px solid #dbeafe; transition: 0.25s ease; }
+    #step7.m7-materiales { background: linear-gradient(180deg, #eff6ff 0%, #ffffff 44%); border-color: #bfdbfe; }
+    #step7.m7-combustible { background: linear-gradient(180deg, #fff7ed 0%, #ffffff 44%); border-color: #fed7aa; }
+    .m7-toolbar { display: grid; grid-template-columns: 1.2fr 0.9fr auto; gap: 12px; align-items: stretch; margin-bottom: 14px; }
+    .m7-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .m7-tab { border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 18px; padding: 13px 16px; font-size: 12px; font-weight: 800; transition: 0.2s; box-shadow: 0 10px 24px rgba(15,23,42,0.06); text-align: left; }
+    .m7-tab i { font-size: 16px; }
+    .m7-tab small { display: block; margin-top: 2px; font-size: 10px; font-weight: 700; opacity: 0.72; }
+    .m7-tab.active { color: #fff; transform: translateY(-1px); box-shadow: 0 14px 30px rgba(15,23,42,0.18); }
+    .m7-tab.materiales { border-color: #bfdbfe; color: #075985; }
+    .m7-tab.materiales.active { background: linear-gradient(135deg, #075985, #0ea5e9); border-color: #0ea5e9; color: #fff; }
+    .m7-tab.combustible { border-color: #fed7aa; color: #92400e; }
+    .m7-tab.combustible.active { background: linear-gradient(135deg, #92400e, #f59e0b); border-color: #f59e0b; color: #fff; }
+    .m7-tab.mov-ingreso.active { background: linear-gradient(135deg, #047857, #10b981); border-color: #10b981; }
+    .m7-tab.mov-salida.active { background: linear-gradient(135deg, #be123c, #fb7185); border-color: #fb7185; }
+    .m7-btn { border: none; border-radius: 18px; padding: 12px 18px; font-size: 12px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #0263a0, #0ea5e9); box-shadow: 0 12px 28px rgba(2,99,160,0.18); min-width: 170px; }
+    #step7.m7-combustible .m7-btn { background: linear-gradient(135deg, #92400e, #f59e0b); box-shadow: 0 12px 28px rgba(180,83,9,0.20); }
+    .m7-paste-zone { border: 2px dashed #cbd5e1; border-radius: 18px; background: rgba(255,255,255,0.78); padding: 12px; color: #64748b; text-align: center; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+    #step7.m7-materiales .m7-paste-zone:focus-within, #step7.m7-materiales .m7-paste-zone:hover { border-color: #0284c7; background: #f0f9ff; color: #0263a0; }
+    #step7.m7-combustible .m7-paste-zone:focus-within, #step7.m7-combustible .m7-paste-zone:hover { border-color: #f59e0b; background: #fff7ed; color: #92400e; }
     .m7-paste-zone textarea { width: 100%; height: 44px; border: 0; outline: 0; resize: none; background: transparent; text-align: center; font-size: 12px; color: #334155; }
     .m7-table-wrap { border: 1px solid #dbeafe; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,0.05); }
+    #step7.m7-combustible .m7-table-wrap { border-color: #fed7aa; }
     .m7-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .m7-table th { background: #f1f5f9; color: #475569; padding: 9px 8px; text-transform: uppercase; letter-spacing: 0.4px; font-size: 10px; border-bottom: 1px solid #cbd5e1; }
     .m7-table td { padding: 6px; border-bottom: 1px solid #eef2ff; vertical-align: middle; }
     .m7-table input { width: 100%; border: 1px solid transparent; border-radius: 9px; padding: 7px 8px; font-size: 12px; background: #f8fafc; outline: none; }
     .m7-table input:focus { border-color: #0ea5e9; background: #fff; box-shadow: 0 0 0 3px rgba(14,165,233,0.10); }
+    #step7.m7-combustible .m7-table input:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.14); }
     .m7-preview { border-radius: 16px; min-height: 86px; resize: vertical; font-size: 12px; background: #f8fafc; }
     .m7-empty { padding: 18px; text-align: center; color: #94a3b8; font-weight: 700; font-size: 12px; }
     .m7-fuel-quick { display: none; border: 1px solid #fed7aa; background: #fff7ed; border-radius: 16px; padding: 12px; margin-bottom: 12px; }
@@ -30,22 +43,23 @@ ALMACEN_HTML = """
     .m7-fuel-grid input { border: 1px solid #fed7aa; border-radius: 12px; padding: 9px 10px; font-weight: 800; outline: none; }
     .m7-fuel-grid input:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }
     .m7-btn-fuel { border: none; border-radius: 14px; padding: 10px 14px; color: #fff; background: #b45309; font-size: 12px; font-weight: 800; }
-    @media (max-width: 768px) { .m7-fuel-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 992px) { .m7-toolbar { grid-template-columns: 1fr; } .m7-btn { width: 100%; } }
+    @media (max-width: 768px) { .m7-fuel-grid { grid-template-columns: 1fr; } .m7-tabs { grid-template-columns: 1fr; } }
     @media (max-width: 768px) { .m7-table { min-width: 760px; } .m7-table-wrap { overflow-x: auto; } }
 </style>
 
-<div class="step-view" id="step7">
+<div class="step-view m7-materiales" id="step7">
     <div class="step-title">7.- Movimientos de Almacen</div>
     <p class="text-muted small mb-3">Registre movimientos de materiales o combustible. Puede pegar desde Excel en el orden: # | Documento | Material/Combustible | Unidad | Cantidad.</p>
 
     <div class="m7-toolbar">
         <div class="m7-tabs">
-            <button type="button" class="m7-tab materiales active" id="m7_cat_materiales" onclick="m7_cambiar_categoria('materiales')"><i class="bi bi-bricks me-1"></i> Materiales</button>
-            <button type="button" class="m7-tab combustible" id="m7_cat_combustible" onclick="m7_cambiar_categoria('combustible')"><i class="bi bi-fuel-pump-fill me-1"></i> Combustible</button>
+            <button type="button" class="m7-tab materiales active" id="m7_cat_materiales" onclick="m7_cambiar_categoria('materiales')"><i class="bi bi-bricks me-1"></i> Materiales de construcción<small>Ingreso y salida de almacén</small></button>
+            <button type="button" class="m7-tab combustible" id="m7_cat_combustible" onclick="m7_cambiar_categoria('combustible')"><i class="bi bi-fuel-pump-fill me-1"></i> Combustible<small>Diésel, gasohol y lubricantes</small></button>
         </div>
         <div class="m7-tabs">
-            <button type="button" class="m7-tab active" id="m7_tab_ingreso" onclick="m7_cambiar_tipo('ingreso')"><i class="bi bi-box-arrow-in-down me-1"></i> Ingreso</button>
-            <button type="button" class="m7-tab" id="m7_tab_salida" onclick="m7_cambiar_tipo('salida')"><i class="bi bi-box-arrow-up me-1"></i> Salida</button>
+            <button type="button" class="m7-tab mov-ingreso active" id="m7_tab_ingreso" onclick="m7_cambiar_tipo('ingreso')"><i class="bi bi-box-arrow-in-down me-1"></i> Ingreso<small>Entradas al almacén</small></button>
+            <button type="button" class="m7-tab mov-salida" id="m7_tab_salida" onclick="m7_cambiar_tipo('salida')"><i class="bi bi-box-arrow-up me-1"></i> Salida<small>Consumo o despacho</small></button>
         </div>
         <button type="button" class="m7-btn" onclick="m7_agregar_fila()"><i class="bi bi-plus-lg me-1"></i> Agregar material</button>
     </div>
@@ -100,6 +114,11 @@ ALMACEN_HTML = """
 
     function m7_cambiar_categoria(categoria) {
         m7_categoria_actual = categoria;
+        const panel = document.getElementById('step7');
+        if(panel) {
+            panel.classList.toggle('m7-materiales', categoria === 'materiales');
+            panel.classList.toggle('m7-combustible', categoria === 'combustible');
+        }
         document.getElementById('m7_cat_materiales').classList.toggle('active', categoria === 'materiales');
         document.getElementById('m7_cat_combustible').classList.toggle('active', categoria === 'combustible');
         document.getElementById('m7_th_material').innerText = categoria === 'combustible' ? 'Combustible' : 'Material';
