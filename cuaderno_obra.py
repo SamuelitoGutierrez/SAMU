@@ -14,7 +14,6 @@ CUADERNO_OBRA_CSS = """
             .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 17px; font-weight: 500; white-space: nowrap; }
             .p-body-lines { position: relative; margin-top: 3px; }
             .pagina-cuaderno { background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px); line-height: 26px; min-height: 760px; padding-top: 0; position: relative; }
-            .pagina-cuaderno + .pagina-cuaderno { margin-top: 48px; padding-top: 0; border-top: 2px dashed #94a3b8; }
             .lapicero { font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; }
             .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 16px; line-height: 26px; font-weight: 700; }
             .encabezado-asiento .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; color: var(--celeste-obra); font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; font-size: 16px; letter-spacing: 0.1px; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
@@ -302,9 +301,6 @@ CUADERNO_OBRA_JS = """
                     return;
                 }
 
-                const paginas = construirPaginas(asiento, g_fechaAsiento, modulos);
-                contenedor.innerHTML = paginas
-                    .map(p => paginaHtml(asiento, g_fechaAsiento, p.modulos, p.continuacion, p.van))
-                    .join('');
+                contenedor.innerHTML = paginaHtml(asiento, g_fechaAsiento, modulos, false, false);
             }
 """
