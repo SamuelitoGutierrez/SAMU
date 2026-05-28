@@ -85,12 +85,12 @@ MAQUINARIA_HTML = """
                 <div class="m8-field"><label>Maquinaria</label><input id="m8_nombre" placeholder="Nombre" onkeydown="m8_enter(event, 'm8_marca')"></div>
                 <div class="m8-field"><label>Marca</label><input id="m8_marca" placeholder="Marca" onkeydown="m8_enter(event, 'm8_modelo')"></div>
                 <div class="m8-field"><label>Placa/serie</label><input id="m8_modelo" placeholder="Modelo / placa / serie" onkeydown="m8_enter(event, 'm8_hm')"></div>
-                <div class="m8-field"><label>HM</label><input id="m8_hm" placeholder="08:00 HM" onkeydown="m8_enter(event, 'm8_combustible')"></div>
+                <div class="m8-field"><label id="m8_medida_label">HM</label><input id="m8_hm" placeholder="08:00 HM" onkeydown="m8_enter(event, 'm8_combustible')"></div>
                 <div class="m8-field"><label>Combustible</label><input id="m8_combustible" placeholder="20 GLN Diesel" onkeydown="m8_enter_guardar(event)"></div>
                 <button type="button" class="m8-btn" onclick="m8_agregar_actual()"><i class="bi bi-plus-lg me-1"></i> Agregar</button>
             </div>
             <div class="m8-paste mt-3">
-                <div><i class="bi bi-clipboard-check me-1"></i> Pegado masivo diario: maquinaria | marca | placa/serie | HM | combustible</div>
+                <div id="m8_paste_help"><i class="bi bi-clipboard-check me-1"></i> Pegado masivo diario: maquinaria | marca | placa/serie | HM | combustible</div>
                 <textarea id="m8_paste" placeholder="Pegar aquí..." onpaste="m8_pegar_diario(event)"></textarea>
             </div>
         </div>
@@ -98,7 +98,7 @@ MAQUINARIA_HTML = """
         <div class="m8-table-wrap">
             <table class="m8-table">
                 <thead>
-                    <tr><th>Maquinaria</th><th>Marca</th><th>Modelo, placa o serie</th><th>HM</th><th>Combustible</th><th></th></tr>
+                    <tr><th>Maquinaria</th><th>Marca</th><th>Modelo, placa o serie</th><th id="m8_th_medida">HM</th><th>Combustible</th><th></th></tr>
                 </thead>
                 <tbody id="m8_tbody"></tbody>
             </table>
@@ -154,6 +154,33 @@ MAQUINARIA_HTML = """
         if(!t) return '';
         return /\\bhm\\b/i.test(t) ? t : `${t} HM`;
     }
+    function m8_es_movilidad(cat = m8_categoria_actual) {
+        return cat.startsWith('mov_');
+    }
+    function m8_es_equipo_liviano(cat = m8_categoria_actual) {
+        return cat.startsWith('eq_');
+    }
+    function m8_medida(texto, cat = m8_categoria_actual) {
+        const t = m8_texto(texto);
+        if(!t) return '';
+        if(m8_es_movilidad(cat)) return /d[ií]a/i.test(t) ? t : `${t} Día`;
+        return /\\bhm\\b/i.test(t) ? t : `${t} HM`;
+    }
+    function m8_combustible_defecto(cat = m8_categoria_actual) {
+        if(cat === 'mov_gore' || m8_es_equipo_liviano(cat)) return 'Gasohol';
+        return '';
+    }
+    function m8_actualizar_campos() {
+        const esMovilidad = m8_es_movilidad();
+        document.getElementById('m8_medida_label').innerText = esMovilidad ? 'Día' : 'HM';
+        document.getElementById('m8_th_medida').innerText = esMovilidad ? 'Día' : 'HM';
+        document.getElementById('m8_hm').placeholder = esMovilidad ? '1 Día' : '08:00 HM';
+        document.getElementById('m8_paste_help').innerHTML = `<i class="bi bi-clipboard-check me-1"></i> Pegado masivo diario: maquinaria | marca | placa/serie | ${esMovilidad ? 'día' : 'HM'} | combustible`;
+        const combustible = document.getElementById('m8_combustible');
+        const defecto = m8_combustible_defecto();
+        combustible.placeholder = defecto ? defecto : '20 GLN Diesel';
+        if(defecto && !m8_texto(combustible.value)) combustible.value = defecto;
+    }
     function m8_combustible(texto) {
         return m8_texto(texto);
     }
@@ -190,6 +217,7 @@ MAQUINARIA_HTML = """
         document.getElementById('m8_base_entidad_box').classList.toggle('active', m8_es_servicio(cat));
         document.getElementById('m8_entidad').value = window.m8_entidad_actual[cat] || '';
         document.getElementById('m8_base_entidad').value = window.m8_entidad_actual[cat] || '';
+        m8_actualizar_campos();
         m8_actualizar_datalist();
         m8_refrescar_select();
         m8_render_base();
@@ -275,6 +303,8 @@ MAQUINARIA_HTML = """
         document.getElementById('m8_nombre').value = item.nombre || '';
         document.getElementById('m8_marca').value = item.marca || '';
         document.getElementById('m8_modelo').value = item.modelo || '';
+        const defecto = m8_combustible_defecto();
+        if(defecto && !m8_texto(document.getElementById('m8_combustible').value)) document.getElementById('m8_combustible').value = defecto;
         document.getElementById('m8_hm').focus();
     }
 
@@ -285,7 +315,7 @@ MAQUINARIA_HTML = """
             marca: document.getElementById('m8_marca').value,
             modelo: document.getElementById('m8_modelo').value,
             hm: document.getElementById('m8_hm').value,
-            combustible: document.getElementById('m8_combustible').value
+            combustible: document.getElementById('m8_combustible').value || m8_combustible_defecto()
         });
         if(!item.nombre) return;
         if(m8_es_servicio()) item.entidad = m8_texto(item.entidad || document.getElementById('m8_entidad').value);
@@ -293,6 +323,8 @@ MAQUINARIA_HTML = """
         window.m8_registros[m8_categoria_actual].push(item);
         if(!data) {
             ['m8_nombre', 'm8_marca', 'm8_modelo', 'm8_hm', 'm8_combustible'].forEach(id => document.getElementById(id).value = '');
+            const defecto = m8_combustible_defecto();
+            if(defecto) document.getElementById('m8_combustible').value = defecto;
             document.getElementById('m8_equipo_select').value = '';
             document.getElementById('m8_equipo_select').focus();
         }
@@ -306,7 +338,7 @@ MAQUINARIA_HTML = """
         data.split('\\n').forEach(row => {
             const cols = row.split('\\t').map(m8_texto);
             if(cols[0]) {
-                m8_agregar_actual({ entidad: document.getElementById('m8_entidad').value, nombre: cols[0], marca: cols[1], modelo: cols[2], hm: cols[3], combustible: cols[4] });
+                m8_agregar_actual({ entidad: document.getElementById('m8_entidad').value, nombre: cols[0], marca: cols[1], modelo: cols[2], hm: cols[3], combustible: cols[4] || m8_combustible_defecto() });
                 count++;
             }
         });
@@ -315,8 +347,8 @@ MAQUINARIA_HTML = """
         setTimeout(() => paste.value = '', 1200);
     }
 
-    function m8_formatear(item) {
-        return [item.nombre, m8_compacto(item.marca), m8_compacto(item.modelo), m8_hm(item.hm), m8_combustible(item.combustible)].map(m8_texto).join('\\t');
+    function m8_formatear(item, cat = m8_categoria_actual) {
+        return [item.nombre, m8_compacto(item.marca), m8_compacto(item.modelo), m8_medida(item.hm, cat), m8_combustible(item.combustible || m8_combustible_defecto(cat))].map(m8_texto).join('\\t');
     }
 
     function m8_sincronizar() {
@@ -335,12 +367,12 @@ MAQUINARIA_HTML = """
                 });
                 Object.keys(grupos).forEach(entidad => {
                     bloque.push(`- ${entidad}`);
-                    grupos[entidad].forEach(item => bloque.push(`${m8_formatear(item)}`));
+                    grupos[entidad].forEach(item => bloque.push(`${m8_formatear(item, cat)}`));
                 });
                 bloques.push(bloque.join('\\n'));
                 return;
             }
-            lista.forEach(item => bloque.push(`${m8_formatear(item)}`));
+            lista.forEach(item => bloque.push(`${m8_formatear(item, cat)}`));
             bloques.push(bloque.join('\\n'));
         });
         document.getElementById('v_maquina').value = bloques.join('\\n');
@@ -356,7 +388,7 @@ MAQUINARIA_HTML = """
             return;
         }
         tbody.innerHTML = lista.map((item, idx) => `
-            <tr><td>${m8_escape(item.nombre)}</td><td>${m8_escape(item.marca)}</td><td>${m8_escape(item.modelo)}</td><td>${m8_escape(m8_hm(item.hm))}</td><td>${m8_escape(item.combustible)}</td><td class="text-end"><button type="button" class="btn btn-sm text-danger border-0" onclick="m8_eliminar(${idx})"><i class="bi bi-trash"></i></button></td></tr>
+            <tr><td>${m8_escape(item.nombre)}</td><td>${m8_escape(item.marca)}</td><td>${m8_escape(item.modelo)}</td><td>${m8_escape(m8_medida(item.hm))}</td><td>${m8_escape(item.combustible || m8_combustible_defecto())}</td><td class="text-end"><button type="button" class="btn btn-sm text-danger border-0" onclick="m8_eliminar(${idx})"><i class="bi bi-trash"></i></button></td></tr>
         `).join('');
         m8_sincronizar();
     }
