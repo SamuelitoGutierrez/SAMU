@@ -412,6 +412,9 @@ CUADERNO_OBRA_JS = """
 
             function sincronizarDatos() {
                 if (typeof actualizarStepper === 'function') actualizarStepper();
+                if (!g_numAsiento && window.g_numAsiento) g_numAsiento = window.g_numAsiento;
+                if (!g_fechaAsiento && window.g_fechaAsiento) g_fechaAsiento = window.g_fechaAsiento;
+                if (typeof window.samuCurrentStep === 'number') currentStep = window.samuCurrentStep;
                 if (!g_numAsiento) return;
 
                 const asiento = g_numAsiento.padStart(4, '0');

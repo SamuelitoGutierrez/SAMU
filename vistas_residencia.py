@@ -116,11 +116,11 @@ def redaccion_asiento_residente():
             
             .stepper-container {{ position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.84); backdrop-filter: blur(22px); border-bottom: 1px solid rgba(15,23,42,0.08); z-index: 900; padding: 14px 18px 16px; overflow-x: auto; white-space: nowrap; display: grid; grid-template-columns: repeat(11, minmax(106px, 1fr)); align-items: center; gap: 10px; opacity: 0; pointer-events: none; transition: opacity 0.5s; box-shadow: 0 14px 35px rgba(15,23,42,0.05); }}
             .stepper-container::-webkit-scrollbar {{ display: none; }}
-            .step-btn {{ position: relative; border: 1px solid #dbeafe; border-radius: 999px; padding: 10px 18px 10px 34px; min-width: 104px; font-size: 11px; font-weight: 800; color: #475569; background: rgba(255,255,255,0.92); cursor: pointer; transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease; transform-origin: center; box-shadow: 0 8px 20px rgba(15,23,42,0.04); }}
+            .step-btn {{ position: relative; border: 1px solid #dbeafe; border-radius: 999px; padding: 10px 16px 10px 34px; min-width: 112px; max-width: 175px; font-size: 10.5px; line-height: 1.15; font-weight: 800; color: #475569; background: rgba(255,255,255,0.92); cursor: pointer; transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease; transform-origin: center; box-shadow: 0 8px 20px rgba(15,23,42,0.04); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
             .step-btn::before {{ content: attr(data-percent); position: absolute; left: 7px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #f1f5f9; color: #64748b; font-size: 8px; font-weight: 900; box-shadow: inset 0 0 0 1px #e2e8f0; }}
             .step-btn::after {{ content: ""; position: absolute; left: 12px; right: 12px; bottom: -7px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, #0284c7 var(--pct, 0%), #e2e8f0 0); opacity: .9; }}
-            .step-btn:hover {{ transform: translateY(-3px) scale(1.08); border-color: #0284c7; box-shadow: 0 16px 30px rgba(2,132,199,0.15); z-index: 3; }}
-            .step-btn.active {{ background: #ffffff !important; color: #020617 !important; font-weight: 900 !important; transform: scale(1.13); box-shadow: 0 16px 35px rgba(15,23,42,0.15); border-color: #020617 !important; margin: 0 8px; }}
+            .step-btn:hover {{ transform: translateY(-2px) scale(1.03); border-color: #0284c7; box-shadow: 0 16px 30px rgba(2,132,199,0.15); z-index: 3; }}
+            .step-btn.active {{ background: #ffffff !important; color: #020617 !important; font-weight: 900 !important; transform: scale(1.04); box-shadow: 0 16px 35px rgba(15,23,42,0.15); border-color: #020617 !important; margin: 0 3px; }}
             .step-btn.completed {{ border-color: #22c55e; color: #166534; background: #f0fdf4; }}
             .step-btn.completed::before {{ content: "✓"; background: #22c55e; color: #fff; box-shadow: 0 6px 14px rgba(34,197,94,.25); }}
             .step-btn.missing {{ border-color: #fed7aa; color: #9a3412; background: #fff7ed; }}
@@ -192,9 +192,9 @@ def redaccion_asiento_residente():
             @media (max-width: 992px) {{
                 body {{ padding-bottom: 112px; }}
                 .stepper-container {{ padding: 12px 12px 15px; display: flex; gap: 8px; overflow-x: auto; }}
-                .step-btn {{ flex: 0 0 auto; min-width: max-content; padding-right: 18px; }}
-                .step-btn:hover {{ transform: translateY(-2px) scale(1.03); }}
-                .step-btn.active {{ transform: scale(1.05); margin: 0 3px; }}
+                .step-btn {{ flex: 0 0 auto; min-width: 126px; max-width: 170px; padding-right: 16px; }}
+                .step-btn:hover {{ transform: translateY(-2px) scale(1.02); }}
+                .step-btn.active {{ transform: scale(1.02); margin: 0 2px; }}
                 .split-layout {{ display: block; max-width: 760px; margin-top: 132px; padding: 0 14px; }}
                 .form-column {{ max-width: none; width: 100%; }}
                 .preview-column {{ display: none; }}
@@ -459,9 +459,9 @@ def redaccion_asiento_residente():
                 document.getElementById(`btnStep${{step}}`)?.classList.add('active');
                 const btnAtras = document.getElementById('btnAtras');
                 if (btnAtras) btnAtras.classList.toggle('d-none', step <= 1);
+                document.dispatchEvent(new CustomEvent('modulo:cambio', {{ detail: {{ step }} }}));
                 if (typeof sincronizarDatos === 'function') sincronizarDatos();
                 if (typeof actualizarAccionesAsiento === 'function') actualizarAccionesAsiento();
-                document.dispatchEvent(new CustomEvent('modulo:cambio', {{ detail: {{ step }} }}));
             }};
             window.siguienteModulo = function() {{
                 if (window.g_numAsiento && typeof autoGuardarBorrador === 'function') {{
@@ -482,6 +482,12 @@ def redaccion_asiento_residente():
                         event.preventDefault();
                         window.iniciarAsientoSeguro();
                     }}
+                }});
+                document.getElementById('formResidencia')?.addEventListener('input', function() {{
+                    if (typeof sincronizarDatos === 'function') sincronizarDatos();
+                }});
+                document.getElementById('formResidencia')?.addEventListener('change', function() {{
+                    if (typeof sincronizarDatos === 'function') sincronizarDatos();
                 }});
             }});
             abrirModalInicialSeguro();
