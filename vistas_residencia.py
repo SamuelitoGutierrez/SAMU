@@ -873,6 +873,7 @@ def redaccion_asiento_residente():
             // Motor de seguridad independiente: si un script anterior falla, este mantiene vivo el cuaderno.
             (function() {{
                 const totalModulos = 10;
+                const estadoKey = 'samu_residencia_asiento_en_edicion';
                 window.samuCurrentStep = window.samuCurrentStep || 1;
 
                 function texto(id, saltos=false) {{
@@ -942,6 +943,139 @@ def redaccion_asiento_residente():
                     return modulos.slice(0, paso);
                 }}
 
+                function camposFormulario() {{
+                    const datos = {{}};
+                    document.querySelectorAll('#formResidencia input[id], #formResidencia textarea[id], #formResidencia select[id]').forEach(el => {{
+                        if (el.type === 'checkbox' || el.type === 'radio') {{
+                            datos[el.id] = {{ tipo: el.type, checked: el.checked, value: el.value }};
+                        }} else {{
+                            datos[el.id] = {{ tipo: el.type || el.tagName.toLowerCase(), value: el.value }};
+                        }}
+                    }});
+                    return datos;
+                }}
+
+                function aplicarCamposFormulario(datos) {{
+                    Object.entries(datos || {{}}).forEach(([id, info]) => {{
+                        const el = document.getElementById(id);
+                        if (!el) return;
+                        if (info && (info.tipo === 'checkbox' || info.tipo === 'radio')) {{
+                            el.checked = !!info.checked;
+                        }} else {{
+                            el.value = info && typeof info.value !== 'undefined' ? info.value : '';
+                        }}
+                    }});
+                }}
+
+                function estadoActualAsiento() {{
+                    return {{
+                        numero: window.g_numAsiento || '',
+                        fechaRaw: window.g_fechaRaw || '',
+                        fechaTexto: window.g_fechaAsiento || '',
+                        step: window.samuCurrentStep || 1,
+                        campos: camposFormulario(),
+                        listas: {{
+                            catalogoMaestro: window.catalogoMaestro || [],
+                            m3_lista: window.m3_lista || [],
+                            m4_lista: window.m4_lista || [],
+                            m5_lista: window.m5_lista || [],
+                            m6_lista: window.m6_lista || [],
+                            m8_base: window.m8_base || null,
+                            m8_registros: window.m8_registros || null,
+                            m8_entidad_actual: window.m8_entidad_actual || null,
+                            m8_entidades_registradas: window.m8_entidades_registradas || null,
+                            m9_herramientas: window.m9_herramientas || null,
+                            m9_seleccionadas: window.m9_seleccionadas || null,
+                            m10_tipo_actual: window.m10_tipo_actual || null
+                        }},
+                        guardadoEn: new Date().toISOString()
+                    }};
+                }}
+
+                function guardarEstadoLocal() {{
+                    if (!window.g_numAsiento) return;
+                    try {{
+                        localStorage.setItem(estadoKey, JSON.stringify(estadoActualAsiento()));
+                    }} catch (e) {{
+                        console.warn('No se pudo guardar el estado local del asiento.', e);
+                    }}
+                }}
+
+                function restaurarRenderModulos() {{
+                    ['m3_render', 'm4_render', 'm5_render', 'm6_render', 'm8_render', 'm8_render_base', 'm8_refrescar_select', 'm8_actualizar_cuaderno', 'm9_render', 'm9_sincronizar', 'm10_sincronizar'].forEach(nombre => {{
+                        if (typeof window[nombre] === 'function') {{
+                            try {{ window[nombre](); }} catch (e) {{ console.warn(`No se pudo ejecutar ${{nombre}}`, e); }}
+                        }}
+                    }});
+                }}
+
+                function desbloquearPantallaAsiento() {{
+                    document.getElementById('modalConfigInicial')?.classList.remove('show');
+                    const modal = document.getElementById('modalConfigInicial');
+                    if (modal) {{
+                        modal.style.display = 'none';
+                        modal.setAttribute('aria-hidden', 'true');
+                    }}
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('overflow');
+                    document.body.style.removeProperty('padding-right');
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.getElementById('mainLayout')?.classList.add('unlocked');
+                    const stepper = document.getElementById('stepperBar');
+                    if (stepper) {{
+                        stepper.style.opacity = '1';
+                        stepper.style.pointerEvents = 'all';
+                    }}
+                    document.getElementById('bottomBarUI')?.classList.add('unlocked');
+                    document.getElementById('mobilePreviewBtn')?.classList.add('unlocked');
+                }}
+
+                function restaurarEstadoLocal() {{
+                    let estado = null;
+                    try {{
+                        estado = JSON.parse(localStorage.getItem(estadoKey) || 'null');
+                    }} catch (e) {{
+                        estado = null;
+                    }}
+                    if (!estado || !estado.numero || !estado.fechaRaw) return false;
+
+                    window.g_numAsiento = estado.numero;
+                    window.g_fechaRaw = estado.fechaRaw;
+                    window.g_fechaAsiento = estado.fechaTexto || estado.fechaRaw;
+                    if (typeof g_numAsiento !== 'undefined') g_numAsiento = window.g_numAsiento;
+                    if (typeof g_fechaRaw !== 'undefined') g_fechaRaw = window.g_fechaRaw;
+                    if (typeof g_fechaAsiento !== 'undefined') g_fechaAsiento = window.g_fechaAsiento;
+
+                    const lblFecha = document.getElementById('lbl_hoja_fecha');
+                    if (lblFecha) lblFecha.innerText = window.g_fechaAsiento;
+                    const inputNumero = document.getElementById('initNumAsiento');
+                    const inputFecha = document.getElementById('initFecha');
+                    if (inputNumero) inputNumero.value = window.g_numAsiento;
+                    if (inputFecha) inputFecha.value = window.g_fechaRaw;
+
+                    const listas = estado.listas || {{}};
+                    if (Array.isArray(listas.catalogoMaestro)) window.catalogoMaestro = listas.catalogoMaestro;
+                    if (Array.isArray(listas.m3_lista)) window.m3_lista = listas.m3_lista;
+                    if (Array.isArray(listas.m4_lista)) window.m4_lista = listas.m4_lista;
+                    if (Array.isArray(listas.m5_lista)) window.m5_lista = listas.m5_lista;
+                    if (Array.isArray(listas.m6_lista)) window.m6_lista = listas.m6_lista;
+                    if (listas.m8_base) window.m8_base = listas.m8_base;
+                    if (listas.m8_registros) window.m8_registros = listas.m8_registros;
+                    if (listas.m8_entidad_actual) window.m8_entidad_actual = listas.m8_entidad_actual;
+                    if (listas.m8_entidades_registradas) window.m8_entidades_registradas = listas.m8_entidades_registradas;
+                    if (Array.isArray(listas.m9_herramientas)) window.m9_herramientas = listas.m9_herramientas;
+                    if (Array.isArray(listas.m9_seleccionadas)) window.m9_seleccionadas = listas.m9_seleccionadas;
+                    if (listas.m10_tipo_actual) window.m10_tipo_actual = listas.m10_tipo_actual;
+
+                    aplicarCamposFormulario(estado.campos || {{}});
+                    desbloquearPantallaAsiento();
+                    restaurarRenderModulos();
+                    window.irModulo(estado.step || 1);
+                    window.samuActualizarCuaderno();
+                    if (typeof mostrarAlerta === 'function') mostrarAlerta(`Se restauró el asiento N° ${{window.g_numAsiento}} donde lo dejaste.`, 'success');
+                    return true;
+                }}
+
                 function htmlContenidoModulo(modulo) {{
                     if (modulo.titulo.startsWith('7.') && typeof htmlAlmacen === 'function') {{
                         return `<div class="almacen-bloque">${{htmlAlmacen(modulo.contenido)}}</div>`;
@@ -979,6 +1113,7 @@ def redaccion_asiento_residente():
                     const contenedor = document.getElementById('contenedorLineasCuaderno');
                     if (!contenedor || !numero) return;
                     contenedor.innerHTML = htmlCuaderno(numero.padStart(4, '0'), fecha, modulosCuaderno());
+                    guardarEstadoLocal();
                 }};
 
                 window.irModulo = function(stepIndex) {{
@@ -1049,6 +1184,7 @@ def redaccion_asiento_residente():
                     document.getElementById('mobilePreviewBtn')?.classList.add('unlocked');
                     window.irModulo(1);
                     window.samuActualizarCuaderno();
+                    guardarEstadoLocal();
                 }};
 
                 async function guardarAsientoSeguro(estado) {{
@@ -1082,6 +1218,7 @@ def redaccion_asiento_residente():
                         if (typeof mostrarAlerta === 'function') mostrarAlerta(data.error || 'No se pudo guardar.', 'error');
                         return;
                     }}
+                    try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
                     if (typeof mostrarAlerta === 'function') mostrarAlerta(estado === 'Cerrado' ? 'Asiento cerrado correctamente.' : 'Borrador guardado correctamente.', 'success');
                     setTimeout(() => {{
                         window.redirigirCuadernoAlCerrarResumen = true;
@@ -1108,10 +1245,18 @@ def redaccion_asiento_residente():
                     const form = document.getElementById('formResidencia');
                     if (form) {{
                         ['input', 'change', 'click', 'keyup'].forEach(evento => {{
-                            form.addEventListener(evento, () => setTimeout(window.samuActualizarCuaderno, 40));
+                            form.addEventListener(evento, () => setTimeout(() => {{
+                                window.samuActualizarCuaderno();
+                                guardarEstadoLocal();
+                            }}, 40));
                         }});
                     }}
-                    setInterval(window.samuActualizarCuaderno, 800);
+                    setTimeout(restaurarEstadoLocal, 450);
+                    setInterval(() => {{
+                        window.samuActualizarCuaderno();
+                        guardarEstadoLocal();
+                    }}, 800);
+                    window.addEventListener('beforeunload', guardarEstadoLocal);
                 }});
             }})();
         </script>
