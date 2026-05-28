@@ -31,7 +31,7 @@ CUADERNO_OBRA_CSS = """
             .maquinaria-bloque { display: block; padding-left: 22px; white-space: normal; }
             .maquinaria-principal { display: block; padding-left: 18px; font-weight: 800; line-height: 26px; }
             .maquinaria-sub { display: block; padding-left: 44px; line-height: 26px; }
-            .maquinaria-fila { display: grid; grid-template-columns: 30% 20% 20% 15% 15%; column-gap: 0; padding-left: 44px; line-height: 23px; font-size: 14px; white-space: nowrap; }
+            .maquinaria-fila { display: grid; grid-template-columns: 30% 20% 20% 15% 15%; column-gap: 0; padding-left: 44px; line-height: 26px; font-size: 16px; white-space: nowrap; }
             .maquinaria-fila span { min-width: 0; white-space: nowrap; overflow: visible; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
             .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000;}
