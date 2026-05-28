@@ -8,19 +8,28 @@ ALMACEN_HTML = """
     #step7 { border-radius: 24px; padding: 18px; border: 1px solid #dbeafe; transition: 0.25s ease; }
     #step7.m7-materiales { background: linear-gradient(180deg, #eff6ff 0%, #ffffff 44%); border-color: #bfdbfe; }
     #step7.m7-combustible { background: linear-gradient(180deg, #fff7ed 0%, #ffffff 44%); border-color: #fed7aa; }
-    .m7-toolbar { display: grid; grid-template-columns: 1.2fr 0.9fr auto; gap: 12px; align-items: stretch; margin-bottom: 14px; }
+    .m7-toolbar { display: grid; grid-template-columns: 1.35fr 0.85fr; gap: 14px; align-items: stretch; margin-bottom: 14px; }
+    .m7-panel { border: 1px solid rgba(148,163,184,0.25); border-radius: 24px; background: rgba(255,255,255,0.82); padding: 13px; box-shadow: 0 16px 34px rgba(15,23,42,0.07); backdrop-filter: blur(8px); }
+    .m7-panel-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; color: #475569; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
+    .m7-pill { border-radius: 999px; padding: 4px 9px; background: #e0f2fe; color: #0369a1; font-size: 10px; font-weight: 900; text-transform: none; letter-spacing: 0; }
+    #step7.m7-combustible .m7-pill { background: #ffedd5; color: #9a3412; }
     .m7-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .m7-tab { border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 18px; padding: 13px 16px; font-size: 12px; font-weight: 800; transition: 0.2s; box-shadow: 0 10px 24px rgba(15,23,42,0.06); text-align: left; }
-    .m7-tab i { font-size: 16px; }
-    .m7-tab small { display: block; margin-top: 2px; font-size: 10px; font-weight: 700; opacity: 0.72; }
-    .m7-tab.active { color: #fff; transform: translateY(-1px); box-shadow: 0 14px 30px rgba(15,23,42,0.18); }
+    .m7-tab { position: relative; border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 20px; padding: 14px 15px 14px 48px; font-size: 12px; font-weight: 900; transition: 0.22s ease; box-shadow: 0 10px 24px rgba(15,23,42,0.06); text-align: left; min-height: 70px; overflow: hidden; }
+    .m7-tab i { position: absolute; left: 14px; top: 16px; width: 24px; height: 24px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; background: #f1f5f9; }
+    .m7-tab small { display: block; margin-top: 3px; font-size: 10px; line-height: 1.2; font-weight: 700; opacity: 0.72; }
+    .m7-tab.active { color: #fff; transform: translateY(-2px); box-shadow: 0 18px 34px rgba(15,23,42,0.18); }
+    .m7-tab.active i { background: rgba(255,255,255,0.18); }
     .m7-tab.materiales { border-color: #bfdbfe; color: #075985; }
     .m7-tab.materiales.active { background: linear-gradient(135deg, #075985, #0ea5e9); border-color: #0ea5e9; color: #fff; }
     .m7-tab.combustible { border-color: #fed7aa; color: #92400e; }
     .m7-tab.combustible.active { background: linear-gradient(135deg, #92400e, #f59e0b); border-color: #f59e0b; color: #fff; }
+    .m7-actions { display: grid; grid-template-rows: auto 1fr; gap: 10px; }
+    .m7-mov-tabs .m7-tab { min-height: 62px; padding-top: 12px; padding-bottom: 12px; }
     .m7-tab.mov-ingreso.active { background: linear-gradient(135deg, #047857, #10b981); border-color: #10b981; }
     .m7-tab.mov-salida.active { background: linear-gradient(135deg, #be123c, #fb7185); border-color: #fb7185; }
-    .m7-btn { border: none; border-radius: 18px; padding: 12px 18px; font-size: 12px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #0263a0, #0ea5e9); box-shadow: 0 12px 28px rgba(2,99,160,0.18); min-width: 170px; }
+    .m7-btn { border: none; border-radius: 22px; padding: 14px 18px; font-size: 13px; font-weight: 900; color: #fff; background: linear-gradient(135deg, #0263a0, #0ea5e9); box-shadow: 0 14px 30px rgba(2,99,160,0.18); min-height: 64px; width: 100%; text-align: left; }
+    .m7-btn i { font-size: 18px; margin-right: 8px; }
+    .m7-btn small { display: block; margin-left: 30px; margin-top: 2px; font-size: 10px; font-weight: 700; opacity: 0.82; }
     #step7.m7-combustible .m7-btn { background: linear-gradient(135deg, #92400e, #f59e0b); box-shadow: 0 12px 28px rgba(180,83,9,0.20); }
     .m7-paste-zone { border: 2px dashed #cbd5e1; border-radius: 18px; background: rgba(255,255,255,0.78); padding: 12px; color: #64748b; text-align: center; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
     #step7.m7-materiales .m7-paste-zone:focus-within, #step7.m7-materiales .m7-paste-zone:hover { border-color: #0284c7; background: #f0f9ff; color: #0263a0; }
@@ -53,15 +62,29 @@ ALMACEN_HTML = """
     <p class="text-muted small mb-3">Registre movimientos de materiales o combustible. Puede pegar desde Excel en el orden: # | Documento | Material/Combustible | Unidad | Cantidad.</p>
 
     <div class="m7-toolbar">
-        <div class="m7-tabs">
-            <button type="button" class="m7-tab materiales active" id="m7_cat_materiales" onclick="m7_cambiar_categoria('materiales')"><i class="bi bi-bricks me-1"></i> Materiales de construcción<small>Ingreso y salida de almacén</small></button>
-            <button type="button" class="m7-tab combustible" id="m7_cat_combustible" onclick="m7_cambiar_categoria('combustible')"><i class="bi bi-fuel-pump-fill me-1"></i> Combustible<small>Diésel, gasohol y lubricantes</small></button>
+        <div class="m7-panel">
+            <div class="m7-panel-title">
+                <span><i class="bi bi-grid-1x2-fill me-1"></i> Seleccione el movimiento</span>
+                <span class="m7-pill" id="m7_contexto">Materiales</span>
+            </div>
+            <div class="m7-tabs">
+                <button type="button" class="m7-tab materiales active" id="m7_cat_materiales" onclick="m7_cambiar_categoria('materiales')"><i class="bi bi-bricks"></i> Materiales de construcción<small>Control de ingreso y salida de obra</small></button>
+                <button type="button" class="m7-tab combustible" id="m7_cat_combustible" onclick="m7_cambiar_categoria('combustible')"><i class="bi bi-fuel-pump-fill"></i> Combustible<small>Diésel, gasohol y lubricantes</small></button>
+            </div>
         </div>
-        <div class="m7-tabs">
-            <button type="button" class="m7-tab mov-ingreso active" id="m7_tab_ingreso" onclick="m7_cambiar_tipo('ingreso')"><i class="bi bi-box-arrow-in-down me-1"></i> Ingreso<small>Entradas al almacén</small></button>
-            <button type="button" class="m7-tab mov-salida" id="m7_tab_salida" onclick="m7_cambiar_tipo('salida')"><i class="bi bi-box-arrow-up me-1"></i> Salida<small>Consumo o despacho</small></button>
+        <div class="m7-panel m7-actions">
+            <div>
+                <div class="m7-panel-title">
+                    <span><i class="bi bi-arrow-left-right me-1"></i> Operación</span>
+                    <span class="m7-pill" id="m7_operacion">Ingreso</span>
+                </div>
+                <div class="m7-tabs m7-mov-tabs">
+                    <button type="button" class="m7-tab mov-ingreso active" id="m7_tab_ingreso" onclick="m7_cambiar_tipo('ingreso')"><i class="bi bi-box-arrow-in-down"></i> Ingreso<small>Entradas al almacén</small></button>
+                    <button type="button" class="m7-tab mov-salida" id="m7_tab_salida" onclick="m7_cambiar_tipo('salida')"><i class="bi bi-box-arrow-up"></i> Salida<small>Consumo o despacho</small></button>
+                </div>
+            </div>
+            <button type="button" class="m7-btn" onclick="m7_agregar_fila()"><i class="bi bi-plus-circle-fill"></i> Agregar material<small>Crear una fila nueva para registrar</small></button>
         </div>
-        <button type="button" class="m7-btn" onclick="m7_agregar_fila()"><i class="bi bi-plus-lg me-1"></i> Agregar material</button>
     </div>
 
     <div class="m7-paste-zone">
@@ -121,10 +144,12 @@ ALMACEN_HTML = """
         }
         document.getElementById('m7_cat_materiales').classList.toggle('active', categoria === 'materiales');
         document.getElementById('m7_cat_combustible').classList.toggle('active', categoria === 'combustible');
+        const contexto = document.getElementById('m7_contexto');
+        if(contexto) contexto.innerText = categoria === 'combustible' ? 'Combustible' : 'Materiales';
         document.getElementById('m7_th_material').innerText = categoria === 'combustible' ? 'Combustible' : 'Material';
         document.querySelector('.m7-btn').innerHTML = categoria === 'combustible'
-            ? '<i class="bi bi-plus-lg me-1"></i> Agregar combustible'
-            : '<i class="bi bi-plus-lg me-1"></i> Agregar material';
+            ? '<i class="bi bi-plus-circle-fill"></i> Agregar combustible<small>Crear una fila nueva para registrar</small>'
+            : '<i class="bi bi-plus-circle-fill"></i> Agregar material<small>Crear una fila nueva para registrar</small>';
         m7_render();
     }
 
@@ -132,6 +157,8 @@ ALMACEN_HTML = """
         m7_tipo_actual = tipo;
         document.getElementById('m7_tab_ingreso').classList.toggle('active', tipo === 'ingreso');
         document.getElementById('m7_tab_salida').classList.toggle('active', tipo === 'salida');
+        const operacion = document.getElementById('m7_operacion');
+        if(operacion) operacion.innerText = tipo === 'ingreso' ? 'Ingreso' : 'Salida';
         m7_render();
     }
 
