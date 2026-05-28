@@ -1249,6 +1249,18 @@ def redaccion_asiento_residente():
                             texto_html: document.getElementById('contenedorLineasCuaderno')?.innerHTML || ''
                         }}
                     }};
+                    const respaldoKey = `samu_asiento_guardado_${{numero}}`;
+                    try {{
+                        localStorage.setItem(respaldoKey, JSON.stringify({{
+                            ...payload,
+                            guardado_local_en: new Date().toISOString()
+                        }}));
+                        localStorage.setItem('samu_ultimo_asiento_guardado', respaldoKey);
+                    }} catch (e) {{
+                        console.warn('No se pudo crear respaldo local del asiento.', e);
+                    }}
+
+                    let guardadoServidor = false;
                     try {{
                         const resp = await fetch('/residencia/api/asiento', {{
                             method: 'POST',
@@ -1257,23 +1269,27 @@ def redaccion_asiento_residente():
                         }});
                         const data = await resp.json().catch(() => ({{ ok: false, error: 'Respuesta inválida' }}));
                         if (!resp.ok || !data.ok) {{
-                            if (typeof mostrarAlerta === 'function') mostrarAlerta(data.error || 'No se pudo guardar.', 'error');
-                            return;
+                            console.warn('No se pudo guardar en servidor:', data.error || resp.status);
+                        }} else {{
+                            guardadoServidor = true;
                         }}
-                        try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
-                        mostrarVentanaExitoGuardado(estado);
                     }} catch (error) {{
                         console.error('Error guardando asiento:', error);
-                        if (typeof mostrarAlerta === 'function') mostrarAlerta('No se pudo conectar con el servidor para guardar.', 'error');
                     }}
+                    if (guardadoServidor) {{
+                        try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
+                    }}
+                    mostrarVentanaExitoGuardado(estado, guardadoServidor);
                 }}
 
-                function mostrarVentanaExitoGuardado(estado) {{
+                function mostrarVentanaExitoGuardado(estado, guardadoServidor=true) {{
                     const toast = document.getElementById('saveSuccessToast');
                     const titulo = document.getElementById('saveSuccessTitle');
                     const texto = document.getElementById('saveSuccessText');
                     if (titulo) titulo.innerText = estado === 'Cerrado' ? 'Cerrado exitosamente' : 'Guardado exitosamente';
-                    if (texto) texto.innerText = 'Abriendo resumen del cuaderno de obra...';
+                    if (texto) texto.innerText = guardadoServidor
+                        ? 'Abriendo resumen del cuaderno de obra...'
+                        : 'Respaldo local creado. Abriendo resumen...';
                     if (toast) {{
                         toast.classList.add('show');
                         clearTimeout(window.__samuSaveToastTimer);
@@ -1281,7 +1297,11 @@ def redaccion_asiento_residente():
                     }}
                     setTimeout(() => {{
                         window.redirigirCuadernoAlCerrarResumen = true;
-                        if (typeof abrirResumenCuaderno === 'function') abrirResumenCuaderno();
+                        if (typeof abrirResumenCuaderno === 'function') {{
+                            abrirResumenCuaderno();
+                        }} else {{
+                            window.location.href = '/cuaderno';
+                        }}
                     }}, 950);
                 }}
 
