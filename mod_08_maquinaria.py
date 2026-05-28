@@ -18,7 +18,9 @@ MAQUINARIA_HTML = """
     .m8-cat.gov.active { background: linear-gradient(135deg, #075985, #0ea5e9); border-color: #0ea5e9; }
     .m8-cat.srv.active { background: linear-gradient(135deg, #7c3aed, #a78bfa); border-color: #a78bfa; }
     .m8-form-grid { display: grid; grid-template-columns: 1.25fr 1fr 1fr 1fr 0.65fr 0.95fr auto; gap: 9px; align-items: end; }
-    .m8-base-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1.1fr auto; gap: 9px; align-items: end; }
+    .m8-base-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1.1fr auto; gap: 9px; align-items: end; }
+    .m8-entity-grid { display: none; grid-template-columns: 1fr; gap: 9px; margin-bottom: 12px; }
+    .m8-entity-grid.active { display: grid; }
     .m8-service-field { display: none; }
     .m8-service-field.active { display: block; }
     .m8-contract-grid { display: none; grid-template-columns: 1fr; gap: 9px; margin-bottom: 12px; }
@@ -48,17 +50,15 @@ MAQUINARIA_HTML = """
                 <h6><i class="bi bi-bookmark-plus-fill me-1"></i> Base de maquinarias, vehículos y equipos</h6>
                 <button type="button" class="m8-btn secondary" onclick="m8_limpiar_base_categoria()"><i class="bi bi-eraser me-1"></i> Limpiar base seleccionada</button>
             </div>
-            <div class="m8-base-grid m8-service-field" id="m8_entidad_registro_box" style="margin-bottom: 12px;">
-                <div class="m8-field"><label>Registrar entidad</label><input id="m8_nueva_entidad" placeholder="Nombre de la entidad / empresa" onkeydown="m8_enter_guardar_entidad(event)"></div>
-                <button type="button" class="m8-btn purple" onclick="m8_agregar_entidad()"><i class="bi bi-building me-1"></i> Agregar entidad</button>
+            <div class="m8-entity-grid" id="m8_entidad_registro_box">
+                <div class="m8-field"><label>Datos de la entidad</label><input id="m8_nueva_entidad" list="m8_entidades_list" placeholder="Nombre de la entidad / empresa" oninput="m8_entidad_base_cambiada()" onkeydown="m8_enter(event, 'm8_base_nombre')"></div>
             </div>
             <div class="m8-base-grid">
                 <div class="m8-field"><label>Clasificación</label><select id="m8_base_cat" onchange="m8_base_categoria_cambio()"><option value="maq_gore">Maquinarias del Gobierno Regional Puno</option><option value="maq_serv">Maquinarias por servicio y/o contrato</option><option value="mov_gore">Movilidades del Gobierno Regional Puno</option><option value="mov_serv">Movilidades por servicio y/o contrato</option><option value="eq_gore">Equipo liviano del Gobierno Regional Puno</option><option value="eq_serv">Equipo liviano por servicio y/o contrato</option></select></div>
-                <div class="m8-field m8-service-field" id="m8_base_entidad_box"><label>Entidad</label><input id="m8_base_entidad" list="m8_entidades_list" placeholder="Entidad / empresa" onkeydown="m8_enter(event, 'm8_base_nombre')"></div>
                 <div class="m8-field"><label>Maquinaria / vehículo / equipo</label><input id="m8_base_nombre" placeholder="Camión volquete" onkeydown="m8_enter(event, 'm8_base_marca')"></div>
                 <div class="m8-field"><label>Marca</label><input id="m8_base_marca" placeholder="Volvo" onkeydown="m8_enter(event, 'm8_base_modelo')"></div>
                 <div class="m8-field"><label>Modelo, placa o serie</label><input id="m8_base_modelo" placeholder="FMX 6X4 R / EGK-176" onkeydown="m8_enter_guardar_base(event)"></div>
-                <button type="button" class="m8-btn purple" onclick="m8_agregar_base()"><i class="bi bi-plus-lg me-1"></i> Registrar base</button>
+                <button type="button" class="m8-btn purple" onclick="m8_agregar_base()"><i class="bi bi-plus-lg me-1"></i> Registrar maquinaria</button>
             </div>
             <div class="m8-paste mt-3">
                 <div><i class="bi bi-clipboard-check me-1"></i> Pegado masivo para la base: maquinaria | marca | modelo, placa o serie. En servicio use primero la entidad seleccionada.</div>
@@ -94,7 +94,7 @@ MAQUINARIA_HTML = """
         <div class="m8-panel">
             <div class="m8-titlebar"><h6><i class="bi bi-pencil-square me-1"></i> Registro diario de trabajo</h6></div>
             <div class="m8-contract-grid" id="m8_contrato_box">
-                <div class="m8-field"><label>Entidad / contratista</label><input id="m8_entidad" list="m8_entidades_list" placeholder="Seleccione o escriba la entidad" oninput="m8_entidad_cambiada()"></div>
+                <div class="m8-field"><label>Entidad / contratista</label><select id="m8_entidad" onchange="m8_entidad_cambiada()"></select></div>
             </div>
             <datalist id="m8_entidades_list"></datalist>
             <div class="m8-form-grid">
@@ -208,11 +208,16 @@ MAQUINARIA_HTML = """
         document.getElementById('m8_paste_help').innerHTML = `<i class="bi bi-clipboard-check me-1"></i> Pegado masivo diario: maquinaria | marca | placa/serie | ${esMovilidad ? 'día' : 'HM'} | combustible`;
         const combustible = document.getElementById('m8_combustible');
         const defecto = m8_combustible_defecto();
-        combustible.placeholder = defecto ? defecto : '20 GLN Diesel';
+        combustible.placeholder = defecto ? '20 GLN Gasohol' : '20 GLN Diesel';
         if(defecto && !m8_texto(combustible.value)) combustible.value = defecto;
     }
-    function m8_combustible(texto) {
-        return m8_texto(texto);
+    function m8_combustible(texto, cat = m8_categoria_actual) {
+        const t = m8_texto(texto);
+        if(!t) return '';
+        if(/\\b(gln|diesel|gasohol)\\b/i.test(t)) return t;
+        if(m8_es_movilidad(cat) || m8_es_equipo_liviano(cat)) return `${t} GLN Gasohol`;
+        if(cat.startsWith('maq_')) return `${t} GLN Diesel`;
+        return t;
     }
     function m8_compacto(texto) {
         return m8_texto(texto).replace(/\\s+/g, '');
@@ -226,11 +231,16 @@ MAQUINARIA_HTML = """
     function m8_actualizar_datalist() {
         const entidades = m8_entidades(m8_categoria_actual);
         document.getElementById('m8_entidades_list').innerHTML = entidades.map(e => `<option value="${m8_escape(e)}"></option>`).join('');
+        const select = document.getElementById('m8_entidad');
+        if(select) {
+            const actual = m8_texto(select.value || window.m8_entidad_actual[m8_categoria_actual]);
+            select.innerHTML = '<option value="">Seleccione entidad...</option>' + entidades.map(e => `<option value="${m8_escape(e)}">${m8_escape(e)}</option>`).join('');
+            if(actual && entidades.some(e => e.toLowerCase() === actual.toLowerCase())) select.value = entidades.find(e => e.toLowerCase() === actual.toLowerCase());
+        }
     }
     function m8_base_categoria_cambio() {
-        document.getElementById('m8_base_entidad_box').classList.toggle('active', m8_base_es_servicio());
         document.getElementById('m8_entidad_registro_box').classList.toggle('active', m8_base_es_servicio());
-        if(!m8_base_es_servicio()) document.getElementById('m8_base_entidad').value = '';
+        if(!m8_base_es_servicio()) document.getElementById('m8_nueva_entidad').value = '';
         m8_render_base();
         m8_refrescar_select();
         m8_actualizar_datalist();
@@ -245,12 +255,11 @@ MAQUINARIA_HTML = """
             if(btn) btn.classList.toggle('active', k === cat);
         });
         document.getElementById('m8_contrato_box').classList.toggle('active', m8_es_servicio(cat));
-        document.getElementById('m8_base_entidad_box').classList.toggle('active', m8_es_servicio(cat));
         document.getElementById('m8_entidad_registro_box').classList.toggle('active', m8_es_servicio(cat));
-        document.getElementById('m8_entidad').value = window.m8_entidad_actual[cat] || '';
-        document.getElementById('m8_base_entidad').value = window.m8_entidad_actual[cat] || '';
+        document.getElementById('m8_nueva_entidad').value = window.m8_entidad_actual[cat] || '';
         m8_actualizar_campos();
         m8_actualizar_datalist();
+        if(m8_es_servicio(cat)) document.getElementById('m8_entidad').value = window.m8_entidad_actual[cat] || '';
         m8_refrescar_select();
         m8_render_base();
         m8_render();
@@ -263,9 +272,21 @@ MAQUINARIA_HTML = """
 
     function m8_entidad_cambiada() {
         m8_guardar_entidad();
-        document.getElementById('m8_base_entidad').value = document.getElementById('m8_entidad').value;
+        document.getElementById('m8_nueva_entidad').value = document.getElementById('m8_entidad').value;
         m8_refrescar_select();
         m8_sincronizar();
+    }
+
+    function m8_entidad_base_cambiada() {
+        const cat = document.getElementById('m8_base_cat').value;
+        if(!m8_es_servicio(cat)) return;
+        const entidad = m8_texto(document.getElementById('m8_nueva_entidad').value);
+        window.m8_entidad_actual[cat] = entidad;
+        if(cat === m8_categoria_actual) {
+            m8_actualizar_datalist();
+            document.getElementById('m8_entidad').value = entidad;
+            m8_refrescar_select();
+        }
     }
 
     function m8_agregar_entidad() {
@@ -278,7 +299,7 @@ MAQUINARIA_HTML = """
             window.m8_entidades_registradas[cat].push(entidad);
         }
         window.m8_entidad_actual[cat] = entidad;
-        document.getElementById('m8_base_entidad').value = entidad;
+        document.getElementById('m8_nueva_entidad').value = entidad;
         if(cat === m8_categoria_actual) document.getElementById('m8_entidad').value = entidad;
         document.getElementById('m8_nueva_entidad').value = '';
         m8_actualizar_datalist();
@@ -289,7 +310,7 @@ MAQUINARIA_HTML = """
     function m8_agregar_base(data = null) {
         const cat = document.getElementById('m8_base_cat').value;
         const item = data ? m8_item(data) : m8_item({
-            entidad: document.getElementById('m8_base_entidad').value,
+            entidad: document.getElementById('m8_nueva_entidad').value,
             nombre: document.getElementById('m8_base_nombre').value,
             marca: document.getElementById('m8_base_marca').value,
             modelo: document.getElementById('m8_base_modelo').value
@@ -325,7 +346,7 @@ MAQUINARIA_HTML = """
             const cols = row.split('\\t').map(m8_texto);
             if(cols[0]) {
                 if(m8_es_servicio(cat)) {
-                    const entidadActual = m8_texto(document.getElementById('m8_base_entidad').value);
+                    const entidadActual = m8_texto(document.getElementById('m8_nueva_entidad').value);
                     if(entidadActual) {
                         window.m8_base_pendientes.push(m8_item({ entidad: entidadActual, nombre: cols[0], marca: cols[1], modelo: cols[2] }));
                     } else {
@@ -406,7 +427,7 @@ MAQUINARIA_HTML = """
     }
 
     function m8_formatear(item, cat = m8_categoria_actual) {
-        return [item.nombre, m8_compacto(item.marca), m8_compacto(item.modelo), m8_medida(item.hm, cat), m8_combustible(item.combustible || m8_combustible_defecto(cat))].map(m8_texto).join('\\t');
+        return [item.nombre, m8_compacto(item.marca), m8_compacto(item.modelo), m8_medida(item.hm, cat), m8_combustible(item.combustible || m8_combustible_defecto(cat), cat)].map(m8_texto).join('\\t');
     }
 
     function m8_sincronizar() {
@@ -446,7 +467,7 @@ MAQUINARIA_HTML = """
             return;
         }
         tbody.innerHTML = lista.map((item, idx) => `
-            <tr><td>${m8_escape(item.nombre)}</td><td>${m8_escape(item.marca)}</td><td>${m8_escape(item.modelo)}</td><td>${m8_escape(m8_medida(item.hm))}</td><td>${m8_escape(item.combustible || m8_combustible_defecto())}</td><td class="text-end"><button type="button" class="btn btn-sm text-danger border-0" onclick="m8_eliminar(${idx})"><i class="bi bi-trash"></i></button></td></tr>
+            <tr><td>${m8_escape(item.nombre)}</td><td>${m8_escape(item.marca)}</td><td>${m8_escape(item.modelo)}</td><td>${m8_escape(m8_medida(item.hm))}</td><td>${m8_escape(m8_combustible(item.combustible || m8_combustible_defecto()))}</td><td class="text-end"><button type="button" class="btn btn-sm text-danger border-0" onclick="m8_eliminar(${idx})"><i class="bi bi-trash"></i></button></td></tr>
         `).join('');
         m8_sincronizar();
     }
@@ -546,6 +567,8 @@ MAQUINARIA_HTML = """
         pendientes.forEach(item => m8_agregar_base(item));
         window.m8_base_pendientes = [];
         document.getElementById('m8_base_paste').value = '';
+        document.getElementById('m8_nueva_entidad').value = '';
+        ['m8_base_nombre', 'm8_base_marca', 'm8_base_modelo'].forEach(id => document.getElementById(id).value = '');
         m8_render_base_preview();
     }
 
