@@ -24,7 +24,10 @@ MAQUINARIA_HTML = """
     .m8-cat.active i { background: rgba(255,255,255,0.18); }
     .m8-cat.gov.active { background: linear-gradient(135deg, #075985, #0ea5e9); border-color: #0ea5e9; }
     .m8-cat.srv.active { background: linear-gradient(135deg, #7c3aed, #a78bfa); border-color: #a78bfa; }
-    .m8-form-grid { display: grid; grid-template-columns: 1.05fr 1.05fr 1fr 0.85fr 0.95fr 0.62fr 0.85fr 0.65fr auto; gap: 9px; align-items: end; }
+    .m8-form-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 9px; align-items: end; }
+    .m8-span-3 { grid-column: span 3; }
+    .m8-span-2 { grid-column: span 2; }
+    .m8-span-1 { grid-column: span 1; }
     .m8-base-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1.1fr auto; gap: 9px; align-items: end; }
     .m8-class-field { grid-column: 1 / -1; }
     .m8-entity-grid { display: none; grid-template-columns: 1fr; gap: 9px; margin-bottom: 12px; }
@@ -48,9 +51,10 @@ MAQUINARIA_HTML = """
     .m8-preview { border-radius: 16px; min-height: 118px; resize: vertical; font-size: 12px; background: #f8fafc; }
     .m8-hidden { display: none; }
     .m8-preview-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 10px; background: #f8fafc; }
-    .m8-toast { position: fixed; top: 86px; right: 28px; z-index: 99999; display: flex; align-items: center; gap: 9px; background: rgba(15,23,42,0.94); color: #fff; border-radius: 999px; padding: 11px 16px; font-size: 12px; font-weight: 900; box-shadow: 0 18px 38px rgba(15,23,42,0.24); opacity: 0; transform: translateY(-12px); pointer-events: none; transition: 0.22s ease; }
-    .m8-toast.show { opacity: 1; transform: translateY(0); }
-    @media (max-width: 992px) { .m8-category-grid, .m8-form-grid, .m8-base-grid, .m8-contract-grid { grid-template-columns: 1fr; } }
+    .m8-toast { position: fixed; top: 82px; right: 28px; z-index: 99999; display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, rgba(15,23,42,0.96), rgba(2,99,160,0.96)); color: #fff; border: 1px solid rgba(255,255,255,0.18); border-radius: 18px; padding: 13px 18px; font-size: 12px; font-weight: 900; box-shadow: 0 20px 45px rgba(15,23,42,0.30); opacity: 0; transform: translate(18px, -14px) scale(0.96); pointer-events: none; transition: 0.25s ease; }
+    .m8-toast i { font-size: 18px; color: #86efac; }
+    .m8-toast.show { opacity: 1; transform: translate(0, 0) scale(1); }
+    @media (max-width: 992px) { .m8-category-grid, .m8-base-grid, .m8-contract-grid { grid-template-columns: 1fr; } .m8-form-grid { grid-template-columns: 1fr; } .m8-span-3, .m8-span-2, .m8-span-1 { grid-column: auto; } }
 </style>
 
 <div class="step-view" id="step8">
@@ -119,15 +123,15 @@ MAQUINARIA_HTML = """
             </div>
             <datalist id="m8_entidades_list"></datalist>
             <div class="m8-form-grid">
-                <div class="m8-field"><label>Buscar rápido</label><input id="m8_buscar_equipo" placeholder="Nombre, marca, placa o serie" oninput="m8_filtrar_equipos()" onkeydown="m8_enter_busqueda(event)"></div>
-                <div class="m8-field"><label>Seleccionar equipo registrado</label><select id="m8_equipo_select" onchange="m8_usar_equipo()"></select></div>
-                <div class="m8-field"><label>Maquinaria</label><input id="m8_nombre" placeholder="Nombre" onkeydown="m8_enter(event, 'm8_marca')"></div>
-                <div class="m8-field"><label>Marca</label><input id="m8_marca" class="m8-upper" placeholder="MARCA" oninput="m8_mayus(this)" onkeydown="m8_enter(event, 'm8_modelo')"></div>
-                <div class="m8-field"><label>Placa/serie</label><input id="m8_modelo" class="m8-upper" placeholder="MODELO / PLACA / SERIE" oninput="m8_mayus(this)" onkeydown="m8_enter(event, 'm8_hm')"></div>
-                <div class="m8-field"><label id="m8_medida_label">HM</label><input id="m8_hm" class="m8-upper" placeholder="08:00 HM" oninput="m8_mayus(this)" onkeydown="m8_enter(event, 'm8_combustible')"></div>
-                <div class="m8-field"><label>Combustible</label><input id="m8_combustible" class="m8-upper" placeholder="20 GLN Diesel" oninput="m8_mayus(this)" onkeydown="m8_enter_guardar(event)"></div>
-                <div class="m8-field m8-service-field" id="m8_combustible_tipo_box"><label>Tipo</label><select id="m8_combustible_tipo"><option value="Gasohol">Gasohol</option><option value="Diesel">Diesel</option></select></div>
-                <button type="button" class="m8-btn" onclick="m8_agregar_actual()"><i class="bi bi-plus-lg me-1"></i> Agregar</button>
+                <div class="m8-field m8-span-3"><label>Buscar rápido</label><input id="m8_buscar_equipo" placeholder="Nombre, marca, placa o serie" oninput="m8_filtrar_equipos()" onkeydown="m8_enter_busqueda(event)"></div>
+                <div class="m8-field m8-span-3"><label>Seleccionar equipo registrado</label><select id="m8_equipo_select" onchange="m8_usar_equipo()"></select></div>
+                <div class="m8-field m8-span-2"><label>Maquinaria</label><input id="m8_nombre" placeholder="Nombre" onkeydown="m8_enter(event, 'm8_marca')"></div>
+                <div class="m8-field m8-span-2"><label>Marca</label><input id="m8_marca" class="m8-upper" placeholder="MARCA" oninput="m8_mayus(this)" onkeydown="m8_enter(event, 'm8_modelo')"></div>
+                <div class="m8-field m8-span-2"><label>Placa/serie</label><input id="m8_modelo" class="m8-upper" placeholder="MODELO / PLACA / SERIE" oninput="m8_mayus(this)" onkeydown="m8_enter(event, 'm8_hm')"></div>
+                <div class="m8-field m8-span-2"><label id="m8_medida_label">HM</label><input id="m8_hm" class="m8-upper" placeholder="08:00 HM" oninput="m8_mayus(this)" onkeydown="m8_enter(event, 'm8_combustible')"></div>
+                <div class="m8-field m8-span-2"><label>Combustible</label><input id="m8_combustible" class="m8-upper" placeholder="20 GLN Diesel" oninput="m8_mayus(this)" onkeydown="m8_enter_guardar(event)"></div>
+                <div class="m8-field m8-span-1 m8-service-field" id="m8_combustible_tipo_box"><label>Tipo</label><select id="m8_combustible_tipo"><option value="Gasohol">Gasohol</option><option value="Diesel">Diesel</option></select></div>
+                <button type="button" class="m8-btn m8-span-1" onclick="m8_agregar_actual()"><i class="bi bi-plus-lg me-1"></i> Agregar</button>
             </div>
             <div class="m8-paste mt-3">
                 <div id="m8_paste_help"><i class="bi bi-clipboard-check me-1"></i> Pegado masivo diario: maquinaria | marca | placa/serie | HM | combustible</div>
@@ -191,6 +195,16 @@ MAQUINARIA_HTML = """
     function m8_texto(valor) { return String(valor || '').replace(/\\s+/g, ' ').trim(); }
     function m8_upper(valor) { return m8_texto(valor).toLocaleUpperCase('es-PE'); }
     function m8_mayus(input) { input.value = input.value.toLocaleUpperCase('es-PE'); }
+    function m8_normalizar_hora(valor) {
+        let t = m8_upper(valor).replace(/HM\\b/g, '').trim().replace(/\\./g, ':');
+        if(!t) return '';
+        if(/^\\d{1,2}$/.test(t)) return `${t.padStart(2, '0')}:00`;
+        const partes = t.split(':');
+        if(partes.length >= 2 && /^\\d{1,2}$/.test(partes[0]) && /^\\d{1,2}$/.test(partes[1])) {
+            return `${partes[0].padStart(2, '0')}:${partes[1].padEnd(2, '0').slice(0, 2)}`;
+        }
+        return t;
+    }
     function m8_escape(valor) {
         return m8_texto(valor).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
@@ -220,7 +234,7 @@ MAQUINARIA_HTML = """
         const t = m8_texto(texto);
         if(!t) return '';
         if(m8_es_movilidad(cat)) return /d[ií]a/i.test(t) ? t : `${t} Día`;
-        return /\\bhm\\b/i.test(t) ? t : `${t} HM`;
+        return `${m8_normalizar_hora(t)} HM`;
     }
     function m8_combustible_defecto(cat = m8_categoria_actual) {
         if(m8_es_movilidad(cat) || m8_es_equipo_liviano(cat)) return 'Gasohol';
@@ -607,11 +621,13 @@ MAQUINARIA_HTML = """
     function m8_enter(event, nextId) {
         if(event.key !== 'Enter') return;
         event.preventDefault();
+        if(event.target && event.target.id === 'm8_hm') event.target.value = m8_medida(event.target.value).replace(/\\s*HM$/i, '');
         document.getElementById(nextId).focus();
     }
     function m8_enter_guardar(event) {
         if(event.key !== 'Enter') return;
         event.preventDefault();
+        document.getElementById('m8_hm').value = m8_medida(document.getElementById('m8_hm').value).replace(/\\s*HM$/i, '');
         m8_agregar_actual();
     }
     function m8_enter_guardar_base(event) {
