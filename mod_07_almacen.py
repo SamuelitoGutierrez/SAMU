@@ -14,6 +14,7 @@ ALMACEN_HTML = """
     .m7-pill { border-radius: 999px; padding: 4px 9px; background: #e0f2fe; color: #0369a1; font-size: 10px; font-weight: 900; text-transform: none; letter-spacing: 0; }
     #step7.m7-combustible .m7-pill { background: #ffedd5; color: #9a3412; }
     .m7-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .m7-category-tabs { grid-template-columns: 1fr; }
     .m7-tab { position: relative; border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 20px; padding: 14px 15px 14px 48px; font-size: 12px; font-weight: 900; transition: 0.22s ease; box-shadow: 0 10px 24px rgba(15,23,42,0.06); text-align: left; min-height: 70px; overflow: hidden; }
     .m7-tab i { position: absolute; left: 14px; top: 16px; width: 24px; height: 24px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; background: #f1f5f9; }
     .m7-tab small { display: block; margin-top: 3px; font-size: 10px; line-height: 1.2; font-weight: 700; opacity: 0.72; }
@@ -67,7 +68,7 @@ ALMACEN_HTML = """
                 <span><i class="bi bi-grid-1x2-fill me-1"></i> Seleccione el movimiento</span>
                 <span class="m7-pill" id="m7_contexto">Materiales</span>
             </div>
-            <div class="m7-tabs">
+            <div class="m7-tabs m7-category-tabs">
                 <button type="button" class="m7-tab materiales active" id="m7_cat_materiales" onclick="m7_cambiar_categoria('materiales')"><i class="bi bi-bricks"></i> Materiales de construcción<small>Control de ingreso y salida de obra</small></button>
                 <button type="button" class="m7-tab combustible" id="m7_cat_combustible" onclick="m7_cambiar_categoria('combustible')"><i class="bi bi-fuel-pump-fill"></i> Combustible<small>Diésel, gasohol y lubricantes</small></button>
             </div>
