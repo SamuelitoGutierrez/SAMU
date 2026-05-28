@@ -342,6 +342,52 @@ def redaccion_asiento_residente():
         {RESUMEN_CUADERNO_HTML}
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            function abrirModalInicialSeguro() {{
+                const modalInicial = document.getElementById('modalConfigInicial');
+                if (!modalInicial || modalInicial.dataset.abierto === '1') return;
+                modalInicial.dataset.abierto = '1';
+                try {{
+                    if (window.bootstrap && bootstrap.Modal) {{
+                        new bootstrap.Modal(modalInicial).show();
+                    }} else {{
+                        modalInicial.style.display = 'block';
+                        modalInicial.removeAttribute('aria-hidden');
+                        modalInicial.setAttribute('aria-modal', 'true');
+                        modalInicial.classList.add('show');
+                        document.body.classList.add('modal-open');
+                        if (!document.querySelector('.modal-backdrop')) {{
+                            const fondo = document.createElement('div');
+                            fondo.className = 'modal-backdrop fade show';
+                            document.body.appendChild(fondo);
+                        }}
+                    }}
+                    setTimeout(() => document.getElementById('initNumAsiento')?.focus(), 250);
+                }} catch (e) {{
+                    modalInicial.style.display = 'block';
+                    modalInicial.classList.add('show');
+                }}
+            }}
+            function cerrarModalInicialSeguro() {{
+                const modalInicial = document.getElementById('modalConfigInicial');
+                if (!modalInicial) return;
+                try {{
+                    const instancia = window.bootstrap && bootstrap.Modal
+                        ? (bootstrap.Modal.getInstance(modalInicial) || new bootstrap.Modal(modalInicial))
+                        : null;
+                    if (instancia) {{
+                        instancia.hide();
+                        return;
+                    }}
+                }} catch (e) {{}}
+                modalInicial.classList.remove('show');
+                modalInicial.style.display = 'none';
+                modalInicial.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('modal-open');
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            }}
+            abrirModalInicialSeguro();
+        </script>
         
         <script>
             // CONFIGURACIÓN GLOBAL
@@ -371,7 +417,7 @@ def redaccion_asiento_residente():
             document.addEventListener("DOMContentLoaded", function() {{
                 const modalInicial = document.getElementById('modalConfigInicial');
                 modalInicial.addEventListener('shown.bs.modal', function () {{ document.getElementById('initNumAsiento').focus(); }});
-                new bootstrap.Modal(modalInicial).show();
+                abrirModalInicialSeguro();
                 instalarTooltipStepper();
                 actualizarStepper();
             }});
@@ -381,7 +427,7 @@ def redaccion_asiento_residente():
                 g_numAsiento = document.getElementById('initNumAsiento').value; let rawDate = document.getElementById('initFecha').value; 
                 if(!g_numAsiento || !rawDate) {{ mostrarAlerta("Complete los datos para iniciar.", "error"); return; }} 
                 g_fechaRaw = rawDate; g_fechaAsiento = formatearFecha(rawDate); document.getElementById('lbl_hoja_fecha').innerText = g_fechaAsiento; 
-                bootstrap.Modal.getInstance(document.getElementById('modalConfigInicial')).hide(); 
+                cerrarModalInicialSeguro(); 
                 document.getElementById('mainLayout').classList.add('unlocked'); document.getElementById('stepperBar').style.opacity = '1'; document.getElementById('stepperBar').style.pointerEvents = 'all'; document.getElementById('bottomBarUI').classList.add('unlocked'); document.getElementById('mobilePreviewBtn').classList.add('unlocked'); sincronizarDatos(); actualizarAccionesAsiento(); verificarEstadoAsientoGuardado();
             }}
 

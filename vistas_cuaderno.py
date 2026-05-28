@@ -120,10 +120,10 @@ def panel_cuaderno():
             }
             
             .project-title h1 { 
-                font-size: clamp(52px, 8vw, 108px); 
+                font-size: clamp(34px, 5vw, 64px); 
                 font-weight: 800; 
-                letter-spacing: -5px; 
-                line-height: .92;
+                letter-spacing: -2px; 
+                line-height: 1;
                 margin-bottom: 12px; 
             }
             
