@@ -18,8 +18,10 @@ MAQUINARIA_HTML = """
     .m8-cat.gov.active { background: linear-gradient(135deg, #075985, #0ea5e9); border-color: #0ea5e9; }
     .m8-cat.srv.active { background: linear-gradient(135deg, #7c3aed, #a78bfa); border-color: #a78bfa; }
     .m8-form-grid { display: grid; grid-template-columns: 1.25fr 1fr 1fr 1fr 0.65fr 0.95fr auto; gap: 9px; align-items: end; }
-    .m8-base-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1.1fr auto; gap: 9px; align-items: end; }
-    .m8-contract-grid { display: none; grid-template-columns: 1.25fr 1fr; gap: 9px; margin-bottom: 12px; }
+    .m8-base-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1.1fr auto; gap: 9px; align-items: end; }
+    .m8-service-field { display: none; }
+    .m8-service-field.active { display: block; }
+    .m8-contract-grid { display: none; grid-template-columns: 1fr; gap: 9px; margin-bottom: 12px; }
     .m8-contract-grid.active { display: grid; }
     .m8-field label { display: block; margin-bottom: 4px; font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.35px; }
     .m8-field input, .m8-field select { width: 100%; border: 1px solid #cbd5e1; border-radius: 13px; padding: 9px 10px; outline: none; font-size: 12px; font-weight: 700; background: #f8fafc; }
@@ -44,14 +46,15 @@ MAQUINARIA_HTML = """
                 <button type="button" class="m8-btn secondary" onclick="m8_limpiar_base_categoria()"><i class="bi bi-eraser me-1"></i> Limpiar base seleccionada</button>
             </div>
             <div class="m8-base-grid">
-                <div class="m8-field"><label>Clasificación</label><select id="m8_base_cat" onchange="m8_render_base(); m8_refrescar_select();"><option value="maq_gore">Maquinarias del Gobierno Regional Puno</option><option value="maq_serv">Maquinarias por servicio y/o contrato</option><option value="mov_gore">Movilidades del Gobierno Regional Puno</option><option value="mov_serv">Movilidades por servicio y/o contrato</option><option value="eq_gore">Equipo liviano del Gobierno Regional Puno</option><option value="eq_serv">Equipo liviano por servicio y/o contrato</option></select></div>
+                <div class="m8-field"><label>Clasificación</label><select id="m8_base_cat" onchange="m8_base_categoria_cambio()"><option value="maq_gore">Maquinarias del Gobierno Regional Puno</option><option value="maq_serv">Maquinarias por servicio y/o contrato</option><option value="mov_gore">Movilidades del Gobierno Regional Puno</option><option value="mov_serv">Movilidades por servicio y/o contrato</option><option value="eq_gore">Equipo liviano del Gobierno Regional Puno</option><option value="eq_serv">Equipo liviano por servicio y/o contrato</option></select></div>
+                <div class="m8-field m8-service-field" id="m8_base_entidad_box"><label>Entidad</label><input id="m8_base_entidad" list="m8_entidades_list" placeholder="Entidad / empresa" onkeydown="m8_enter(event, 'm8_base_nombre')"></div>
                 <div class="m8-field"><label>Maquinaria / vehículo / equipo</label><input id="m8_base_nombre" placeholder="Camión volquete" onkeydown="m8_enter(event, 'm8_base_marca')"></div>
                 <div class="m8-field"><label>Marca</label><input id="m8_base_marca" placeholder="Volvo" onkeydown="m8_enter(event, 'm8_base_modelo')"></div>
                 <div class="m8-field"><label>Modelo, placa o serie</label><input id="m8_base_modelo" placeholder="FMX 6X4 R / EGK-176" onkeydown="m8_enter_guardar_base(event)"></div>
                 <button type="button" class="m8-btn purple" onclick="m8_agregar_base()"><i class="bi bi-plus-lg me-1"></i> Registrar base</button>
             </div>
             <div class="m8-paste mt-3">
-                <div><i class="bi bi-clipboard-check me-1"></i> Pegado masivo para la base: maquinaria | marca | modelo, placa o serie</div>
+                <div><i class="bi bi-clipboard-check me-1"></i> Pegado masivo para la base: entidad | maquinaria | marca | modelo, placa o serie</div>
                 <textarea id="m8_base_paste" placeholder="Pegar aquí..." onpaste="m8_pegar_base(event)"></textarea>
             </div>
         </div>
@@ -74,9 +77,9 @@ MAQUINARIA_HTML = """
         <div class="m8-panel">
             <div class="m8-titlebar"><h6><i class="bi bi-pencil-square me-1"></i> Registro diario de trabajo</h6></div>
             <div class="m8-contract-grid" id="m8_contrato_box">
-                <div class="m8-field"><label>Entidad / contratista</label><input id="m8_entidad" placeholder="Nombre de la entidad o empresa" oninput="m8_sincronizar()"></div>
-                <div class="m8-field"><label>Número de contrato</label><input id="m8_contrato" placeholder="Contrato, servicio u orden" oninput="m8_sincronizar()"></div>
+                <div class="m8-field"><label>Entidad / contratista</label><input id="m8_entidad" list="m8_entidades_list" placeholder="Seleccione o escriba la entidad" oninput="m8_entidad_cambiada()"></div>
             </div>
+            <datalist id="m8_entidades_list"></datalist>
             <div class="m8-form-grid">
                 <div class="m8-field"><label>Seleccionar equipo registrado</label><select id="m8_equipo_select" onchange="m8_usar_equipo()"></select></div>
                 <div class="m8-field"><label>Maquinaria</label><input id="m8_nombre" placeholder="Nombre" onkeydown="m8_enter(event, 'm8_marca')"></div>
@@ -104,8 +107,8 @@ MAQUINARIA_HTML = """
         <div class="m8-table-wrap">
             <table class="m8-table">
                 <thead>
-                    <tr><th colspan="4">Base registrada de la clasificación seleccionada</th></tr>
-                    <tr><th>Maquinaria</th><th>Marca</th><th>Modelo, placa o serie</th><th></th></tr>
+                    <tr><th colspan="5">Base registrada de la clasificación seleccionada</th></tr>
+                    <tr><th>Entidad</th><th>Maquinaria</th><th>Marca</th><th>Modelo, placa o serie</th><th></th></tr>
                 </thead>
                 <tbody id="m8_base_tbody"></tbody>
             </table>
@@ -119,7 +122,7 @@ MAQUINARIA_HTML = """
 <script>
     window.m8_base = window.m8_base || { maq_gore: [], maq_serv: [], mov_gore: [], mov_serv: [], eq_gore: [], eq_serv: [] };
     window.m8_registros = window.m8_registros || { maq_gore: [], maq_serv: [], mov_gore: [], mov_serv: [], eq_gore: [], eq_serv: [] };
-    window.m8_contratos = window.m8_contratos || { maq_serv: {}, mov_serv: {}, eq_serv: {} };
+    window.m8_entidad_actual = window.m8_entidad_actual || { maq_serv: '', mov_serv: '', eq_serv: '' };
     let m8_categoria_actual = 'maq_gore';
 
     const m8_titulos = {
@@ -138,6 +141,7 @@ MAQUINARIA_HTML = """
     }
     function m8_item(data) {
         return {
+            entidad: m8_texto(data.entidad),
             nombre: m8_texto(data.nombre),
             marca: m8_texto(data.marca),
             modelo: m8_texto(data.modelo),
@@ -153,9 +157,29 @@ MAQUINARIA_HTML = """
     function m8_combustible(texto) {
         return m8_texto(texto);
     }
+    function m8_compacto(texto) {
+        return m8_texto(texto).replace(/\\s+/g, '');
+    }
+    function m8_base_es_servicio() {
+        return m8_es_servicio(document.getElementById('m8_base_cat').value);
+    }
+    function m8_entidades(cat = m8_categoria_actual) {
+        return [...new Set((window.m8_base[cat] || []).map(x => m8_texto(x.entidad)).filter(Boolean))];
+    }
+    function m8_actualizar_datalist() {
+        const entidades = m8_entidades(m8_categoria_actual);
+        document.getElementById('m8_entidades_list').innerHTML = entidades.map(e => `<option value="${m8_escape(e)}"></option>`).join('');
+    }
+    function m8_base_categoria_cambio() {
+        document.getElementById('m8_base_entidad_box').classList.toggle('active', m8_base_es_servicio());
+        if(!m8_base_es_servicio()) document.getElementById('m8_base_entidad').value = '';
+        m8_render_base();
+        m8_refrescar_select();
+        m8_actualizar_datalist();
+    }
 
     function m8_cambiar_categoria(cat) {
-        m8_guardar_contrato();
+        m8_guardar_entidad();
         m8_categoria_actual = cat;
         document.getElementById('m8_base_cat').value = cat;
         Object.keys(m8_titulos).forEach(k => {
@@ -163,37 +187,49 @@ MAQUINARIA_HTML = """
             if(btn) btn.classList.toggle('active', k === cat);
         });
         document.getElementById('m8_contrato_box').classList.toggle('active', m8_es_servicio(cat));
-        const contrato = window.m8_contratos[cat] || {};
-        document.getElementById('m8_entidad').value = contrato.entidad || '';
-        document.getElementById('m8_contrato').value = contrato.contrato || '';
+        document.getElementById('m8_base_entidad_box').classList.toggle('active', m8_es_servicio(cat));
+        document.getElementById('m8_entidad').value = window.m8_entidad_actual[cat] || '';
+        document.getElementById('m8_base_entidad').value = window.m8_entidad_actual[cat] || '';
+        m8_actualizar_datalist();
         m8_refrescar_select();
         m8_render_base();
         m8_render();
     }
 
-    function m8_guardar_contrato() {
+    function m8_guardar_entidad() {
         if(!m8_es_servicio()) return;
-        window.m8_contratos[m8_categoria_actual] = {
-            entidad: m8_texto(document.getElementById('m8_entidad').value),
-            contrato: m8_texto(document.getElementById('m8_contrato').value)
-        };
+        window.m8_entidad_actual[m8_categoria_actual] = m8_texto(document.getElementById('m8_entidad').value);
+    }
+
+    function m8_entidad_cambiada() {
+        m8_guardar_entidad();
+        document.getElementById('m8_base_entidad').value = document.getElementById('m8_entidad').value;
+        m8_refrescar_select();
+        m8_sincronizar();
     }
 
     function m8_agregar_base(data = null) {
         const cat = document.getElementById('m8_base_cat').value;
         const item = data ? m8_item(data) : m8_item({
+            entidad: document.getElementById('m8_base_entidad').value,
             nombre: document.getElementById('m8_base_nombre').value,
             marca: document.getElementById('m8_base_marca').value,
             modelo: document.getElementById('m8_base_modelo').value
         });
         if(!item.nombre) return;
-        window.m8_base[cat].push({ nombre: item.nombre, marca: item.marca, modelo: item.modelo });
+        if(m8_es_servicio(cat) && !item.entidad) return;
+        window.m8_base[cat].push({ entidad: m8_es_servicio(cat) ? item.entidad : '', nombre: item.nombre, marca: item.marca, modelo: item.modelo });
         if(!data) {
             document.getElementById('m8_base_nombre').value = '';
             document.getElementById('m8_base_marca').value = '';
             document.getElementById('m8_base_modelo').value = '';
             document.getElementById('m8_base_nombre').focus();
         }
+        if(m8_es_servicio(cat)) {
+            window.m8_entidad_actual[cat] = item.entidad;
+            if(cat === m8_categoria_actual) document.getElementById('m8_entidad').value = item.entidad;
+        }
+        m8_actualizar_datalist();
         m8_refrescar_select();
         m8_render_base();
     }
@@ -205,7 +241,12 @@ MAQUINARIA_HTML = """
         data.split('\\n').forEach(row => {
             const cols = row.split('\\t').map(m8_texto);
             if(cols[0]) {
-                m8_agregar_base({ nombre: cols[0], marca: cols[1], modelo: cols[2] });
+                const cat = document.getElementById('m8_base_cat').value;
+                if(m8_es_servicio(cat)) {
+                    m8_agregar_base({ entidad: cols[0], nombre: cols[1], marca: cols[2], modelo: cols[3] });
+                } else {
+                    m8_agregar_base({ nombre: cols[0], marca: cols[1], modelo: cols[2] });
+                }
                 count++;
             }
         });
@@ -216,13 +257,20 @@ MAQUINARIA_HTML = """
 
     function m8_refrescar_select() {
         const select = document.getElementById('m8_equipo_select');
-        const lista = window.m8_base[m8_categoria_actual] || [];
+        const entidad = m8_texto(document.getElementById('m8_entidad').value);
+        const lista = (window.m8_base[m8_categoria_actual] || []).filter(item => !m8_es_servicio() || m8_texto(item.entidad) === entidad);
+        if(m8_es_servicio() && !entidad) {
+            select.innerHTML = '<option value="">Primero escriba o seleccione una entidad...</option>';
+            return;
+        }
         select.innerHTML = '<option value="">Seleccione o escriba manualmente...</option>' + lista.map((item, idx) => `<option value="${idx}">${m8_escape(item.nombre)} | ${m8_escape(item.marca)} | ${m8_escape(item.modelo)}</option>`).join('');
+        select.dataset.items = JSON.stringify(lista);
     }
 
     function m8_usar_equipo() {
         const idx = document.getElementById('m8_equipo_select').value;
-        const item = (window.m8_base[m8_categoria_actual] || [])[idx];
+        const items = JSON.parse(document.getElementById('m8_equipo_select').dataset.items || '[]');
+        const item = items[idx];
         if(!item) return;
         document.getElementById('m8_nombre').value = item.nombre || '';
         document.getElementById('m8_marca').value = item.marca || '';
@@ -232,6 +280,7 @@ MAQUINARIA_HTML = """
 
     function m8_agregar_actual(data = null) {
         const item = data ? m8_item(data) : m8_item({
+            entidad: document.getElementById('m8_entidad').value,
             nombre: document.getElementById('m8_nombre').value,
             marca: document.getElementById('m8_marca').value,
             modelo: document.getElementById('m8_modelo').value,
@@ -239,6 +288,8 @@ MAQUINARIA_HTML = """
             combustible: document.getElementById('m8_combustible').value
         });
         if(!item.nombre) return;
+        if(m8_es_servicio()) item.entidad = m8_texto(item.entidad || document.getElementById('m8_entidad').value);
+        if(m8_es_servicio() && !item.entidad) return;
         window.m8_registros[m8_categoria_actual].push(item);
         if(!data) {
             ['m8_nombre', 'm8_marca', 'm8_modelo', 'm8_hm', 'm8_combustible'].forEach(id => document.getElementById(id).value = '');
@@ -255,7 +306,7 @@ MAQUINARIA_HTML = """
         data.split('\\n').forEach(row => {
             const cols = row.split('\\t').map(m8_texto);
             if(cols[0]) {
-                m8_agregar_actual({ nombre: cols[0], marca: cols[1], modelo: cols[2], hm: cols[3], combustible: cols[4] });
+                m8_agregar_actual({ entidad: document.getElementById('m8_entidad').value, nombre: cols[0], marca: cols[1], modelo: cols[2], hm: cols[3], combustible: cols[4] });
                 count++;
             }
         });
@@ -265,22 +316,31 @@ MAQUINARIA_HTML = """
     }
 
     function m8_formatear(item) {
-        return [item.nombre, item.marca, item.modelo, m8_hm(item.hm), m8_combustible(item.combustible)].map(m8_texto).join('\\t');
+        return [item.nombre, m8_compacto(item.marca), m8_compacto(item.modelo), m8_hm(item.hm), m8_combustible(item.combustible)].map(m8_texto).join('\\t');
     }
 
     function m8_sincronizar() {
-        m8_guardar_contrato();
+        m8_guardar_entidad();
         const bloques = [];
         Object.keys(m8_titulos).forEach(cat => {
             const lista = window.m8_registros[cat] || [];
             if(lista.length === 0) return;
             const bloque = [m8_titulos[cat]];
             if(m8_es_servicio(cat)) {
-                const c = window.m8_contratos[cat] || {};
-                const contrato = [c.entidad, c.contrato].map(m8_texto).filter(Boolean).join(' - ');
-                bloque.push(`- ${contrato || 'servicio y/o contrato'}`);
+                const grupos = {};
+                lista.forEach(item => {
+                    const entidad = m8_texto(item.entidad) || 'servicio y/o contrato';
+                    if(!grupos[entidad]) grupos[entidad] = [];
+                    grupos[entidad].push(item);
+                });
+                Object.keys(grupos).forEach(entidad => {
+                    bloque.push(`- ${entidad}`);
+                    grupos[entidad].forEach(item => bloque.push(`${m8_formatear(item)}`));
+                });
+                bloques.push(bloque.join('\\n'));
+                return;
             }
-            lista.forEach(item => bloque.push(`   ${m8_formatear(item)}`));
+            lista.forEach(item => bloque.push(`${m8_formatear(item)}`));
             bloques.push(bloque.join('\\n'));
         });
         document.getElementById('v_maquina').value = bloques.join('\\n');
@@ -306,11 +366,11 @@ MAQUINARIA_HTML = """
         const lista = window.m8_base[cat] || [];
         const tbody = document.getElementById('m8_base_tbody');
         if(lista.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4"><div class="m8-empty">No hay equipos en la base de esta clasificación.</div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5"><div class="m8-empty">No hay equipos en la base de esta clasificación.</div></td></tr>';
             return;
         }
         tbody.innerHTML = lista.map((item, idx) => `
-            <tr><td>${m8_escape(item.nombre)}</td><td>${m8_escape(item.marca)}</td><td>${m8_escape(item.modelo)}</td><td class="text-end"><button type="button" class="btn btn-sm text-danger border-0" onclick="m8_eliminar_base(${idx})"><i class="bi bi-trash"></i></button></td></tr>
+            <tr><td>${m8_escape(item.entidad)}</td><td>${m8_escape(item.nombre)}</td><td>${m8_escape(item.marca)}</td><td>${m8_escape(item.modelo)}</td><td class="text-end"><button type="button" class="btn btn-sm text-danger border-0" onclick="m8_eliminar_base(${idx})"><i class="bi bi-trash"></i></button></td></tr>
         `).join('');
     }
 

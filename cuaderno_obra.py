@@ -28,10 +28,11 @@ CUADERNO_OBRA_CSS = """
             .almacen-label { color: var(--celeste-obra); font-weight: 800; }
             .almacen-detalle { color: var(--celeste-obra); font-weight: 400; }
             .almacen-espacio { display: block; height: 26px; }
-            .maquinaria-bloque { display: block; padding-left: 22px; white-space: pre-wrap; }
+            .maquinaria-bloque { display: block; padding-left: 22px; white-space: normal; }
             .maquinaria-principal { display: block; padding-left: 18px; font-weight: 800; line-height: 26px; }
             .maquinaria-sub { display: block; padding-left: 44px; line-height: 26px; }
-            .maquinaria-fila { display: grid; grid-template-columns: 1.55fr 1fr 1.35fr 0.75fr 1fr; column-gap: 10px; padding-left: 44px; line-height: 26px; white-space: normal; }
+            .maquinaria-fila { display: grid; grid-template-columns: 1.45fr 0.78fr 1.18fr 0.62fr 0.95fr; column-gap: 6px; padding-left: 44px; line-height: 23px; font-size: 14px; white-space: nowrap; }
+            .maquinaria-fila span { min-width: 0; white-space: nowrap; overflow: visible; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
             .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000;}
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
