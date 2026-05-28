@@ -28,6 +28,10 @@ CUADERNO_OBRA_CSS = """
             .almacen-label { color: var(--celeste-obra); font-weight: 800; }
             .almacen-detalle { color: var(--celeste-obra); font-weight: 400; }
             .almacen-espacio { display: block; height: 26px; }
+            .maquinaria-bloque { display: block; padding-left: 22px; white-space: pre-wrap; }
+            .maquinaria-principal { display: block; padding-left: 18px; font-weight: 800; line-height: 26px; }
+            .maquinaria-sub { display: block; padding-left: 44px; line-height: 26px; }
+            .maquinaria-fila { display: grid; grid-template-columns: 1.55fr 1fr 1.35fr 0.75fr 1fr; column-gap: 10px; padding-left: 44px; line-height: 26px; white-space: normal; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
             .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000;}
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
@@ -113,6 +117,15 @@ CUADERNO_OBRA_JS = """
                 modulos.push({ titulo, contenido: texto || '-' });
             }
 
+            function agregarModuloConFormato(modulos, titulo, contenido) {
+                const texto = String(contenido || '')
+                    .split('\\n')
+                    .map(linea => String(linea || '').trimEnd())
+                    .filter(linea => linea.trim())
+                    .join('\\n');
+                modulos.push({ titulo, contenido: texto || '-' });
+            }
+
             function cantidadPersonal(cantidad, nombre) {
                 return `(${cantidad.toString().padStart(2, '0')}) ${nombre}`;
             }
@@ -174,7 +187,7 @@ CUADERNO_OBRA_JS = """
                 }
 
                 agregarModulo(modulos, '7. Movimiento de almacén', valorConSaltos('v_almacen'));
-                agregarModulo(modulos, '8. Maquinarias y equipos', valorConSaltos('v_maquina'));
+                agregarModuloConFormato(modulos, '8. Maquinarias y equipos', valorConSaltos('v_maquina'));
                 agregarModulo(modulos, '9. Herramientas manuales', valor('v_herram'));
                 agregarModulo(modulos, '10. Ocurrencias y otros', valor('v_ocurrencia'));
 
@@ -199,6 +212,14 @@ CUADERNO_OBRA_JS = """
                         <div class="modulo-redaccion">
                             <span class="modulo-titulo">${escaparHtml(modulo.titulo)}</span>
                             <div class="almacen-bloque">${htmlAlmacen(modulo.contenido)}</div>
+                        </div>
+                    `;
+                }
+                if (modulo.titulo.startsWith('8.')) {
+                    return `
+                        <div class="modulo-redaccion">
+                            <span class="modulo-titulo">${escaparHtml(modulo.titulo)}</span>
+                            <div class="maquinaria-bloque">${htmlMaquinaria(modulo.contenido)}</div>
                         </div>
                     `;
                 }
@@ -279,6 +300,32 @@ CUADERNO_OBRA_JS = """
 
                     return `<div class="almacen-sub">${escaparHtml(limpia)}</div>${espacio}`;
                 }).join('');
+            }
+
+            function htmlMaquinaria(texto) {
+                if (!texto || texto === '-') return '<span class="modulo-contenido">-</span>';
+
+                return String(texto).split('\\n').map(linea => {
+                    const cruda = String(linea || '').trimEnd();
+                    if (!cruda.trim()) return '';
+                    const limpia = cruda.trimStart();
+
+                    if (limpia.startsWith('*')) {
+                        return `<div class="maquinaria-principal">${escaparHtml(limpia)}</div>`;
+                    }
+
+                    if (limpia.startsWith('-')) {
+                        return `<div class="maquinaria-sub">${escaparHtml(limpia)}</div>`;
+                    }
+
+                    if (cruda.includes('\\t')) {
+                        const cols = cruda.split('\\t').map(col => escaparHtml(col.trim()));
+                        while (cols.length < 5) cols.push('');
+                        return `<div class="maquinaria-fila"><span>${cols[0]}</span><span>${cols[1]}</span><span>${cols[2]}</span><span>${cols[3]}</span><span>${cols[4]}</span></div>`;
+                    }
+
+                    return `<div class="maquinaria-sub">${escaparHtml(cruda)}</div>`;
+                }).filter(Boolean).join('');
             }
 
             function paginaHtml(asiento, fecha, modulos, continuacion=false, van=false) {
