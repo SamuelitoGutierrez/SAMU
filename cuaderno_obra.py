@@ -109,6 +109,11 @@ CUADERNO_OBRA_JS = """
                 return normalizarOracion(`${item}${p.descripcion || ''}${progresiva}${metrado}`);
             }
 
+            function listaModulo(nombre) {
+                const lista = window[nombre];
+                return Array.isArray(lista) ? lista : [];
+            }
+
             function agregarModulo(modulos, titulo, contenido) {
                 const texto = String(contenido || '')
                     .split('\\n')
@@ -133,8 +138,6 @@ CUADERNO_OBRA_JS = """
 
             function redactarModulosCuaderno() {
                 const modulos = [];
-                const pasoActual = Number(window.samuCurrentStep || currentStep || 1);
-                const pasoMaximo = Math.max(1, Math.min(pasoActual, 10));
 
                 const vJ1 = valor('v_jornal_m');
                 const vJ2 = valor('v_jornal_t');
@@ -166,28 +169,32 @@ CUADERNO_OBRA_JS = """
                     agregarModulo(modulos, '2. Personal de obra', '');
                 }
 
-                if (Array.isArray(window.m3_lista) && window.m3_lista.length > 0) {
-                    agregarModulo(modulos, '3. Partidas ejecutadas', window.m3_lista.map(formatoItem).join('\\n'));
+                const m3 = listaModulo('m3_lista');
+                if (m3.length > 0) {
+                    agregarModulo(modulos, '3. Partidas ejecutadas', m3.map(formatoItem).join('\\n'));
                 } else {
                     agregarModulo(modulos, '3. Partidas ejecutadas', '');
                 }
 
-                if (Array.isArray(window.m4_lista) && window.m4_lista.length > 0) {
-                    agregarModulo(modulos, '4. Partidas de mayor metrado', window.m4_lista.map(formatoItem).join('\\n'));
+                const m4 = listaModulo('m4_lista');
+                if (m4.length > 0) {
+                    agregarModulo(modulos, '4. Partidas de mayor metrado', m4.map(formatoItem).join('\\n'));
                 } else {
-                    agregarModulo(modulos, '4. Partidas de mayor metrado', valor('v_mayor_m'));
+                    agregarModulo(modulos, '4. Partidas de mayor metrado', '');
                 }
 
-                if (Array.isArray(window.m5_lista) && window.m5_lista.length > 0) {
-                    agregarModulo(modulos, '5. Sub partidas ejecutadas', window.m5_lista.map(formatoItem).join('\\n'));
+                const m5 = listaModulo('m5_lista');
+                if (m5.length > 0) {
+                    agregarModulo(modulos, '5. Sub partidas ejecutadas', m5.map(formatoItem).join('\\n'));
                 } else {
-                    agregarModulo(modulos, '5. Sub partidas ejecutadas', valor('v_sub_p'));
+                    agregarModulo(modulos, '5. Sub partidas ejecutadas', '');
                 }
 
-                if (Array.isArray(window.m6_lista) && window.m6_lista.length > 0) {
-                    agregarModulo(modulos, '6. Actividades ejecutadas', window.m6_lista.map(formatoItem).join('\\n'));
+                const m6 = listaModulo('m6_lista');
+                if (m6.length > 0) {
+                    agregarModulo(modulos, '6. Actividades ejecutadas', m6.map(formatoItem).join('\\n'));
                 } else {
-                    agregarModulo(modulos, '6. Actividades ejecutadas', valor('v_activ'));
+                    agregarModulo(modulos, '6. Actividades ejecutadas', '');
                 }
 
                 agregarModulo(modulos, '7. Movimiento de almacén', valorConSaltos('v_almacen'));
@@ -195,7 +202,7 @@ CUADERNO_OBRA_JS = """
                 agregarModulo(modulos, '9. Herramientas manuales', valor('v_herram'));
                 agregarModuloConFormato(modulos, '10. Ocurrencias y otros', valorConSaltos('v_ocurrencia'));
 
-                return modulos.slice(0, pasoMaximo);
+                return modulos;
             }
 
             function encabezadoPagina(asiento, fecha, continuacion=false) {
@@ -429,5 +436,25 @@ CUADERNO_OBRA_JS = """
                 }
 
                 contenedor.innerHTML = paginaHtml(asiento, fechaActiva, modulos, false, false);
+            }
+
+            if (!window.__samuCuadernoAutoSync) {
+                window.__samuCuadernoAutoSync = true;
+                document.addEventListener('DOMContentLoaded', () => {
+                    const form = document.getElementById('formResidencia');
+                    if (form) {
+                        ['input', 'change', 'keyup', 'click'].forEach(evento => {
+                            form.addEventListener(evento, () => {
+                                if (window.g_numAsiento || typeof g_numAsiento !== 'undefined') {
+                                    setTimeout(sincronizarDatos, 30);
+                                }
+                            });
+                        });
+                    }
+                    setInterval(() => {
+                        const numeroActivo = String((typeof g_numAsiento !== 'undefined' ? g_numAsiento : '') || window.g_numAsiento || '').trim();
+                        if (numeroActivo) sincronizarDatos();
+                    }, 900);
+                });
             }
 """
