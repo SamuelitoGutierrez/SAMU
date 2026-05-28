@@ -167,6 +167,19 @@ def redaccion_asiento_residente():
             .asiento-actions.visible {{ display: flex; }}
             .asiento-lock-banner {{ display: none; position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%); z-index: 930; border-radius: 999px; padding: 10px 16px; background: #0f172a; color: #fff; font-size: 12px; font-weight: 800; box-shadow: 0 18px 34px rgba(15,23,42,.22); }}
             .asiento-lock-banner.visible {{ display: inline-flex; gap: 8px; align-items: center; }}
+            .confirm-seat-overlay {{ position: fixed; inset: 0; z-index: 999999; display: none; align-items: center; justify-content: center; padding: 18px; background: rgba(15,23,42,.48); backdrop-filter: blur(14px); }}
+            .confirm-seat-overlay.active {{ display: flex; animation: floatInUp .22s ease both; }}
+            .confirm-seat-card {{ width: min(460px, 94vw); border: 1px solid rgba(255,255,255,.84); border-radius: 30px; background: rgba(255,255,255,.96); box-shadow: 0 35px 90px rgba(15,23,42,.32); overflow: hidden; }}
+            .confirm-seat-hero {{ padding: 26px 26px 20px; color: #fff; background: linear-gradient(135deg, #0f172a, #166534); text-align: center; }}
+            .confirm-seat-hero .icon {{ width: 62px; height: 62px; border-radius: 22px; display: grid; place-items: center; margin: 0 auto 12px; background: rgba(255,255,255,.14); font-size: 30px; }}
+            .confirm-seat-hero h5 {{ margin: 0; font-weight: 900; letter-spacing: -.25px; }}
+            .confirm-seat-hero p {{ margin: 8px 0 0; font-size: 12px; color: rgba(255,255,255,.76); }}
+            .confirm-seat-body {{ padding: 22px 24px 24px; }}
+            .confirm-seat-warning {{ border: 1px solid #fde68a; border-radius: 18px; padding: 13px; background: #fef9c3; color: #854d0e; font-size: 12px; font-weight: 800; line-height: 1.45; }}
+            .confirm-seat-actions {{ display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }}
+            .confirm-seat-btn {{ border: 0; border-radius: 999px; padding: 11px 16px; font-size: 12px; font-weight: 900; }}
+            .confirm-seat-btn.cancel {{ color: #334155; background: #f1f5f9; }}
+            .confirm-seat-btn.close-seat {{ color: #fff; background: linear-gradient(135deg, #166534, #22c55e); box-shadow: 0 14px 28px rgba(34,197,94,.22); }}
             .form-column.asiento-cerrado input,
             .form-column.asiento-cerrado textarea,
             .form-column.asiento-cerrado select {{ pointer-events: none; background-color: #f8fafc !important; opacity: .72; }}
@@ -324,8 +337,8 @@ def redaccion_asiento_residente():
         <div class="bottom-bar shadow-lg" id="bottomBarUI">
             <button type="button" id="btnAtras" class="btn btn-light border fw-bold rounded-pill px-4 text-dark shadow-sm d-none" onclick="window.anteriorModulo()"><i class="bi bi-arrow-left"></i> Anterior</button>
             <div class="asiento-actions" id="asientoActions">
-                <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm" onclick="guardarBorradorAsiento()"><i class="bi bi-save2"></i> Guardar borrador</button>
-                <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" onclick="cerrarAsiento()"><i class="bi bi-lock-fill"></i> Cerrar asiento</button>
+                <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm" onclick="window.guardarBorradorAsiento()"><i class="bi bi-save2"></i> Guardar borrador</button>
+                <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" onclick="window.mostrarConfirmarCerrarAsiento()"><i class="bi bi-lock-fill"></i> Cerrar asiento</button>
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4 shadow-sm d-none" id="btnEditarComoDueno" onclick="habilitarEdicionComoDueno()"><i class="bi bi-unlock-fill"></i> Editar como dueño</button>
             </div>
             <div class="d-flex gap-2 align-items-center ms-auto" id="moduloNavActions">
@@ -334,6 +347,26 @@ def redaccion_asiento_residente():
             </div>
         </div>
         <div class="asiento-lock-banner" id="asientoLockBanner"><i class="bi bi-lock-fill"></i> Asiento cerrado. La edición está bloqueada.</div>
+
+        <div class="confirm-seat-overlay" id="confirmCerrarAsiento">
+            <div class="confirm-seat-card">
+                <div class="confirm-seat-hero">
+                    <div class="icon"><i class="bi bi-shield-lock-fill"></i></div>
+                    <h5>Cerrar asiento del cuaderno</h5>
+                    <p>Antes de cerrar, revise que la información registrada sea correcta.</p>
+                </div>
+                <div class="confirm-seat-body">
+                    <div class="confirm-seat-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        Al cerrar el asiento ya no podrá modificarse desde residencia. Solo el dueño/Admin podrá habilitar edición de emergencia.
+                    </div>
+                    <div class="confirm-seat-actions">
+                        <button type="button" class="confirm-seat-btn cancel" onclick="window.ocultarConfirmarCerrarAsiento()">Seguir editando</button>
+                        <button type="button" class="confirm-seat-btn close-seat" onclick="window.confirmarCerrarAsiento()">Cerrar asiento y ver resumen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <button type="button" class="mobile-preview-btn" id="mobilePreviewBtn" onclick="abrirResumenCuaderno()">
             <i class="bi bi-journal-text"></i> Ver cuaderno
@@ -735,13 +768,9 @@ def redaccion_asiento_residente():
             window.guardarBorradorAsiento = guardarBorradorAsiento;
 
             async function cerrarAsiento() {{
-                if (!confirm("Al cerrar el asiento ya no se podrá modificar. Solo el dueño/Admin podrá editarlo. ¿Desea cerrar el asiento?")) return;
-                const data = await enviarAsiento('Cerrado');
-                if (!data) return;
-                asientoCerrado = true;
-                edicionDuenoActiva = false;
-                bloquearEdicionAsiento();
-                mostrarAlerta("Asiento cerrado y guardado correctamente.", "success");
+                if (typeof window.mostrarConfirmarCerrarAsiento === 'function') {{
+                    window.mostrarConfirmarCerrarAsiento();
+                }}
             }}
             window.cerrarAsiento = cerrarAsiento;
 
@@ -1208,28 +1237,41 @@ def redaccion_asiento_residente():
                             texto_html: document.getElementById('contenedorLineasCuaderno')?.innerHTML || ''
                         }}
                     }};
-                    const resp = await fetch('/residencia/api/asiento', {{
-                        method: 'POST',
-                        headers: {{ 'Content-Type': 'application/json' }},
-                        body: JSON.stringify(payload)
-                    }});
-                    const data = await resp.json().catch(() => ({{ ok: false, error: 'Respuesta inválida' }}));
-                    if (!resp.ok || !data.ok) {{
-                        if (typeof mostrarAlerta === 'function') mostrarAlerta(data.error || 'No se pudo guardar.', 'error');
-                        return;
+                    try {{
+                        const resp = await fetch('/residencia/api/asiento', {{
+                            method: 'POST',
+                            headers: {{ 'Content-Type': 'application/json' }},
+                            body: JSON.stringify(payload)
+                        }});
+                        const data = await resp.json().catch(() => ({{ ok: false, error: 'Respuesta inválida' }}));
+                        if (!resp.ok || !data.ok) {{
+                            if (typeof mostrarAlerta === 'function') mostrarAlerta(data.error || 'No se pudo guardar.', 'error');
+                            return;
+                        }}
+                        try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
+                        if (typeof mostrarAlerta === 'function') mostrarAlerta(estado === 'Cerrado' ? 'Asiento cerrado correctamente.' : 'Borrador guardado correctamente.', 'success');
+                        setTimeout(() => {{
+                            window.redirigirCuadernoAlCerrarResumen = true;
+                            if (typeof abrirResumenCuaderno === 'function') abrirResumenCuaderno();
+                        }}, 450);
+                    }} catch (error) {{
+                        console.error('Error guardando asiento:', error);
+                        if (typeof mostrarAlerta === 'function') mostrarAlerta('No se pudo conectar con el servidor para guardar.', 'error');
                     }}
-                    try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
-                    if (typeof mostrarAlerta === 'function') mostrarAlerta(estado === 'Cerrado' ? 'Asiento cerrado correctamente.' : 'Borrador guardado correctamente.', 'success');
-                    setTimeout(() => {{
-                        window.redirigirCuadernoAlCerrarResumen = true;
-                        if (typeof abrirResumenCuaderno === 'function') abrirResumenCuaderno();
-                    }}, 450);
                 }}
 
                 window.guardarBorradorAsiento = function() {{ guardarAsientoSeguro('Borrador'); }};
-                window.cerrarAsiento = function() {{
-                    if (confirm('Al cerrar el asiento ya no se podrá modificar. ¿Desea cerrar el asiento?')) guardarAsientoSeguro('Cerrado');
+                window.mostrarConfirmarCerrarAsiento = function() {{
+                    document.getElementById('confirmCerrarAsiento')?.classList.add('active');
                 }};
+                window.ocultarConfirmarCerrarAsiento = function() {{
+                    document.getElementById('confirmCerrarAsiento')?.classList.remove('active');
+                }};
+                window.confirmarCerrarAsiento = function() {{
+                    window.ocultarConfirmarCerrarAsiento();
+                    guardarAsientoSeguro('Cerrado');
+                }};
+                window.cerrarAsiento = window.mostrarConfirmarCerrarAsiento;
 
                 document.addEventListener('DOMContentLoaded', function() {{
                     document.getElementById('btnComenzarRegistro')?.addEventListener('click', function(event) {{
