@@ -286,16 +286,16 @@ def redaccion_asiento_residente():
         </div>
 
         <div class="stepper-container" id="stepperBar">
-            <button type="button" class="step-btn active" id="btnStep1" data-step="1" data-percent="0%" onclick="jumpToStep(1)">1. Jornal</button>
-            <button type="button" class="step-btn" id="btnStep2" data-step="2" data-percent="0%" onclick="jumpToStep(2)">2. Personal</button>
-            <button type="button" class="step-btn" id="btnStep3" data-step="3" data-percent="0%" onclick="jumpToStep(3)">3. Partidas</button>
-            <button type="button" class="step-btn" id="btnStep4" data-step="4" data-percent="0%" onclick="jumpToStep(4)">4. Mayor Metrado</button>
-            <button type="button" class="step-btn" id="btnStep5" data-step="5" data-percent="0%" onclick="jumpToStep(5)">5. Sub Partidas</button>
-            <button type="button" class="step-btn" id="btnStep6" data-step="6" data-percent="0%" onclick="jumpToStep(6)">6. Actividades</button>
-            <button type="button" class="step-btn" id="btnStep7" data-step="7" data-percent="0%" onclick="jumpToStep(7)">7. Almacén</button>
-            <button type="button" class="step-btn" id="btnStep8" data-step="8" data-percent="0%" onclick="jumpToStep(8)">8. Maquinaria</button>
-            <button type="button" class="step-btn" id="btnStep9" data-step="9" data-percent="0%" onclick="jumpToStep(9)">9. Herramientas</button>
-            <button type="button" class="step-btn" id="btnStep10" data-step="10" data-percent="0%" onclick="jumpToStep(10)">10. Ocurrencias</button>
+            <button type="button" class="step-btn active" id="btnStep1" data-step="1" data-percent="0%" onclick="window.irModulo(1)">1. Jornal</button>
+            <button type="button" class="step-btn" id="btnStep2" data-step="2" data-percent="0%" onclick="window.irModulo(2)">2. Personal</button>
+            <button type="button" class="step-btn" id="btnStep3" data-step="3" data-percent="0%" onclick="window.irModulo(3)">3. Partidas</button>
+            <button type="button" class="step-btn" id="btnStep4" data-step="4" data-percent="0%" onclick="window.irModulo(4)">4. Mayor Metrado</button>
+            <button type="button" class="step-btn" id="btnStep5" data-step="5" data-percent="0%" onclick="window.irModulo(5)">5. Sub Partidas</button>
+            <button type="button" class="step-btn" id="btnStep6" data-step="6" data-percent="0%" onclick="window.irModulo(6)">6. Actividades</button>
+            <button type="button" class="step-btn" id="btnStep7" data-step="7" data-percent="0%" onclick="window.irModulo(7)">7. Almacén</button>
+            <button type="button" class="step-btn" id="btnStep8" data-step="8" data-percent="0%" onclick="window.irModulo(8)">8. Maquinaria</button>
+            <button type="button" class="step-btn" id="btnStep9" data-step="9" data-percent="0%" onclick="window.irModulo(9)">9. Herramientas</button>
+            <button type="button" class="step-btn" id="btnStep10" data-step="10" data-percent="0%" onclick="window.irModulo(10)">10. Ocurrencias</button>
             <button type="button" class="step-btn resumen" id="btnResumenCuaderno" data-percent="Ver" data-tooltip="Resumen del cuaderno · Vista previa completa" onclick="abrirResumenCuaderno()">Resumen</button>
         </div>
         <div id="globalTooltip"></div>
@@ -322,15 +322,15 @@ def redaccion_asiento_residente():
         </div>
 
         <div class="bottom-bar shadow-lg" id="bottomBarUI">
-            <button type="button" id="btnAtras" class="btn btn-light border fw-bold rounded-pill px-4 text-dark shadow-sm d-none" onclick="anteriorPaso()"><i class="bi bi-arrow-left"></i> Anterior</button>
+            <button type="button" id="btnAtras" class="btn btn-light border fw-bold rounded-pill px-4 text-dark shadow-sm d-none" onclick="window.anteriorModulo()"><i class="bi bi-arrow-left"></i> Anterior</button>
             <div class="asiento-actions" id="asientoActions">
                 <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm" onclick="guardarBorradorAsiento()"><i class="bi bi-save2"></i> Guardar borrador</button>
                 <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" onclick="cerrarAsiento()"><i class="bi bi-lock-fill"></i> Cerrar asiento</button>
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4 shadow-sm d-none" id="btnEditarComoDueno" onclick="habilitarEdicionComoDueno()"><i class="bi bi-unlock-fill"></i> Editar como dueño</button>
             </div>
             <div class="d-flex gap-2 align-items-center ms-auto">
-                <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill px-4" onclick="omitirPaso()">Omitir</button>
-                <button type="button" class="btn btn-dark fw-bold rounded-pill px-4" onclick="siguientePaso()">Guardar y Continuar <i class="bi bi-arrow-right"></i></button>
+                <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill px-4" onclick="window.siguienteModulo()">Omitir</button>
+                <button type="button" class="btn btn-dark fw-bold rounded-pill px-4" onclick="window.siguienteModulo()">Guardar y Continuar <i class="bi bi-arrow-right"></i></button>
             </div>
         </div>
         <div class="asiento-lock-banner" id="asientoLockBanner"><i class="bi bi-lock-fill"></i> Asiento cerrado. La edición está bloqueada.</div>
@@ -449,6 +449,29 @@ def redaccion_asiento_residente():
                 setTimeout(activarRegistro, 80);
             }};
             window.iniciarAsientoSeguro = window.iniciarAsiento;
+            window.samuCurrentStep = 1;
+            window.irModulo = function(stepIndex) {{
+                const step = Math.max(1, Math.min(10, parseInt(stepIndex, 10) || 1));
+                window.samuCurrentStep = step;
+                document.querySelectorAll('.step-view').forEach(view => view.classList.remove('active', 'exit'));
+                document.querySelectorAll('.step-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`step${{step}}`)?.classList.add('active');
+                document.getElementById(`btnStep${{step}}`)?.classList.add('active');
+                const btnAtras = document.getElementById('btnAtras');
+                if (btnAtras) btnAtras.classList.toggle('d-none', step <= 1);
+                if (typeof sincronizarDatos === 'function') sincronizarDatos();
+                if (typeof actualizarAccionesAsiento === 'function') actualizarAccionesAsiento();
+                document.dispatchEvent(new CustomEvent('modulo:cambio', {{ detail: {{ step }} }}));
+            }};
+            window.siguienteModulo = function() {{
+                if (window.g_numAsiento && typeof autoGuardarBorrador === 'function') {{
+                    try {{ autoGuardarBorrador(); }} catch (e) {{}}
+                }}
+                window.irModulo((window.samuCurrentStep || 1) + 1);
+            }};
+            window.anteriorModulo = function() {{
+                window.irModulo((window.samuCurrentStep || 1) - 1);
+            }};
             document.addEventListener('DOMContentLoaded', function() {{
                 document.getElementById('btnComenzarRegistro')?.addEventListener('click', function(event) {{
                     event.preventDefault();
@@ -477,6 +500,10 @@ def redaccion_asiento_residente():
                 g_fechaRaw = detalle.fechaRaw || "";
                 g_fechaAsiento = detalle.fechaTexto || "";
                 currentStep = 1;
+            }});
+            document.addEventListener('modulo:cambio', function(event) {{
+                currentStep = (event.detail && event.detail.step) ? event.detail.step : 1;
+                isAnimating = false;
             }});
             const stepLabels = {{
                 1: 'Jornal de trabajo', 2: 'Personal de obra', 3: 'Partidas ejecutadas',

@@ -140,12 +140,8 @@ def panel_cuaderno():
                 to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
             }
 
-            .scroll-reveal {
-                opacity: var(--scroll-opacity, 0);
-                transform: translateY(var(--scroll-y, 34px)) scale(var(--scroll-scale, .98));
-                filter: blur(var(--scroll-blur, 7px));
-                transition: box-shadow .25s ease, border-color .25s ease, transform .08s linear, opacity .08s linear, filter .08s linear;
-                will-change: transform, opacity, filter;
+            .content-float-in {
+                animation: heroFloatIn 1.35s cubic-bezier(.16,.84,.24,1) both;
             }
             
             /* --- DASHBOARD ESTADÍSTICO --- */
@@ -705,30 +701,14 @@ def panel_cuaderno():
         <script>
             const nombreSupervisor = "{{ nombre_completo }}";
 
-            function prepararAnimacionScrollCuaderno() {
+            function prepararAnimacionCuaderno() {
                 const elementos = document.querySelectorAll(
                     '.stat-card, .panel-head, .last-seat, .supervisor-tools, .calendar-grid, .calendar-legend, .postit, .empty-state, .portal-card'
                 );
-                elementos.forEach(el => el.classList.add('scroll-reveal'));
-                const actualizar = () => {
-                    const alto = window.innerHeight || document.documentElement.clientHeight;
-                    elementos.forEach(el => {
-                        const rect = el.getBoundingClientRect();
-                        const inicio = alto * 0.94;
-                        const fin = alto * 0.18;
-                        const progreso = Math.max(0, Math.min(1, (inicio - rect.top) / (inicio - fin)));
-                        el.style.setProperty('--scroll-opacity', progreso.toFixed(2));
-                        el.style.setProperty('--scroll-y', `${Math.round((1 - progreso) * 38)}px`);
-                        el.style.setProperty('--scroll-scale', (0.975 + progreso * 0.025).toFixed(3));
-                        el.style.setProperty('--scroll-blur', `${Math.round((1 - progreso) * 8)}px`);
-                    });
-                };
-                actualizar();
-                window.addEventListener('scroll', () => requestAnimationFrame(actualizar), { passive: true });
-                window.addEventListener('resize', actualizar);
+                elementos.forEach(el => el.classList.add('content-float-in'));
             }
 
-            document.addEventListener('DOMContentLoaded', prepararAnimacionScrollCuaderno);
+            document.addEventListener('DOMContentLoaded', prepararAnimacionCuaderno);
 
             function irAAsiento(numero) {
                 const destino = `/residencia?asiento=${numero}`;
