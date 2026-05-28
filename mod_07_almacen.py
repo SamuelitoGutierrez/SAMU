@@ -155,20 +155,24 @@ ALMACEN_HTML = """
         return null;
     }
 
+    function m7_texto_oracion(valor) {
+        return String(valor || '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('es-PE');
+    }
+
     function m7_formato_item(m) {
         if(!m.material || !m.unidad || !m.cantidad) return '';
         const cantidad = Number(m.cantidad);
         const cantidadTxt = Number.isFinite(cantidad) ? cantidad.toFixed(2) : m.cantidad;
-        return `${cantidadTxt} ${m.unidad.toUpperCase()} ${m.material.toUpperCase()}`;
+        return `${cantidadTxt} ${m7_texto_oracion(m.unidad)} ${m7_texto_oracion(m.material)}`;
     }
 
     function m7_titulo_categoria(categoria) {
-        return categoria === 'combustible' ? '* MOVIMIENTO DE COMBUSTIBLE Y LUBRICANTES' : '* MOVIMIENTO DE MATERIALES DE CONSTRUCCIÓN';
+        return categoria === 'combustible' ? '7.2 Movimiento de combustible.' : '7.1 Movimiento de materiales de construcción';
     }
 
     function m7_numero_movimiento(categoria, tipo) {
-        if(categoria === 'combustible') return tipo === 'ingreso' ? '7.2.1 INGRESO:' : '7.2.2 SALIDA:';
-        return tipo === 'ingreso' ? '7.1.1 INGRESO:' : '7.1.2 SALIDA:';
+        if(categoria === 'combustible') return tipo === 'ingreso' ? '7.2.1 Ingreso:' : '7.2.2 Salida:';
+        return tipo === 'ingreso' ? '7.1.1 Ingreso:' : '7.1.2 Salida:';
     }
 
     function m7_agregar_salida_combustible() {
@@ -203,8 +207,8 @@ ALMACEN_HTML = """
             const salida = window.m7_movimientos[cat].salida.map(m7_formato_item).filter(Boolean);
             if(ingreso.length > 0 || salida.length > 0) {
                 const bloque = [m7_titulo_categoria(cat)];
-                bloque.push(`- INGRESO: ${ingreso.join('; ')}`);
-                bloque.push(`- SALIDA: ${salida.join('; ')}`);
+                bloque.push(`${m7_numero_movimiento(cat, 'ingreso')} ${ingreso.join('; ')}`);
+                bloque.push(`${m7_numero_movimiento(cat, 'salida')} ${salida.join('; ')}`);
                 partes.push(bloque.join('\\n'));
             }
         });

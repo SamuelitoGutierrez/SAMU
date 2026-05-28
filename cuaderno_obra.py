@@ -70,6 +70,10 @@ CUADERNO_OBRA_JS = """
                     .trim();
             }
 
+            function textoMinuscula(texto) {
+                return normalizarOracion(texto).toLocaleLowerCase('es-PE');
+            }
+
             function escaparHtml(texto) {
                 return String(texto || '')
                     .replace(/&/g, '&amp;')
@@ -164,7 +168,7 @@ CUADERNO_OBRA_JS = """
                     agregarModulo(modulos, '6. Actividades ejecutadas', valor('v_activ'));
                 }
 
-                agregarModulo(modulos, '7.- MOVIMIENTO DE ALMACÉN', valor('v_almacen'));
+                agregarModulo(modulos, '7. Movimiento de almacén', valor('v_almacen'));
                 agregarModulo(modulos, '8. Maquinarias y equipos', valor('v_maquina'));
                 agregarModulo(modulos, '9. Herramientas manuales', valor('v_herram'));
                 agregarModulo(modulos, '10. Ocurrencias y otros', valor('v_ocurrencia'));
@@ -204,13 +208,39 @@ CUADERNO_OBRA_JS = """
             function htmlAlmacen(texto) {
                 if (!texto || texto === '-') return '<span class="modulo-contenido">-</span>';
                 
-                const lineas = String(texto).split('\\n').map(linea => normalizarOracion(linea)).filter(Boolean);
+                let categoriaActual = 'materiales';
+                const lineas = String(texto).split('\\n').map(linea => {
+                    const limpia = normalizarOracion(linea);
+                    const mayuscula = limpia.toLocaleUpperCase('es-PE');
+
+                    if ((limpia.startsWith('*') || /^7\\.1\\s+/i.test(limpia)) && mayuscula.includes('MATERIALES')) {
+                        categoriaActual = 'materiales';
+                        return '7.1 Movimiento de materiales de construcción';
+                    }
+
+                    if ((limpia.startsWith('*') || /^7\\.2\\s+/i.test(limpia)) && mayuscula.includes('COMBUSTIBLE')) {
+                        categoriaActual = 'combustible';
+                        return '7.2 Movimiento de combustible.';
+                    }
+
+                    const sub = limpia.match(/^(?:-\\s*)?(?:7\\.\\d+\\.\\d+\\s*)?(INGRESO|SALIDA):\\s*(.*)$/i);
+                    if (sub) {
+                        const esIngreso = sub[1].toLocaleUpperCase('es-PE') === 'INGRESO';
+                        const numero = categoriaActual === 'combustible'
+                            ? (esIngreso ? '7.2.1' : '7.2.2')
+                            : (esIngreso ? '7.1.1' : '7.1.2');
+                        const etiqueta = esIngreso ? 'Ingreso' : 'Salida';
+                        return `${numero} ${etiqueta}: ${textoMinuscula(sub[2])}`;
+                    }
+
+                    return limpia;
+                }).filter(Boolean);
                 
                 return lineas.map((limpia, index) => {
                     const siguiente = lineas[index + 1] || '';
                     const esUltimaLinea = index === lineas.length - 1;
                     
-                    const esSubMovimiento = /^7\\.\\d+\\.\\d+\\s+(INGRESO|SALIDA):/i.test(limpia) || /^-\\s*(INGRESO|SALIDA):/i.test(limpia);
+                    const esSubMovimiento = /^7\\.\\d+\\.\\d+\\s+(Ingreso|Salida):/i.test(limpia) || /^-\\s*(Ingreso|Salida):/i.test(limpia);
                     const esCategoria = /^7\\.\\d+\\s+/.test(limpia) || limpia.startsWith('*');
                     const siguienteEsCategoria = /^7\\.\\d+\\s+/.test(siguiente) || siguiente.startsWith('*');
                     const llevaEspacio = esSubMovimiento ||
@@ -223,18 +253,18 @@ CUADERNO_OBRA_JS = """
                         return `<div class="almacen-principal">${escaparHtml(limpia)}</div>${espacio}`;
                     }
 
-                    const subNumerado = limpia.match(/^(7\\.\\d+\\.\\d+\\s+(INGRESO|SALIDA):)(.*)$/i);
+                    const subNumerado = limpia.match(/^(7\\.\\d+\\.\\d+\\s+(Ingreso|Salida):)(.*)$/i);
                     if (subNumerado) {
-                        return `<div class="almacen-sub"><span class="almacen-label">${escaparHtml(subNumerado[1].toUpperCase())}</span><span class="almacen-detalle">${escaparHtml(subNumerado[3])}</span></div>${espacio}`;
+                        return `<div class="almacen-sub"><span class="almacen-label">${escaparHtml(subNumerado[1])}</span><span class="almacen-detalle">${escaparHtml(subNumerado[3])}</span></div>${espacio}`;
                     }
 
                     if (limpia.startsWith('*')) {
                         return `<div class="almacen-principal">${escaparHtml(limpia)}</div>${espacio}`;
                     }
 
-                    const sub = limpia.match(/^(-\\s*(INGRESO|SALIDA):)(.*)$/i);
+                    const sub = limpia.match(/^(-\\s*(Ingreso|Salida):)(.*)$/i);
                     if (sub) {
-                        return `<div class="almacen-sub"><span class="almacen-label">${escaparHtml(sub[1].toUpperCase())}</span><span class="almacen-detalle">${escaparHtml(sub[3])}</span></div>${espacio}`;
+                        return `<div class="almacen-sub"><span class="almacen-label">${escaparHtml(sub[1])}</span><span class="almacen-detalle">${escaparHtml(sub[3])}</span></div>${espacio}`;
                     }
 
                     return `<div class="almacen-sub">${escaparHtml(limpia)}</div>${espacio}`;
