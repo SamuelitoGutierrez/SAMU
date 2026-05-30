@@ -1264,9 +1264,46 @@ def redaccion_asiento_residente():
                     const fecha = String(window.g_fechaAsiento || (typeof g_fechaAsiento !== 'undefined' ? g_fechaAsiento : '') || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
                     const destino = document.getElementById('resumenCuadernoContenido');
                     if (!destino || !numero) return;
-                    destino.innerHTML = `<div class="papel-fisico">${{htmlCuaderno(numero.padStart(4, '0'), fecha, modulosCuaderno())}}</div>`;
+                    destino.innerHTML = htmlCuadernoPDF(numero.padStart(4, '0'), fecha, modulosCuaderno());
                     if (typeof aplicarZoomResumenCuaderno === 'function') aplicarZoomResumenCuaderno();
                 }};
+
+                function htmlFirmasPDF() {{
+                    const footer = document.querySelector('#papelOficial .p-footer');
+                    return footer ? footer.outerHTML : '<div class="p-footer"><div class="p-sig">ING. INSPECTOR</div><div class="p-sig">ING. RESIDENTE</div><div class="p-sig">ING. SUPERVISOR</div></div>';
+                }}
+
+                function htmlEncabezadoGeneralPDF() {{
+                    const top = document.querySelector('#papelOficial .p-header-top')?.outerHTML || '';
+                    const meta = document.querySelector('#papelOficial .p-meta')?.outerHTML || '';
+                    return `${{top}}${{meta}}`;
+                }}
+
+                function htmlCuadernoPDF(asiento, fecha, modulos) {{
+                    const paginas = paginarModulos(asiento, fecha, modulos);
+                    const firmas = htmlFirmasPDF();
+                    const encabezadoGeneral = htmlEncabezadoGeneralPDF();
+                    return paginas.map((pagina, idx) => `
+                        <div class="papel-fisico hoja-pdf">
+                            ${{idx === 0 ? encabezadoGeneral : ''}}
+                            <div class="p-body-lines">
+                                <div class="pagina-cuaderno">
+                                    <div class="lapicero">
+                                        ${{htmlEncabezadoPagina(asiento, fecha, pagina.continuacion)}}
+                                        ${{pagina.modulos.map(modulo => `
+                                            <div class="modulo-redaccion">
+                                                <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
+                                                ${{htmlContenidoModulo(modulo)}}
+                                            </div>
+                                        `).join('')}}
+                                        ${{pagina.van ? '<span class="van-final">Van ...</span>' : ''}}
+                                    </div>
+                                </div>
+                            </div>
+                            ${{firmas}}
+                        </div>
+                    `).join('');
+                }}
 
                 window.irModulo = function(stepIndex) {{
                     const step = Math.max(1, Math.min(totalModulos, parseInt(stepIndex, 10) || 1));

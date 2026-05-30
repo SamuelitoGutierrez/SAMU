@@ -57,14 +57,29 @@ def ver_asiento_cuaderno(numero):
             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
             .modulo-contenido { display: block; padding-left: 22px; white-space: pre-wrap; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
+            .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+            .p-title-box { text-align: center; flex: 1; margin-left: 60px; }
+            .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0; }
+            .p-num { font-size: 24px; font-weight: bold; }
+            .p-meta { margin-bottom: 6px; padding-bottom: 7px; border-bottom: 3px solid #000; }
+            .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
+            .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
+            .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
+            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; font-weight: 500; white-space: nowrap; }
+            .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000; }
+            .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
             @media print {
                 body { background: #fff; }
                 body * { visibility: hidden !important; }
                 #asientoPaper, #asientoPaper * { visibility: visible !important; }
                 @page { size: A4; margin: 12mm; }
                 #asientoPaper { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border-radius: 0; padding: 0; }
-                #asientoPaper .pagina-cuaderno { page-break-after: always; break-after: page; min-height: 260mm; }
-                #asientoPaper .pagina-cuaderno:last-child { page-break-after: auto; break-after: auto; }
+                #asientoPaper .papel-fisico { box-shadow: none !important; border: none !important; width: 100% !important; min-height: 270mm !important; padding: 8mm 10mm 10mm !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; }
+                #asientoPaper .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
+                #asientoPaper .p-body-lines { flex: 1; }
+                #asientoPaper .pagina-cuaderno { min-height: 210mm; }
+                #asientoPaper .hoja-pdf:not(:first-child) .pagina-cuaderno { min-height: 238mm; }
+                #asientoPaper .p-footer { margin-top: auto !important; padding-top: 12mm; }
             }
         </style>
     </head>
@@ -161,13 +176,43 @@ def ver_asiento_cuaderno(numero):
 
             function prepararAsientoPDF() {
                 if (!Array.isArray(asientoModulos) || asientoModulos.length === 0) return;
-                document.getElementById('asientoPaper').innerHTML = paginarVista(asientoModulos).map(p => `
-                    <div class="pagina-cuaderno"><div class="lapicero">
-                        ${encabezadoVista(p.continuacion)}
-                        ${p.modulos.map(htmlModuloVista).join('')}
-                        ${p.van ? '<span class="van-final">Van ...</span>' : ''}
-                    </div></div>
+                document.getElementById('asientoPaper').innerHTML = paginarVista(asientoModulos).map((p, idx) => `
+                    <div class="papel-fisico hoja-pdf">
+                        ${idx === 0 ? encabezadoGeneralVista() : ''}
+                        <div class="p-body-lines">
+                            <div class="pagina-cuaderno"><div class="lapicero">
+                                ${encabezadoVista(p.continuacion)}
+                                ${p.modulos.map(htmlModuloVista).join('')}
+                                ${p.van ? '<span class="van-final">Van ...</span>' : ''}
+                            </div></div>
+                        </div>
+                        ${firmasVista()}
+                    </div>
                 `).join('');
+            }
+
+            function encabezadoGeneralVista() {
+                return `
+                    <div class="p-header-top">
+                        <div style="width: 80px;"></div>
+                        <div class="p-title-box"><h1>CUADERNO DE OBRA</h1></div>
+                        <div style="text-align: right; width: 80px;"><div class="p-num">No <span style="font-size: 26px; margin-left:3px;">${asientoNumero}</span></div></div>
+                    </div>
+                    <div class="p-meta">
+                        <div class="d-flex w-100 mb-1">
+                            <div class="d-flex" style="flex: 0.5;"><span class="p-label">Fecha:</span><div class="p-line"><span class="lapicero-meta">${esc(asientoFechaTexto)}</span></div></div>
+                            <div class="d-flex" style="flex: 0.5; margin-left: 15px;"><span class="p-label">Modalidad:</span><div class="p-line"><span class="lapicero-meta">Administracion Directa</span></div></div>
+                        </div>
+                        <div class="p-row"><span class="p-label">Obra:</span><div class="p-line"><span class="lapicero-meta">Mejoramiento de la Carretera Asiruni - Rosaspata</span></div></div>
+                        <div class="p-row"><span class="p-label">Proyecto:</span><div class="p-line"><span class="lapicero-meta">Tramo I</span></div></div>
+                        <div class="p-row"><span class="p-label">Programa:</span><div class="p-line"><span class="lapicero-meta">-</span></div></div>
+                        <div class="p-row"><span class="p-label">Entidad Ejecutora:</span><div class="p-line"><span class="lapicero-meta">Gobierno Regional Puno</span></div></div>
+                    </div>
+                `;
+            }
+
+            function firmasVista() {
+                return '<div class="p-footer"><div class="p-sig">ING. INSPECTOR</div><div class="p-sig">ING. RESIDENTE</div><div class="p-sig">ING. SUPERVISOR</div></div>';
             }
 
             function exportarAsientoPDF() {
