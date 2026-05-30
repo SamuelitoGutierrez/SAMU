@@ -10,7 +10,6 @@ RESUMEN_ASIENTO_HTML = """
     .resumen-btn { border: 0; border-radius: 999px; padding: 9px 14px; font-size: 12px; font-weight: 900; color: #0f172a; background: #fff; }
     .resumen-btn.dark { color: #fff; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18); }
     .resumen-btn.pdf { color: #fff; background: linear-gradient(135deg, #991b1b, #ef4444); }
-    .resumen-btn.word { color: #fff; background: linear-gradient(135deg, #1d4ed8, #38bdf8); }
     .resumen-body { overflow: auto; padding: 24px; background: linear-gradient(135deg, #f8fafc, #eff6ff); }
     .resumen-paper { width: min(760px, 100%); margin: 0 auto; transform-origin: top center; }
     .resumen-paper .papel-fisico { margin: 0 auto; }
@@ -20,8 +19,10 @@ RESUMEN_ASIENTO_HTML = """
     @media print {
         body * { visibility: hidden !important; }
         #resumenCuadernoContenido, #resumenCuadernoContenido * { visibility: visible !important; }
-        #resumenCuadernoContenido { position: fixed; inset: 0; width: 100% !important; transform: none !important; }
+        #resumenCuadernoContenido { position: absolute; left: 0; top: 0; width: 100% !important; transform: none !important; }
         #resumenCuadernoContenido .papel-fisico { box-shadow: none !important; border: none !important; width: 100% !important; }
+        #resumenCuadernoContenido .pagina-cuaderno { page-break-after: always; break-after: page; min-height: 980px; }
+        #resumenCuadernoContenido .pagina-cuaderno:last-child { page-break-after: auto; break-after: auto; }
     }
     @media (max-width: 768px) {
         .resumen-overlay { padding: 8px; align-items: stretch; }
@@ -45,7 +46,6 @@ RESUMEN_ASIENTO_HTML = """
             <div class="resumen-actions">
                 <button type="button" class="resumen-btn dark" onclick="actualizarResumenCuaderno()"><i class="bi bi-arrow-clockwise me-1"></i>Actualizar</button>
                 <button type="button" class="resumen-btn pdf" onclick="exportarResumenPDF()"><i class="bi bi-filetype-pdf me-1"></i>PDF</button>
-                <button type="button" class="resumen-btn word" onclick="exportarResumenWord()"><i class="bi bi-file-earmark-word me-1"></i>Word</button>
                 <button type="button" class="resumen-btn" onclick="cerrarResumenCuaderno()"><i class="bi bi-x-lg me-1"></i>Cerrar</button>
             </div>
         </div>
@@ -115,37 +115,6 @@ RESUMEN_ASIENTO_HTML = """
     function exportarResumenPDF() {
         actualizarResumenCuaderno();
         window.print();
-    }
-
-    function exportarResumenWord() {
-        actualizarResumenCuaderno();
-        const contenido = document.getElementById('resumenCuadernoContenido');
-        if (!contenido) return;
-        const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <title>Cuaderno de Obra</title>
-                <style>
-                    body { font-family: Candara, Calibri, Arial, sans-serif; color: #0263a0; }
-                    .papel-fisico { width: 100%; }
-                    .p-footer { margin-top: 48px; display: flex; justify-content: space-between; color: #000; font-weight: bold; }
-                    .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
-                </style>
-            </head>
-            <body>${contenido.innerHTML}</body>
-            </html>
-        `;
-        const blob = new Blob(['\\ufeff', html], { type: 'application/msword' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = nombreArchivoResumen('doc');
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
     }
 </script>
 """

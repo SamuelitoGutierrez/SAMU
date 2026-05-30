@@ -5,9 +5,86 @@
 
 from flask import Blueprint, render_template_string, session, redirect, url_for
 from navbar import obtener_navbar
-from cuaderno_store import obtener_panel_cuaderno
+from cuaderno_store import obtener_panel_cuaderno, obtener_asiento
 
 cuaderno_bp = Blueprint('cuaderno', __name__)
+
+
+@cuaderno_bp.route('/cuaderno/asiento/<int:numero>')
+def ver_asiento_cuaderno(numero):
+    if 'usuario_id' not in session:
+        return redirect(url_for('login.mostrar_login'))
+
+    asiento = obtener_asiento(numero)
+    if not asiento:
+        return redirect(url_for('cuaderno.panel_cuaderno'))
+
+    import json
+    contenido = asiento.get("contenido") or "{}"
+    try:
+        contenido = json.loads(contenido) if isinstance(contenido, str) else contenido
+    except Exception:
+        contenido = {}
+
+    html_cuaderno = (contenido or {}).get("texto_html") or "<div class='empty-state'>No hay contenido guardado para este asiento.</div>"
+    menu_superior = obtener_navbar(session.get('rol') == 'Admin', session.get('nombre', 'Visitante'))
+
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Asiento {{ asiento.numero }} — Cuaderno de Obra</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <style>
+            body { margin: 0; min-height: 100vh; font-family: Inter, Arial, sans-serif; background: linear-gradient(135deg,#f8fafc,#eff6ff); color: #0f172a; }
+            .asiento-view { max-width: 980px; margin: 0 auto; padding: 96px 18px 42px; }
+            .asiento-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+            .asiento-head h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -.8px; }
+            .asiento-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+            .asiento-btn { border: 0; border-radius: 999px; padding: 10px 14px; font-size: 12px; font-weight: 900; text-decoration: none; color: #fff; background: #0f172a; }
+            .asiento-btn.pdf { background: linear-gradient(135deg,#991b1b,#ef4444); }
+            .asiento-paper { background: #fff; border-radius: 28px; padding: 20px; box-shadow: 0 24px 60px rgba(15,23,42,.12); overflow-x: auto; }
+            .pagina-cuaderno { background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px); line-height: 26px; min-height: 760px; padding-top: 0; position: relative; }
+            .lapicero { font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; }
+            .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-weight: 700; }
+            .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
+            .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; }
+            .modulo-titulo { display: block; font-weight: 700; color: #075985; }
+            .modulo-contenido { display: block; padding-left: 22px; white-space: pre-wrap; }
+            .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
+            @media print {
+                body { background: #fff; }
+                body * { visibility: hidden !important; }
+                #asientoPaper, #asientoPaper * { visibility: visible !important; }
+                #asientoPaper { position: fixed; inset: 0; box-shadow: none; border-radius: 0; padding: 0; }
+                #asientoPaper .pagina-cuaderno { page-break-after: always; break-after: page; min-height: 980px; }
+                #asientoPaper .pagina-cuaderno:last-child { page-break-after: auto; break-after: auto; }
+            }
+        </style>
+    </head>
+    <body>
+        {{ menu_superior | safe }}
+        <main class="asiento-view">
+            <div class="asiento-head">
+                <div>
+                    <h1>Asiento N° {{ asiento.numero }}</h1>
+                    <div class="text-muted fw-bold small">{{ asiento.fecha }} · {{ asiento.estado }} · Avance {{ asiento.avance }}%</div>
+                </div>
+                <div class="asiento-actions">
+                    <a class="asiento-btn" href="/cuaderno"><i class="bi bi-arrow-left"></i> Volver al calendario</a>
+                    <button class="asiento-btn pdf" onclick="window.print()"><i class="bi bi-filetype-pdf"></i> Exportar PDF</button>
+                </div>
+            </div>
+            <section class="asiento-paper" id="asientoPaper">
+                {{ html_cuaderno | safe }}
+            </section>
+        </main>
+    </body>
+    </html>
+    """, asiento=asiento, html_cuaderno=html_cuaderno, menu_superior=menu_superior)
 
 # NOTA IMPORTANTE: Ahora SOLO maneja la ruta /cuaderno. 
 # Esto permite que vistas_residencia.py funcione correctamente sin interferencias.
@@ -711,7 +788,7 @@ def panel_cuaderno():
             document.addEventListener('DOMContentLoaded', prepararAnimacionCuaderno);
 
             function irAAsiento(numero) {
-                const destino = `/residencia?asiento=${numero}`;
+                const destino = `/cuaderno/asiento/${numero}`;
                 window.location.href = destino;
             }
 

@@ -1130,6 +1130,106 @@ def redaccion_asiento_residente():
                 }}
 
                 function htmlCuaderno(asiento, fecha, modulos) {{
+                    const paginas = paginarModulos(asiento, fecha, modulos);
+                    return paginas.map(pagina => `
+                        <div class="pagina-cuaderno">
+                            <div class="lapicero">
+                                ${{htmlEncabezadoPagina(asiento, fecha, pagina.continuacion)}}
+                                ${{pagina.modulos.map(modulo => `
+                                    <div class="modulo-redaccion">
+                                        <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
+                                        ${{htmlContenidoModulo(modulo)}}
+                                    </div>
+                                `).join('')}}
+                                ${{pagina.van ? '<span class="van-final">Van ...</span>' : ''}}
+                            </div>
+                        </div>
+                    `).join('');
+                }}
+
+                function htmlEncabezadoPagina(asiento, fecha, continuacion=false) {{
+                    const titulo = continuacion
+                        ? `... viene del ASIENTO N° ${{asiento}} DEL RESIDENTE DE OBRA`
+                        : `ASIENTO N° ${{asiento}} DEL RESIDENTE DE OBRA`;
+                    return `
+                        <div class="encabezado-asiento ${{continuacion ? 'continuacion' : ''}}">
+                            <div class="titulo-asiento">${{escapar(titulo)}}</div>
+                            <div class="fecha-asiento">${{escapar(fecha)}}</div>
+                        </div>
+                    `;
+                }}
+
+                function lineasModulo(modulo) {{
+                    const base = 1;
+                    const contenido = String(modulo.contenido || '-');
+                    const lineasTexto = contenido.split('\\n').reduce((sum, linea) => {{
+                        const largo = Math.max(1, Math.ceil(String(linea || '').length / 82));
+                        return sum + largo;
+                    }}, 0);
+                    return base + lineasTexto;
+                }}
+
+                function dividirModuloPorLineas(modulo, maxLineas) {{
+                    const lineas = String(modulo.contenido || '-').split('\\n');
+                    const primera = [];
+                    const segunda = [];
+                    let usadas = 1;
+                    lineas.forEach(linea => {{
+                        const peso = Math.max(1, Math.ceil(String(linea || '').length / 82));
+                        if (usadas + peso <= maxLineas || primera.length === 0) {{
+                            primera.push(linea);
+                            usadas += peso;
+                        }} else {{
+                            segunda.push(linea);
+                        }}
+                    }});
+                    return [
+                        {{ titulo: modulo.titulo, contenido: primera.join('\\n') || '-' }},
+                        {{ titulo: modulo.titulo, contenido: segunda.join('\\n') }}
+                    ];
+                }}
+
+                function paginarModulos(asiento, fecha, modulos) {{
+                    const maxLineas = 25;
+                    const paginas = [];
+                    let actual = [];
+                    let usadas = 1;
+                    let continuacion = false;
+
+                    modulos.forEach(moduloOriginal => {{
+                        let pendiente = {{ ...moduloOriginal }};
+                        while (pendiente && String(pendiente.contenido || '').trim()) {{
+                            const lineas = lineasModulo(pendiente);
+                            if (usadas + lineas <= maxLineas) {{
+                                actual.push(pendiente);
+                                usadas += lineas;
+                                pendiente = null;
+                                continue;
+                            }}
+
+                            if (actual.length > 0) {{
+                                paginas.push({{ modulos: actual, continuacion, van: true }});
+                                actual = [];
+                                usadas = 1;
+                                continuacion = true;
+                                continue;
+                            }}
+
+                            const partes = dividirModuloPorLineas(pendiente, maxLineas - usadas);
+                            actual.push(partes[0]);
+                            paginas.push({{ modulos: actual, continuacion, van: true }});
+                            actual = [];
+                            usadas = 1;
+                            continuacion = true;
+                            pendiente = partes[1].contenido.trim() ? partes[1] : null;
+                        }}
+                    }});
+
+                    paginas.push({{ modulos: actual, continuacion, van: false }});
+                    return paginas;
+                }}
+
+                function htmlCuadernoPlano(asiento, fecha, modulos) {{
                     const contenido = modulos.map(modulo => `
                         <div class="modulo-redaccion">
                             <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
