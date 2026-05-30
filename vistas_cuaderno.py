@@ -79,7 +79,9 @@ def ver_asiento_cuaderno(numero):
                 #asientoPaper .p-header-top { flex: 0 0 auto; margin-bottom: 7mm !important; }
                 #asientoPaper .p-meta { flex: 0 0 auto; margin-bottom: 3mm !important; padding-bottom: 2mm !important; }
                 #asientoPaper .p-body-lines { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-                #asientoPaper .pagina-cuaderno { flex: 1 1 auto; min-height: 0 !important; }
+                #asientoPaper .pagina-cuaderno { flex: 1 1 auto; min-height: 0 !important; display: flex; flex-direction: column; }
+                #asientoPaper .lapicero { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+                #asientoPaper .van-final { margin-top: auto !important; text-align: right !important; padding-right: 8px !important; }
                 #asientoPaper .p-footer { flex: 0 0 auto; margin-top: 10mm !important; padding-top: 0 !important; }
             }
         </style>

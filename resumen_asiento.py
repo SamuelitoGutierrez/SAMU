@@ -26,8 +26,9 @@ RESUMEN_ASIENTO_HTML = """
         #resumenCuadernoContenido .p-header-top { flex: 0 0 auto; margin-bottom: 7mm !important; }
         #resumenCuadernoContenido .p-meta { flex: 0 0 auto; margin-bottom: 3mm !important; padding-bottom: 2mm !important; }
         #resumenCuadernoContenido .p-body-lines { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-        #resumenCuadernoContenido .pagina-cuaderno { flex: 1 1 auto; width: 100%; min-height: 0 !important; background-size: auto 26px; }
-        #resumenCuadernoContenido .lapicero { font-size: 17px; line-height: 26px; }
+        #resumenCuadernoContenido .pagina-cuaderno { flex: 1 1 auto; width: 100%; min-height: 0 !important; background-size: auto 26px; display: flex; flex-direction: column; }
+        #resumenCuadernoContenido .lapicero { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; font-size: 17px; line-height: 26px; }
+        #resumenCuadernoContenido .van-final { margin-top: auto !important; text-align: right !important; padding-right: 8px !important; }
         #resumenCuadernoContenido .p-footer { flex: 0 0 auto; margin-top: 10mm !important; padding-top: 0 !important; }
     }
     @media (max-width: 768px) {
