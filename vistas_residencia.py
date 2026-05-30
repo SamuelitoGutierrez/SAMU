@@ -1199,7 +1199,7 @@ def redaccion_asiento_residente():
                     let actual = [];
                     let usadas = 1;
                     let continuacion = false;
-                    const maxLineasPagina = () => continuacion ? 36 : 28;
+                    const maxLineasPagina = () => continuacion ? 32 : 24;
 
                     modulos.forEach(moduloOriginal => {{
                         let pendiente = {{ ...moduloOriginal }};

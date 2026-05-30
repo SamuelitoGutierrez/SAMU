@@ -79,8 +79,8 @@ def ver_asiento_cuaderno(numero):
                 #asientoPaper .p-header-top { flex: 0 0 auto; margin-bottom: 7mm !important; }
                 #asientoPaper .p-meta { flex: 0 0 auto; margin-bottom: 3mm !important; padding-bottom: 2mm !important; }
                 #asientoPaper .p-body-lines { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-                #asientoPaper .pagina-cuaderno { flex: 1 1 auto; min-height: 0 !important; background-size: auto 24px; background-image: repeating-linear-gradient(transparent, transparent 23px, #cbd5e1 24px) !important; display: flex; flex-direction: column; }
-                #asientoPaper .lapicero { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; font-size: 16px; line-height: 24px; }
+                #asientoPaper .pagina-cuaderno { flex: 1 1 auto; min-height: 0 !important; background-size: auto 26px; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px) !important; display: flex; flex-direction: column; }
+                #asientoPaper .lapicero { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; font-size: 17px; line-height: 26px; }
                 #asientoPaper .van-final { margin-top: auto !important; text-align: right !important; padding-right: 8px !important; }
                 #asientoPaper .p-footer { flex: 0 0 auto; margin-top: 10mm !important; padding-top: 0 !important; }
             }
@@ -143,7 +143,7 @@ def ver_asiento_cuaderno(numero):
                 let actual = [];
                 let usadas = 1;
                 let continuacion = false;
-                const maxLineasPagina = () => continuacion ? 36 : 28;
+                const maxLineasPagina = () => continuacion ? 32 : 24;
                 modulos.forEach(original => {
                     let pendiente = {...original};
                     while (pendiente && String(pendiente.contenido || '').trim()) {
