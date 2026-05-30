@@ -955,7 +955,7 @@ def redaccion_asiento_residente():
                     modulos.push({{ titulo, contenido: limpio || '-' }});
                 }}
 
-                function modulosCuaderno() {{
+                function modulosCuadernoCompleto() {{
                     const modulos = [];
                     const jornal = [];
                     if (texto('v_jornal_m')) jornal.push(`Mañana: ${{texto('v_jornal_m')}}`);
@@ -982,6 +982,11 @@ def redaccion_asiento_residente():
                     agregar(modulos, '8. Maquinarias y equipos', texto('v_maquina', true));
                     agregar(modulos, '9. Herramientas manuales', texto('v_herram', true));
                     agregar(modulos, '10. Ocurrencias y otros', texto('v_ocurrencia', true));
+                    return modulos;
+                }}
+
+                function modulosCuaderno() {{
+                    const modulos = modulosCuadernoCompleto();
                     const paso = Math.max(1, Math.min(totalModulos, parseInt(window.samuCurrentStep || 1, 10) || 1));
                     return modulos.slice(0, paso);
                 }}
@@ -1194,7 +1199,7 @@ def redaccion_asiento_residente():
                     let actual = [];
                     let usadas = 1;
                     let continuacion = false;
-                    const maxLineasPagina = () => continuacion ? 32 : 24;
+                    const maxLineasPagina = () => continuacion ? 36 : 28;
 
                     modulos.forEach(moduloOriginal => {{
                         let pendiente = {{ ...moduloOriginal }};
@@ -1264,7 +1269,7 @@ def redaccion_asiento_residente():
                     const fecha = String(window.g_fechaAsiento || (typeof g_fechaAsiento !== 'undefined' ? g_fechaAsiento : '') || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
                     const destino = document.getElementById('resumenCuadernoContenido');
                     if (!destino || !numero) return;
-                    destino.innerHTML = htmlCuadernoPDF(numero.padStart(4, '0'), fecha, modulosCuaderno());
+                    destino.innerHTML = htmlCuadernoPDF(numero.padStart(4, '0'), fecha, modulosCuadernoCompleto());
                     if (typeof aplicarZoomResumenCuaderno === 'function') aplicarZoomResumenCuaderno();
                 }};
 
@@ -1393,7 +1398,7 @@ def redaccion_asiento_residente():
                             numero,
                             fecha,
                             fecha_texto: window.g_fechaAsiento || '',
-                            modulos: modulosCuaderno(),
+                            modulos: modulosCuadernoCompleto(),
                             texto_html: document.getElementById('contenedorLineasCuaderno')?.innerHTML || ''
                         }}
                     }};
