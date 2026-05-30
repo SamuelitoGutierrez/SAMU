@@ -220,8 +220,59 @@ def ver_asiento_cuaderno(numero):
 
             function exportarAsientoPDF() {
                 prepararAsientoPDF();
-                window.print();
+                imprimirAsientoEnVentana();
                 setTimeout(() => { document.getElementById('asientoPaper').innerHTML = asientoHtmlNormal; }, 700);
+            }
+
+            function imprimirAsientoEnVentana() {
+                const contenido = document.getElementById('asientoPaper');
+                if (!contenido || !contenido.innerHTML.trim()) return;
+                const ventana = window.open('', '_blank', 'width=980,height=720');
+                if (!ventana) {
+                    window.print();
+                    return;
+                }
+                ventana.document.open();
+                ventana.document.write(`
+                    <!DOCTYPE html>
+                    <html lang="es">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>cuaderno_obra_${asientoNumero}.pdf</title>
+                        <style>
+                            @page { size: A4; margin: 0; }
+                            html, body { margin: 0; padding: 0; background: #fff; }
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                            .papel-fisico { width: 210mm; height: 297mm; min-height: 297mm; box-sizing: border-box; padding: 12mm 14mm 14mm; margin: 0; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa; border: none; box-shadow: none; font-family: Arial, sans-serif; color: #000; }
+                            .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
+                            .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7mm; flex: 0 0 auto; }
+                            .p-title-box { text-align: center; flex: 1; margin-left: 60px; }
+                            .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0; }
+                            .p-num { font-size: 24px; font-weight: bold; }
+                            .p-meta { flex: 0 0 auto; margin-bottom: 3mm; padding-bottom: 2mm; border-bottom: 3px solid #000; }
+                            .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
+                            .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
+                            .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
+                            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; font-weight: 500; white-space: nowrap; }
+                            .p-body-lines { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+                            .pagina-cuaderno { flex: 1 1 auto; min-height: 0; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px); background-size: auto 26px; line-height: 26px; display: flex; flex-direction: column; }
+                            .lapicero { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; }
+                            .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-weight: 700; }
+                            .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
+                            .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; }
+                            .modulo-titulo { display: block; font-weight: 700; color: #075985; }
+                            .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; }
+                            .van-final { margin-top: auto; display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
+                            .p-footer { flex: 0 0 auto; display: flex; justify-content: space-between; margin-top: 10mm; font-size: 12px; font-weight: bold; color: #000; }
+                            .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
+                        </style>
+                    </head>
+                    <body>${contenido.innerHTML}</body>
+                    </html>
+                `);
+                ventana.document.close();
+                ventana.focus();
+                setTimeout(() => ventana.print(), 350);
             }
         </script>
     </body>
