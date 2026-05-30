@@ -72,14 +72,15 @@ def ver_asiento_cuaderno(numero):
                 body { background: #fff; }
                 body * { visibility: hidden !important; }
                 #asientoPaper, #asientoPaper * { visibility: visible !important; }
-                @page { size: A4; margin: 12mm; }
-                #asientoPaper { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border-radius: 0; padding: 0; }
-                #asientoPaper .papel-fisico { box-shadow: none !important; border: none !important; width: 100% !important; min-height: 270mm !important; padding: 8mm 10mm 10mm !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; }
+                @page { size: A4; margin: 0; }
+                #asientoPaper { position: absolute; left: 0; top: 0; width: 210mm; box-shadow: none; border-radius: 0; padding: 0; background: #fff; }
+                #asientoPaper .papel-fisico { width: 210mm !important; height: 297mm !important; min-height: 297mm !important; box-sizing: border-box !important; padding: 12mm 14mm 14mm !important; margin: 0 !important; box-shadow: none !important; border: none !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa !important; }
                 #asientoPaper .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
-                #asientoPaper .p-body-lines { flex: 1; }
-                #asientoPaper .pagina-cuaderno { min-height: 210mm; }
-                #asientoPaper .hoja-pdf:not(:first-child) .pagina-cuaderno { min-height: 238mm; }
-                #asientoPaper .p-footer { margin-top: auto !important; padding-top: 12mm; }
+                #asientoPaper .p-header-top { flex: 0 0 auto; margin-bottom: 7mm !important; }
+                #asientoPaper .p-meta { flex: 0 0 auto; margin-bottom: 3mm !important; padding-bottom: 2mm !important; }
+                #asientoPaper .p-body-lines { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+                #asientoPaper .pagina-cuaderno { flex: 1 1 auto; min-height: 0 !important; }
+                #asientoPaper .p-footer { flex: 0 0 auto; margin-top: 10mm !important; padding-top: 0 !important; }
             }
         </style>
     </head>
@@ -136,16 +137,16 @@ def ver_asiento_cuaderno(numero):
             }
 
             function paginarVista(modulos) {
-                const maxLineas = 25;
                 const paginas = [];
                 let actual = [];
                 let usadas = 1;
                 let continuacion = false;
+                const maxLineasPagina = () => continuacion ? 32 : 24;
                 modulos.forEach(original => {
                     let pendiente = {...original};
                     while (pendiente && String(pendiente.contenido || '').trim()) {
                         const lineas = lineasModuloVista(pendiente);
-                        if (usadas + lineas <= maxLineas) {
+                        if (usadas + lineas <= maxLineasPagina()) {
                             actual.push(pendiente);
                             usadas += lineas;
                             pendiente = null;
@@ -155,7 +156,7 @@ def ver_asiento_cuaderno(numero):
                             usadas = 1;
                             continuacion = true;
                         } else {
-                            const partes = dividirModuloVista(pendiente, maxLineas - usadas);
+                            const partes = dividirModuloVista(pendiente, maxLineasPagina() - usadas);
                             actual.push(partes[0]);
                             paginas.push({modulos: actual, continuacion, van: true});
                             actual = [];

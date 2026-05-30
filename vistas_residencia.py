@@ -1190,17 +1190,17 @@ def redaccion_asiento_residente():
                 }}
 
                 function paginarModulos(asiento, fecha, modulos) {{
-                    const maxLineas = 25;
                     const paginas = [];
                     let actual = [];
                     let usadas = 1;
                     let continuacion = false;
+                    const maxLineasPagina = () => continuacion ? 32 : 24;
 
                     modulos.forEach(moduloOriginal => {{
                         let pendiente = {{ ...moduloOriginal }};
                         while (pendiente && String(pendiente.contenido || '').trim()) {{
                             const lineas = lineasModulo(pendiente);
-                            if (usadas + lineas <= maxLineas) {{
+                            if (usadas + lineas <= maxLineasPagina()) {{
                                 actual.push(pendiente);
                                 usadas += lineas;
                                 pendiente = null;
@@ -1215,7 +1215,7 @@ def redaccion_asiento_residente():
                                 continue;
                             }}
 
-                            const partes = dividirModuloPorLineas(pendiente, maxLineas - usadas);
+                            const partes = dividirModuloPorLineas(pendiente, maxLineasPagina() - usadas);
                             actual.push(partes[0]);
                             paginas.push({{ modulos: actual, continuacion, van: true }});
                             actual = [];
