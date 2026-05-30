@@ -27,6 +27,8 @@ def ver_asiento_cuaderno(numero):
         contenido = {}
 
     html_cuaderno = (contenido or {}).get("texto_html") or "<div class='empty-state'>No hay contenido guardado para este asiento.</div>"
+    modulos_json = json.dumps((contenido or {}).get("modulos") or [], ensure_ascii=False)
+    fecha_texto = (contenido or {}).get("fecha_texto") or asiento.get("fecha") or ""
     menu_superior = obtener_navbar(session.get('rol') == 'Admin', session.get('nombre', 'Visitante'))
 
     return render_template_string("""
@@ -59,8 +61,9 @@ def ver_asiento_cuaderno(numero):
                 body { background: #fff; }
                 body * { visibility: hidden !important; }
                 #asientoPaper, #asientoPaper * { visibility: visible !important; }
-                #asientoPaper { position: fixed; inset: 0; box-shadow: none; border-radius: 0; padding: 0; }
-                #asientoPaper .pagina-cuaderno { page-break-after: always; break-after: page; min-height: 980px; }
+                @page { size: A4; margin: 12mm; }
+                #asientoPaper { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border-radius: 0; padding: 0; }
+                #asientoPaper .pagina-cuaderno { page-break-after: always; break-after: page; min-height: 260mm; }
                 #asientoPaper .pagina-cuaderno:last-child { page-break-after: auto; break-after: auto; }
             }
         </style>
@@ -75,16 +78,107 @@ def ver_asiento_cuaderno(numero):
                 </div>
                 <div class="asiento-actions">
                     <a class="asiento-btn" href="/cuaderno"><i class="bi bi-arrow-left"></i> Volver al calendario</a>
-                    <button class="asiento-btn pdf" onclick="window.print()"><i class="bi bi-filetype-pdf"></i> Exportar PDF</button>
+                    <button class="asiento-btn pdf" onclick="exportarAsientoPDF()"><i class="bi bi-filetype-pdf"></i> Exportar PDF</button>
                 </div>
             </div>
             <section class="asiento-paper" id="asientoPaper">
                 {{ html_cuaderno | safe }}
             </section>
         </main>
+        <script>
+            const asientoModulos = {{ modulos_json | safe }};
+            const asientoNumero = "{{ asiento.numero }}".padStart(4, "0");
+            const asientoFechaTexto = {{ fecha_texto | tojson }};
+            const asientoHtmlNormal = document.getElementById('asientoPaper')?.innerHTML || '';
+
+            function esc(v) {
+                return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            }
+
+            function htmlModuloVista(modulo) {
+                return `<div class="modulo-redaccion"><span class="modulo-titulo">${esc(modulo.titulo)}</span><span class="modulo-contenido">${esc(modulo.contenido || '-').replace(/\\n/g, '<br>')}</span></div>`;
+            }
+
+            function lineasModuloVista(modulo) {
+                return 1 + String(modulo.contenido || '-').split('\\n').reduce((sum, linea) => sum + Math.max(1, Math.ceil(String(linea || '').length / 82)), 0);
+            }
+
+            function dividirModuloVista(modulo, maxLineas) {
+                const lineas = String(modulo.contenido || '-').split('\\n');
+                const primera = [];
+                const segunda = [];
+                let usadas = 1;
+                lineas.forEach(linea => {
+                    const peso = Math.max(1, Math.ceil(String(linea || '').length / 82));
+                    if (usadas + peso <= maxLineas || primera.length === 0) {
+                        primera.push(linea);
+                        usadas += peso;
+                    } else {
+                        segunda.push(linea);
+                    }
+                });
+                return [{...modulo, contenido: primera.join('\\n') || '-'}, {...modulo, contenido: segunda.join('\\n')}];
+            }
+
+            function paginarVista(modulos) {
+                const maxLineas = 25;
+                const paginas = [];
+                let actual = [];
+                let usadas = 1;
+                let continuacion = false;
+                modulos.forEach(original => {
+                    let pendiente = {...original};
+                    while (pendiente && String(pendiente.contenido || '').trim()) {
+                        const lineas = lineasModuloVista(pendiente);
+                        if (usadas + lineas <= maxLineas) {
+                            actual.push(pendiente);
+                            usadas += lineas;
+                            pendiente = null;
+                        } else if (actual.length > 0) {
+                            paginas.push({modulos: actual, continuacion, van: true});
+                            actual = [];
+                            usadas = 1;
+                            continuacion = true;
+                        } else {
+                            const partes = dividirModuloVista(pendiente, maxLineas - usadas);
+                            actual.push(partes[0]);
+                            paginas.push({modulos: actual, continuacion, van: true});
+                            actual = [];
+                            usadas = 1;
+                            continuacion = true;
+                            pendiente = partes[1].contenido.trim() ? partes[1] : null;
+                        }
+                    }
+                });
+                paginas.push({modulos: actual, continuacion, van: false});
+                return paginas;
+            }
+
+            function encabezadoVista(continuacion) {
+                const titulo = continuacion ? `... viene del ASIENTO N° ${asientoNumero} DEL RESIDENTE DE OBRA` : `ASIENTO N° ${asientoNumero} DEL RESIDENTE DE OBRA`;
+                return `<div class="encabezado-asiento"><div class="titulo-asiento">${esc(titulo)}</div><div class="fecha-asiento">${esc(asientoFechaTexto)}</div></div>`;
+            }
+
+            function prepararAsientoPDF() {
+                if (!Array.isArray(asientoModulos) || asientoModulos.length === 0) return;
+                document.getElementById('asientoPaper').innerHTML = paginarVista(asientoModulos).map(p => `
+                    <div class="pagina-cuaderno"><div class="lapicero">
+                        ${encabezadoVista(p.continuacion)}
+                        ${p.modulos.map(htmlModuloVista).join('')}
+                        ${p.van ? '<span class="van-final">Van ...</span>' : ''}
+                    </div></div>
+                `).join('');
+            }
+
+            function exportarAsientoPDF() {
+                prepararAsientoPDF();
+                window.print();
+                setTimeout(() => { document.getElementById('asientoPaper').innerHTML = asientoHtmlNormal; }, 700);
+            }
+        </script>
     </body>
     </html>
-    """, asiento=asiento, html_cuaderno=html_cuaderno, menu_superior=menu_superior)
+    """, asiento=asiento, html_cuaderno=html_cuaderno, modulos_json=modulos_json, fecha_texto=fecha_texto, menu_superior=menu_superior)
 
 # NOTA IMPORTANTE: Ahora SOLO maneja la ruta /cuaderno. 
 # Esto permite que vistas_residencia.py funcione correctamente sin interferencias.

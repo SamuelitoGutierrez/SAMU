@@ -17,12 +17,14 @@ RESUMEN_ASIENTO_HTML = """
     .resumen-zoom button { border: 0; border-radius: 999px; padding: 7px 11px; font-size: 12px; font-weight: 900; color: #0f172a; background: #e0f2fe; }
     .resumen-zoom span { margin-left: auto; font-size: 11px; font-weight: 900; color: #475569; }
     @media print {
+        @page { size: A4; margin: 12mm; }
         body * { visibility: hidden !important; }
         #resumenCuadernoContenido, #resumenCuadernoContenido * { visibility: visible !important; }
         #resumenCuadernoContenido { position: absolute; left: 0; top: 0; width: 100% !important; transform: none !important; }
-        #resumenCuadernoContenido .papel-fisico { box-shadow: none !important; border: none !important; width: 100% !important; }
-        #resumenCuadernoContenido .pagina-cuaderno { page-break-after: always; break-after: page; min-height: 980px; }
+        #resumenCuadernoContenido .papel-fisico { box-shadow: none !important; border: none !important; width: 100% !important; min-height: 0 !important; padding: 0 !important; }
+        #resumenCuadernoContenido .pagina-cuaderno { width: 100%; min-height: 260mm; page-break-after: always; break-after: page; background-size: auto 26px; }
         #resumenCuadernoContenido .pagina-cuaderno:last-child { page-break-after: auto; break-after: auto; }
+        #resumenCuadernoContenido .lapicero { font-size: 17px; line-height: 26px; }
     }
     @media (max-width: 768px) {
         .resumen-overlay { padding: 8px; align-items: stretch; }
@@ -113,8 +115,10 @@ RESUMEN_ASIENTO_HTML = """
     }
 
     function exportarResumenPDF() {
-        actualizarResumenCuaderno();
+        if (typeof window.samuPrepararResumenPDF === 'function') window.samuPrepararResumenPDF();
+        else actualizarResumenCuaderno();
         window.print();
+        setTimeout(actualizarResumenCuaderno, 700);
     }
 </script>
 """

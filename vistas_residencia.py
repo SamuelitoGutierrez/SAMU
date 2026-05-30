@@ -1255,8 +1255,17 @@ def redaccion_asiento_residente():
                     const fecha = String(window.g_fechaAsiento || (typeof g_fechaAsiento !== 'undefined' ? g_fechaAsiento : '') || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
                     const contenedor = document.getElementById('contenedorLineasCuaderno');
                     if (!contenedor || !numero) return;
-                    contenedor.innerHTML = htmlCuaderno(numero.padStart(4, '0'), fecha, modulosCuaderno());
+                    contenedor.innerHTML = htmlCuadernoPlano(numero.padStart(4, '0'), fecha, modulosCuaderno());
                     guardarEstadoLocal();
+                }};
+
+                window.samuPrepararResumenPDF = function() {{
+                    const numero = String(window.g_numAsiento || (typeof g_numAsiento !== 'undefined' ? g_numAsiento : '') || '').trim();
+                    const fecha = String(window.g_fechaAsiento || (typeof g_fechaAsiento !== 'undefined' ? g_fechaAsiento : '') || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
+                    const destino = document.getElementById('resumenCuadernoContenido');
+                    if (!destino || !numero) return;
+                    destino.innerHTML = `<div class="papel-fisico">${{htmlCuaderno(numero.padStart(4, '0'), fecha, modulosCuaderno())}}</div>`;
+                    if (typeof aplicarZoomResumenCuaderno === 'function') aplicarZoomResumenCuaderno();
                 }};
 
                 window.irModulo = function(stepIndex) {{
