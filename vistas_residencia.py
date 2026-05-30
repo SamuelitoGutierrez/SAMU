@@ -7,7 +7,7 @@ from flask import Blueprint, render_template_string, session, redirect, url_for,
 from navbar import obtener_navbar
 from datetime import datetime
 from cuaderno_obra import CUADERNO_OBRA_CSS, CUADERNO_OBRA_JS, obtener_cuaderno_obra_html
-from resumen_cuaderno import RESUMEN_CUADERNO_HTML
+from resumen_asiento import RESUMEN_ASIENTO_HTML
 from cuaderno_store import guardar_asiento, obtener_asiento
 
 # ==============================================================================
@@ -171,6 +171,7 @@ def redaccion_asiento_residente():
             .confirm-seat-overlay.active {{ display: flex; animation: floatInUp .22s ease both; }}
             .confirm-seat-card {{ width: min(460px, 94vw); border: 1px solid rgba(255,255,255,.84); border-radius: 30px; background: rgba(255,255,255,.96); box-shadow: 0 35px 90px rgba(15,23,42,.32); overflow: hidden; }}
             .confirm-seat-hero {{ padding: 26px 26px 20px; color: #fff; background: linear-gradient(135deg, #0f172a, #166534); text-align: center; }}
+            .confirm-seat-hero.draft {{ background: linear-gradient(135deg, #78350f, #f59e0b); }}
             .confirm-seat-hero .icon {{ width: 62px; height: 62px; border-radius: 22px; display: grid; place-items: center; margin: 0 auto 12px; background: rgba(255,255,255,.14); font-size: 30px; }}
             .confirm-seat-hero h5 {{ margin: 0; font-weight: 900; letter-spacing: -.25px; }}
             .confirm-seat-hero p {{ margin: 8px 0 0; font-size: 12px; color: rgba(255,255,255,.76); }}
@@ -179,7 +180,8 @@ def redaccion_asiento_residente():
             .confirm-seat-actions {{ display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }}
             .confirm-seat-btn {{ border: 0; border-radius: 999px; padding: 11px 16px; font-size: 12px; font-weight: 900; }}
             .confirm-seat-btn.cancel {{ color: #334155; background: #f1f5f9; }}
-            .confirm-seat-btn.close-seat {{ color: #fff; background: linear-gradient(135deg, #166534, #22c55e); box-shadow: 0 14px 28px rgba(34,197,94,.22); }}
+            .confirm-seat-btn.primary {{ color: #fff; background: linear-gradient(135deg, #166534, #22c55e); box-shadow: 0 14px 28px rgba(34,197,94,.22); }}
+            .confirm-seat-btn.primary.draft {{ background: linear-gradient(135deg, #b45309, #f59e0b); box-shadow: 0 14px 28px rgba(245,158,11,.22); }}
             .save-success-toast {{ position: fixed; top: 28px; right: 28px; z-index: 1000000; min-width: 280px; max-width: calc(100vw - 32px); display: none; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 22px; background: rgba(255,255,255,.96); border: 1px solid rgba(255,255,255,.9); box-shadow: 0 24px 54px rgba(15,23,42,.22); backdrop-filter: blur(18px); }}
             .save-success-toast.show {{ display: flex; animation: floatInUp .28s ease both; }}
             .save-success-icon {{ width: 42px; height: 42px; border-radius: 16px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #16a34a, #22c55e); font-size: 22px; box-shadow: 0 12px 24px rgba(34,197,94,.24); }}
@@ -349,7 +351,7 @@ def redaccion_asiento_residente():
         <div class="bottom-bar shadow-lg" id="bottomBarUI">
             <button type="button" id="btnAtras" class="btn btn-light border fw-bold rounded-pill px-4 text-dark shadow-sm d-none" onclick="window.anteriorModulo()"><i class="bi bi-arrow-left"></i> Anterior</button>
             <div class="asiento-actions" id="asientoActions">
-                <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm" onclick="window.guardarBorradorAsiento()"><i class="bi bi-save2"></i> Guardar borrador</button>
+                <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm" onclick="window.mostrarConfirmarGuardarBorrador()"><i class="bi bi-save2"></i> Guardar borrador</button>
                 <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" onclick="window.mostrarConfirmarCerrarAsiento()"><i class="bi bi-lock-fill"></i> Cerrar asiento</button>
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4 shadow-sm d-none" id="btnEditarComoDueno" onclick="habilitarEdicionComoDueno()"><i class="bi bi-unlock-fill"></i> Editar como dueño</button>
             </div>
@@ -360,21 +362,21 @@ def redaccion_asiento_residente():
         </div>
         <div class="asiento-lock-banner" id="asientoLockBanner"><i class="bi bi-lock-fill"></i> Asiento cerrado. La edición está bloqueada.</div>
 
-        <div class="confirm-seat-overlay" id="confirmCerrarAsiento">
+        <div class="confirm-seat-overlay" id="confirmAccionAsiento">
             <div class="confirm-seat-card">
-                <div class="confirm-seat-hero">
-                    <div class="icon"><i class="bi bi-shield-lock-fill"></i></div>
-                    <h5>Cerrar asiento del cuaderno</h5>
-                    <p>Antes de cerrar, revise que la información registrada sea correcta.</p>
+                <div class="confirm-seat-hero" id="confirmAccionHero">
+                    <div class="icon" id="confirmAccionIcon"><i class="bi bi-shield-lock-fill"></i></div>
+                    <h5 id="confirmAccionTitulo">Cerrar asiento del cuaderno</h5>
+                    <p id="confirmAccionSubtitulo">Antes de cerrar, revise que la información registrada sea correcta.</p>
                 </div>
                 <div class="confirm-seat-body">
-                    <div class="confirm-seat-warning">
+                    <div class="confirm-seat-warning" id="confirmAccionMensaje">
                         <i class="bi bi-exclamation-triangle-fill me-1"></i>
                         Al cerrar el asiento ya no podrá modificarse desde residencia. Solo el dueño/Admin podrá habilitar edición de emergencia.
                     </div>
                     <div class="confirm-seat-actions">
-                        <button type="button" class="confirm-seat-btn cancel" onclick="window.ocultarConfirmarCerrarAsiento()">Seguir editando</button>
-                        <button type="button" class="confirm-seat-btn close-seat" onclick="window.confirmarCerrarAsiento()">Cerrar asiento y ver resumen</button>
+                        <button type="button" class="confirm-seat-btn cancel" onclick="window.ocultarConfirmarAccionAsiento()">Seguir editando</button>
+                        <button type="button" class="confirm-seat-btn primary" id="confirmAccionBoton" onclick="window.confirmarAccionAsiento()">Cerrar asiento y ver resumen</button>
                     </div>
                 </div>
             </div>
@@ -384,7 +386,7 @@ def redaccion_asiento_residente():
             <i class="bi bi-journal-text"></i> Ver cuaderno
         </button>
 
-        {RESUMEN_CUADERNO_HTML}
+        {RESUMEN_ASIENTO_HTML}
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
@@ -1305,17 +1307,44 @@ def redaccion_asiento_residente():
                     }}, 950);
                 }}
 
-                window.guardarBorradorAsiento = function() {{ guardarAsientoSeguro('Borrador'); }};
+                window.accionAsientoPendiente = 'Borrador';
+                function configurarConfirmacionAsiento(tipo) {{
+                    const esCierre = tipo === 'Cerrado';
+                    window.accionAsientoPendiente = tipo;
+                    const hero = document.getElementById('confirmAccionHero');
+                    const icon = document.getElementById('confirmAccionIcon');
+                    const titulo = document.getElementById('confirmAccionTitulo');
+                    const subtitulo = document.getElementById('confirmAccionSubtitulo');
+                    const mensaje = document.getElementById('confirmAccionMensaje');
+                    const boton = document.getElementById('confirmAccionBoton');
+                    hero?.classList.toggle('draft', !esCierre);
+                    boton?.classList.toggle('draft', !esCierre);
+                    if (icon) icon.innerHTML = esCierre ? '<i class="bi bi-shield-lock-fill"></i>' : '<i class="bi bi-save2-fill"></i>';
+                    if (titulo) titulo.innerText = esCierre ? 'Cerrar asiento del cuaderno' : 'Guardar asiento como borrador';
+                    if (subtitulo) subtitulo.innerText = esCierre
+                        ? 'Confirme el cierre para revisar el resumen final.'
+                        : 'Se guardará el avance y podrá continuar editando después.';
+                    if (mensaje) mensaje.innerHTML = esCierre
+                        ? '<i class="bi bi-exclamation-triangle-fill me-1"></i> Al cerrar el asiento ya no podrá modificarse desde residencia. Solo el dueño/Admin podrá habilitar edición de emergencia.'
+                        : '<i class="bi bi-info-circle-fill me-1"></i> El asiento quedará como borrador y aparecerá en el calendario como en proceso de llenado.';
+                    if (boton) boton.innerText = esCierre ? 'Cerrar asiento y ver resumen' : 'Guardar borrador y ver resumen';
+                }}
+                window.mostrarConfirmarGuardarBorrador = function() {{
+                    configurarConfirmacionAsiento('Borrador');
+                    document.getElementById('confirmAccionAsiento')?.classList.add('active');
+                }};
                 window.mostrarConfirmarCerrarAsiento = function() {{
-                    document.getElementById('confirmCerrarAsiento')?.classList.add('active');
+                    configurarConfirmacionAsiento('Cerrado');
+                    document.getElementById('confirmAccionAsiento')?.classList.add('active');
                 }};
-                window.ocultarConfirmarCerrarAsiento = function() {{
-                    document.getElementById('confirmCerrarAsiento')?.classList.remove('active');
+                window.ocultarConfirmarAccionAsiento = function() {{
+                    document.getElementById('confirmAccionAsiento')?.classList.remove('active');
                 }};
-                window.confirmarCerrarAsiento = function() {{
-                    window.ocultarConfirmarCerrarAsiento();
-                    guardarAsientoSeguro('Cerrado');
+                window.confirmarAccionAsiento = function() {{
+                    window.ocultarConfirmarAccionAsiento();
+                    guardarAsientoSeguro(window.accionAsientoPendiente || 'Borrador');
                 }};
+                window.guardarBorradorAsiento = window.mostrarConfirmarGuardarBorrador;
                 window.cerrarAsiento = window.mostrarConfirmarCerrarAsiento;
 
                 document.addEventListener('DOMContentLoaded', function() {{
