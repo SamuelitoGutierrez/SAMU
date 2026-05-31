@@ -889,8 +889,10 @@ def redaccion_asiento_residente():
             window.samuSincronizarCuaderno = function() {{
                 try {{
                     if (typeof actualizarStepper === 'function') actualizarStepper();
-                    const numero = String(g_numAsiento || window.g_numAsiento || '').trim();
-                    const fecha = String(g_fechaAsiento || window.g_fechaAsiento || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
+                    const numeroGlobal = typeof g_numAsiento !== 'undefined' ? g_numAsiento : '';
+                    const fechaGlobal = typeof g_fechaAsiento !== 'undefined' ? g_fechaAsiento : '';
+                    const numero = String(numeroGlobal || window.g_numAsiento || '').trim();
+                    const fecha = String(fechaGlobal || window.g_fechaAsiento || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
                     const contenedor = document.getElementById('contenedorLineasCuaderno');
                     if (!contenedor || !numero) return;
                     const asiento = numero.padStart(4, '0');
@@ -904,11 +906,16 @@ def redaccion_asiento_residente():
             sincronizarDatos = window.samuSincronizarCuaderno;
 
             document.addEventListener('DOMContentLoaded', function() {{
-                const refrescar = () => setTimeout(window.samuSincronizarCuaderno, 30);
+                const refrescar = () => {{
+                    clearTimeout(window.__samuSyncLigeroTimer);
+                    window.__samuSyncLigeroTimer = setTimeout(() => {{
+                        const fn = window.samuActualizarCuaderno || window.samuSincronizarCuaderno;
+                        if (typeof fn === 'function') fn();
+                    }}, 160);
+                }};
                 document.getElementById('formResidencia')?.addEventListener('input', refrescar);
                 document.getElementById('formResidencia')?.addEventListener('change', refrescar);
                 document.getElementById('formResidencia')?.addEventListener('click', refrescar);
-                setInterval(window.samuSincronizarCuaderno, 700);
             }});
         </script>
 
@@ -1273,7 +1280,6 @@ def redaccion_asiento_residente():
                     const contenedor = document.getElementById('contenedorLineasCuaderno');
                     if (!contenedor || !numero) return;
                     contenedor.innerHTML = htmlCuadernoPlano(numero.padStart(4, '0'), fecha, modulosCuaderno());
-                    guardarEstadoLocal();
                 }};
 
                 window.samuPrepararResumenPDF = function() {{
@@ -1523,18 +1529,18 @@ def redaccion_asiento_residente():
                     }});
                     const form = document.getElementById('formResidencia');
                     if (form) {{
-                        ['input', 'change', 'click', 'keyup'].forEach(evento => {{
-                            form.addEventListener(evento, () => setTimeout(() => {{
+                        const refrescarYGuardar = () => {{
+                            clearTimeout(window.__samuRefrescoTimer);
+                            window.__samuRefrescoTimer = setTimeout(() => {{
                                 window.samuActualizarCuaderno();
                                 guardarEstadoLocal();
-                            }}, 40));
+                            }}, 160);
+                        }};
+                        ['input', 'change', 'click'].forEach(evento => {{
+                            form.addEventListener(evento, refrescarYGuardar);
                         }});
                     }}
                     setTimeout(restaurarEstadoLocal, 450);
-                    setInterval(() => {{
-                        window.samuActualizarCuaderno();
-                        guardarEstadoLocal();
-                    }}, 800);
                     window.addEventListener('beforeunload', guardarEstadoLocal);
                 }});
             }})();

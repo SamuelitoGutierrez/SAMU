@@ -420,8 +420,10 @@ CUADERNO_OBRA_JS = """
 
             function sincronizarDatos() {
                 if (typeof actualizarStepper === 'function') actualizarStepper();
-                const numeroActivo = String(g_numAsiento || window.g_numAsiento || '').trim();
-                const fechaActiva = String(g_fechaAsiento || window.g_fechaAsiento || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
+                const numeroGlobal = typeof g_numAsiento !== 'undefined' ? g_numAsiento : '';
+                const fechaGlobal = typeof g_fechaAsiento !== 'undefined' ? g_fechaAsiento : '';
+                const numeroActivo = String(numeroGlobal || window.g_numAsiento || '').trim();
+                const fechaActiva = String(fechaGlobal || window.g_fechaAsiento || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
                 if (typeof window.samuCurrentStep === 'number') currentStep = window.samuCurrentStep;
                 if (!numeroActivo) return;
 
@@ -443,18 +445,16 @@ CUADERNO_OBRA_JS = """
                 document.addEventListener('DOMContentLoaded', () => {
                     const form = document.getElementById('formResidencia');
                     if (form) {
-                        ['input', 'change', 'keyup', 'click'].forEach(evento => {
-                            form.addEventListener(evento, () => {
-                                if (window.g_numAsiento || typeof g_numAsiento !== 'undefined') {
-                                    setTimeout(sincronizarDatos, 30);
-                                }
-                            });
+                        const sincronizarConPausa = () => {
+                            const numeroGlobal = typeof g_numAsiento !== 'undefined' ? g_numAsiento : '';
+                            if (!window.g_numAsiento && !numeroGlobal) return;
+                            clearTimeout(window.__samuCuadernoTimer);
+                            window.__samuCuadernoTimer = setTimeout(sincronizarDatos, 160);
+                        };
+                        ['input', 'change', 'click'].forEach(evento => {
+                            form.addEventListener(evento, sincronizarConPausa);
                         });
                     }
-                    setInterval(() => {
-                        const numeroActivo = String((typeof g_numAsiento !== 'undefined' ? g_numAsiento : '') || window.g_numAsiento || '').trim();
-                        if (numeroActivo) sincronizarDatos();
-                    }, 900);
                 });
             }
 """
