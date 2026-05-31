@@ -1212,6 +1212,18 @@ def redaccion_asiento_residente():
                                 continue;
                             }}
 
+                            const espacioRestante = maxLineasPagina() - usadas;
+                            if (actual.length > 0 && espacioRestante > 1) {{
+                                const partes = dividirModuloPorLineas(pendiente, espacioRestante);
+                                actual.push(partes[0]);
+                                paginas.push({{ modulos: actual, continuacion, van: true }});
+                                actual = [];
+                                usadas = 1;
+                                continuacion = true;
+                                pendiente = partes[1].contenido.trim() ? partes[1] : null;
+                                continue;
+                            }}
+
                             if (actual.length > 0) {{
                                 paginas.push({{ modulos: actual, continuacion, van: true }});
                                 actual = [];
