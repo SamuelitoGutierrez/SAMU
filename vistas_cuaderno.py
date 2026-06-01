@@ -340,12 +340,17 @@ def panel_cuaderno():
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>SAMU — Centro de Mando del Cuaderno de Obra</title>
+        <title>Cuaderno de Obra</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            window.tailwind = window.tailwind || {};
+            window.tailwind.config = { corePlugins: { preflight: false } };
+        </script>
+        <script src="https://cdn.tailwindcss.com"></script>
         <style>
             :root {
                 --samu-blue: #0263a0;
@@ -959,7 +964,7 @@ def panel_cuaderno():
             }
 
             .seat-modal-card {
-                width: min(100%, 460px);
+                width: min(100%, 560px);
                 border: 1px solid rgba(255,255,255,.72);
                 border-radius: 30px;
                 padding: 24px;
@@ -1009,6 +1014,65 @@ def panel_cuaderno():
             .seat-modal-form {
                 display: grid;
                 gap: 14px;
+            }
+
+            .mini-seat-calendar {
+                display: grid;
+                grid-template-columns: repeat(7, minmax(0, 1fr));
+                gap: 7px;
+            }
+
+            .mini-seat-day {
+                min-height: 44px;
+                border: 1px solid #e2e8f0;
+                border-radius: 14px;
+                background: #fff;
+                color: #334155;
+                font-size: 12px;
+                font-weight: 900;
+                transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+            }
+
+            .mini-seat-day:hover {
+                transform: scale(1.08);
+                box-shadow: 0 14px 30px rgba(15,23,42,.14);
+                z-index: 2;
+            }
+
+            .mini-seat-day.empty {
+                opacity: .25;
+                pointer-events: none;
+                background: transparent;
+            }
+
+            .mini-seat-day.pending {
+                border-color: #fecaca;
+                background: linear-gradient(135deg, #fff1f2, #fee2e2);
+                color: #991b1b;
+            }
+
+            .mini-seat-day.draft {
+                border-color: #fde68a;
+                background: linear-gradient(135deg, #fefce8, #fef3c7);
+                color: #713f12;
+            }
+
+            .mini-seat-day.closed {
+                border-color: #bbf7d0;
+                background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+                color: #166534;
+            }
+
+            .mini-seat-day.observed {
+                border-color: #fdba74;
+                background: linear-gradient(135deg, #fff7ed, #ffedd5);
+                color: #9a3412;
+            }
+
+            .mini-seat-day.selected {
+                outline: 3px solid rgba(2,99,160,.26);
+                transform: scale(1.04);
+                box-shadow: 0 16px 34px rgba(2,99,160,.18);
             }
 
             .seat-field label {
@@ -1147,7 +1211,7 @@ def panel_cuaderno():
             <section class="hero-card fade-up">
                 <div class="dashboard-title">
                     <div>
-                        <h1>Centro de Mando<br>Cuaderno de Obra</h1>
+                        <h1>Cuaderno de Obra</h1>
                         <p>Panel principal para redactar asientos, revisar estados del mes, atender observaciones de supervisión y exportar rangos del cuaderno.</p>
                     </div>
                     <span class="connection-pill {% if not conectado %}offline{% endif %}">
@@ -1259,30 +1323,31 @@ def panel_cuaderno():
             </section>
         </main>
 
-        <div id="seatEntryModal" class="seat-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="seatEntryTitle">
+        <div id="seatEntryModal" class="seat-modal-overlay hidden transition-opacity duration-200" role="dialog" aria-modal="true" aria-labelledby="seatEntryTitle">
             <div class="seat-modal-card">
                 <div class="seat-modal-head">
                     <div>
                         <h3 id="seatEntryTitle">Nuevo Asiento / Continuar</h3>
-                        <p>Seleccione la fecha y confirme el número de asiento para ingresar al cuaderno.</p>
+                        <p>Seleccione un día del calendario para crear, continuar o revisar el asiento.</p>
                     </div>
                     <button type="button" class="seat-modal-close" onclick="cerrarModalAsiento()" aria-label="Cerrar">&times;</button>
                 </div>
-                <div class="seat-modal-form">
-                    <div class="seat-field">
-                        <label for="seatModalDate">Fecha del asiento</label>
-                        <input type="date" id="seatModalDate" onchange="evaluarFechaAsientoModal()">
+                <div class="grid gap-3">
+                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2">
+                        <span id="miniMonthLabel" class="text-xs font-black uppercase tracking-wide text-slate-700">Mes actual</span>
+                        <span class="inline-flex items-center gap-2 text-[11px] font-black text-slate-500">
+                            <span class="inline-block h-2.5 w-2.5 rounded-full bg-red-500"></span>Nuevo
+                            <span class="inline-block h-2.5 w-2.5 rounded-full bg-yellow-400"></span>Borrador
+                            <span class="inline-block h-2.5 w-2.5 rounded-full bg-green-500"></span>Cerrado
+                        </span>
                     </div>
-                    <div class="seat-field">
-                        <label for="seatModalNumber">Número de asiento</label>
-                        <input type="text" id="seatModalNumber" placeholder="Ingrese el número de asiento">
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black uppercase text-slate-400">
+                        <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
                     </div>
-                    <div id="seatModalState" class="seat-modal-state">
-                        Día sin registro. Ingrese manualmente el número de asiento.
+                    <div id="miniSeatCalendar" class="mini-seat-calendar"></div>
+                    <div id="seatActionPanel" class="rounded-3xl border border-slate-200 bg-slate-50 p-3">
+                        <div class="text-sm font-extrabold text-slate-600">Seleccione un día para continuar.</div>
                     </div>
-                    <button type="button" id="seatModalSubmit" class="seat-modal-submit" onclick="ingresarAlCuadernoResidencia()">
-                        <i class="bi bi-journal-arrow-up me-1"></i> Ingresar al Cuaderno
-                    </button>
                 </div>
             </div>
         </div>
@@ -1315,6 +1380,7 @@ def panel_cuaderno():
             let doughnutChart = null;
             let asientosMesActivo = new Map();
             let asientoModalActual = null;
+            let fechaModalSeleccionada = null;
 
             function escapeHtml(valor) {
                 return String(valor ?? '')
@@ -1519,74 +1585,127 @@ def panel_cuaderno():
             function abrirModalAsientoResidencia(event, fechaISO=null) {
                 if (event) event.preventDefault();
                 const modal = document.getElementById('seatEntryModal');
-                const fechaInput = document.getElementById('seatModalDate');
-                const fechaBase = fechaISO || fechaPorDefectoModal();
-                fechaInput.value = fechaBase;
                 modal.classList.remove('hidden');
-                evaluarFechaAsientoModal();
-                setTimeout(() => fechaInput.focus(), 80);
+                renderMiniCalendarioAsiento(fechaISO || fechaPorDefectoModal());
             }
 
             function cerrarModalAsiento() {
                 document.getElementById('seatEntryModal')?.classList.add('hidden');
             }
 
-            function evaluarFechaAsientoModal() {
-                const fechaInput = document.getElementById('seatModalDate');
-                const numeroInput = document.getElementById('seatModalNumber');
-                const estadoBox = document.getElementById('seatModalState');
-                const boton = document.getElementById('seatModalSubmit');
-                const fechaISO = fechaInput.value;
-                const asiento = buscarAsientoPorFecha(fechaISO);
-                asientoModalActual = asiento || null;
+            function renderMiniCalendarioAsiento(fechaSeleccionada=null) {
+                const year = mesActivo.getFullYear();
+                const month = mesActivo.getMonth();
+                const grid = document.getElementById('miniSeatCalendar');
+                const label = document.getElementById('miniMonthLabel');
+                if (!grid || !label) return;
+                label.textContent = nombreMes(mesActivo);
+                grid.innerHTML = '';
 
-                if (asiento && normalizarEstado(asiento.estado) === 'borrador') {
-                    numeroInput.value = `Continuando Asiento N° ${String(asiento.numero).padStart(3, '0')}`;
-                    numeroInput.dataset.numero = asiento.numero;
-                    numeroInput.readOnly = true;
-                    estadoBox.classList.add('draft');
-                    estadoBox.innerHTML = '<i class="bi bi-pencil-square me-1"></i> Día amarillo: existe un borrador. Continuará el asiento registrado.';
-                    boton.innerHTML = '<i class="bi bi-journal-arrow-up me-1"></i> Continuar Borrador';
-                    return;
+                const espacios = primerDiaLunes(year, month);
+                for (let i = 0; i < espacios; i += 1) {
+                    const empty = document.createElement('div');
+                    empty.className = 'mini-seat-day empty';
+                    grid.appendChild(empty);
                 }
 
-                numeroInput.value = '';
-                numeroInput.dataset.numero = '';
-                numeroInput.readOnly = false;
-                estadoBox.classList.remove('draft');
-                if (asiento) {
-                    numeroInput.value = `Asiento cerrado N° ${String(asiento.numero).padStart(3, '0')}`;
-                    numeroInput.dataset.numero = asiento.numero;
-                    numeroInput.readOnly = true;
-                    estadoBox.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Esta fecha ya tiene un asiento cerrado. Puede revisarlo desde el calendario.';
-                    boton.innerHTML = '<i class="bi bi-eye-fill me-1"></i> Ver Asiento';
+                const totalDias = diasEnMes(year, month);
+                for (let dia = 1; dia <= totalDias; dia += 1) {
+                    const fechaISO = fechaISODesdePartes(year, month, dia);
+                    const asiento = buscarAsientoPorFecha(fechaISO);
+                    const estado = asiento ? normalizarEstado(asiento.estado) : 'pendiente';
+                    const estadoVisual = estado === 'observado' ? 'draft' : estado;
+                    const day = document.createElement('button');
+                    day.type = 'button';
+                    day.className = `mini-seat-day ${estadoVisual} ${fechaISO === fechaSeleccionada ? 'selected' : ''}`;
+                    day.textContent = dia;
+                    day.addEventListener('click', () => seleccionarDiaMiniCalendario(fechaISO));
+                    grid.appendChild(day);
+                }
+
+                if (fechaSeleccionada) {
+                    seleccionarDiaMiniCalendario(fechaSeleccionada, false);
                 } else {
-                    estadoBox.innerHTML = '<i class="bi bi-plus-circle-fill me-1"></i> Día rojo: sin registro. Ingrese manualmente el número de asiento.';
-                    boton.innerHTML = '<i class="bi bi-journal-arrow-up me-1"></i> Ingresar al Cuaderno';
+                    document.getElementById('seatActionPanel').innerHTML = '<div class="text-sm font-extrabold text-slate-600">Seleccione un día para continuar.</div>';
                 }
             }
 
-            function ingresarAlCuadernoResidencia() {
-                const fecha = document.getElementById('seatModalDate').value;
-                const numeroInput = document.getElementById('seatModalNumber');
-                const asientoExistente = asientoModalActual;
-                if (asientoExistente && normalizarEstado(asientoExistente.estado) === 'cerrado') {
-                    irAAsiento(asientoExistente.numero);
+            function seleccionarDiaMiniCalendario(fechaISO, rerender=true) {
+                if (rerender) renderMiniCalendarioAsiento(fechaISO);
+                const asiento = buscarAsientoPorFecha(fechaISO);
+                asientoModalActual = asiento || null;
+                fechaModalSeleccionada = fechaISO;
+                renderPanelAccionAsiento(fechaISO, asiento);
+            }
+
+            function renderPanelAccionAsiento(fechaISO, asiento) {
+                const panel = document.getElementById('seatActionPanel');
+                if (!panel) return;
+                if (asiento && normalizarEstado(asiento.estado) === 'borrador') {
+                    panel.innerHTML = `
+                        <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-3">
+                            <div class="text-sm font-black text-yellow-800"><i class="bi bi-pencil-square me-1"></i> Borrador encontrado</div>
+                            <p class="mb-3 mt-1 text-xs font-bold text-yellow-700">Asiento N° ${escapeHtml(String(asiento.numero).padStart(3, '0'))} listo para continuar.</p>
+                            <button type="button" class="w-full rounded-2xl bg-yellow-500 px-4 py-3 text-sm font-black text-white shadow-lg shadow-yellow-500/20 transition hover:scale-[1.02]" onclick="continuarBorradorAsiento()">
+                                Continuar Borrador
+                            </button>
+                        </div>
+                    `;
                     return;
                 }
-                const numero = asientoExistente && normalizarEstado(asientoExistente.estado) === 'borrador'
-                    ? asientoExistente.numero
-                    : String(numeroInput.value || '').trim();
-                if (!fecha || !numero || String(numero).includes('Continuando')) {
-                    alert('Seleccione la fecha e ingrese un número de asiento válido.');
+
+                if (asiento) {
+                    panel.innerHTML = `
+                        <div class="rounded-2xl border border-green-200 bg-green-50 p-3">
+                            <div class="text-sm font-black text-green-800"><i class="bi bi-lock-fill me-1"></i> Asiento Cerrado</div>
+                            <p class="mb-3 mt-1 text-xs font-bold text-green-700">El Asiento N° ${escapeHtml(String(asiento.numero).padStart(3, '0'))} ya está cerrado. Solo puede consultarse.</p>
+                            <button type="button" class="w-full rounded-2xl bg-green-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-green-600/20 transition hover:scale-[1.02]" onclick="verAsientoCerrado()">
+                                Ver Cuaderno
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                panel.innerHTML = `
+                    <div class="rounded-2xl border border-red-200 bg-red-50 p-3">
+                        <div class="text-sm font-black text-red-800"><i class="bi bi-plus-circle-fill me-1"></i> Día sin registro</div>
+                        <p class="mb-3 mt-1 text-xs font-bold text-red-700">Fecha seleccionada: ${escapeHtml(fechaISO)}. Ingrese el número para crear el asiento.</p>
+                        <input type="text" id="newSeatNumberInput" class="mb-3 w-full rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-800 outline-none transition focus:border-red-400 focus:ring-4 focus:ring-red-100" placeholder="Ingrese Número de Asiento">
+                        <button type="button" class="w-full rounded-2xl bg-green-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-green-600/20 transition hover:scale-[1.02]" onclick="crearNuevoAsientoDesdeModal()">
+                            Crear Nuevo Asiento
+                        </button>
+                    </div>
+                `;
+                setTimeout(() => document.getElementById('newSeatNumberInput')?.focus(), 80);
+            }
+
+            function crearNuevoAsientoDesdeModal() {
+                const numero = String(document.getElementById('newSeatNumberInput')?.value || '').trim();
+                if (!fechaModalSeleccionada || !numero) {
+                    alert('Ingrese el número de asiento para continuar.');
                     return;
                 }
                 const params = new URLSearchParams({
-                    fecha,
+                    fecha: fechaModalSeleccionada,
                     asiento: numero,
-                    modo: asientoExistente ? 'continuar' : 'nuevo'
+                    modo: 'nuevo'
                 });
                 window.location.href = `/residencia?${params.toString()}`;
+            }
+
+            function continuarBorradorAsiento() {
+                if (!fechaModalSeleccionada || !asientoModalActual) return;
+                const params = new URLSearchParams({
+                    fecha: fechaModalSeleccionada,
+                    asiento: asientoModalActual.numero,
+                    modo: 'continuar'
+                });
+                window.location.href = `/residencia?${params.toString()}`;
+            }
+
+            function verAsientoCerrado() {
+                if (asientoModalActual?.numero) irAAsiento(asientoModalActual.numero);
             }
 
             function textoEstado(asiento, estado) {
