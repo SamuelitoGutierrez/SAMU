@@ -68,13 +68,13 @@ def api_guardar_asiento():
         return jsonify({"ok": False, "error": "Número de asiento o avance inválido"}), 400
 
     estado_raw = str(data.get("estado") or "Borrador").strip().lower()
-    estado = "Cerrado" if estado_raw in ("cerrado", "firmado", "vista previa y firmar", "closed") else "Borrador"
+    estado = "Enviado Inspector" if estado_raw in ("enviado_inspector", "enviado inspector", "enviar a inspector", "cerrado", "firmado", "vista previa y firmar", "closed") else "Borrador"
     tipo_raw = data.get("tipo") or data.get("autor_tipo") or session.get("rol") or "Residente"
-    tipo = "Supervisor" if "super" in str(tipo_raw).lower() else "Residente"
+    tipo = "Inspector" if ("inspector" in str(tipo_raw).lower() or "super" in str(tipo_raw).lower()) else "Residente"
 
     existente = obtener_asiento(numero)
-    if existente and (existente.get("estado") == "Cerrado" or existente.get("bloqueado")) and session.get("rol") != "Admin":
-        return jsonify({"ok": False, "error": "El asiento está cerrado. Solo el dueño/Admin puede editarlo."}), 403
+    if existente and (existente.get("estado") in ("Cerrado", "Firmado", "Enviado Inspector") or existente.get("bloqueado")) and session.get("rol") != "Admin":
+        return jsonify({"ok": False, "error": "El asiento ya fue enviado o cerrado. Solo el dueño/Admin puede editarlo."}), 403
     contenido = data.get("contenido")
     if not contenido:
         contenido = {
@@ -365,7 +365,7 @@ def redaccion_asiento_residente():
             <button type="button" id="btnAtras" class="btn btn-light border fw-bold rounded-pill px-4 text-dark shadow-sm d-none" onclick="window.anteriorModulo()"><i class="bi bi-arrow-left"></i> Anterior</button>
             <div class="asiento-actions" id="asientoActions">
                 <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm" onclick="window.mostrarConfirmarGuardarBorrador()"><i class="bi bi-save2"></i> Guardar borrador</button>
-                <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" onclick="window.mostrarConfirmarCerrarAsiento()"><i class="bi bi-lock-fill"></i> Cerrar asiento</button>
+                <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" onclick="window.mostrarConfirmarCerrarAsiento()"><i class="bi bi-send-check-fill"></i> Enviar a Inspector</button>
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4 shadow-sm d-none" id="btnEditarComoDueno" onclick="habilitarEdicionComoDueno()"><i class="bi bi-unlock-fill"></i> Editar como dueño</button>
             </div>
             <div class="d-flex gap-2 align-items-center ms-auto" id="moduloNavActions">
@@ -373,14 +373,14 @@ def redaccion_asiento_residente():
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4" onclick="window.siguienteModulo()">Guardar y Continuar <i class="bi bi-arrow-right"></i></button>
             </div>
         </div>
-        <div class="asiento-lock-banner" id="asientoLockBanner"><i class="bi bi-lock-fill"></i> Asiento cerrado. La edición está bloqueada.</div>
+        <div class="asiento-lock-banner" id="asientoLockBanner"><i class="bi bi-lock-fill"></i> Asiento enviado a Inspector. La edición de Residencia está bloqueada.</div>
 
         <div class="confirm-seat-overlay" id="confirmAccionAsiento">
             <div class="confirm-seat-card">
                 <div class="confirm-seat-hero" id="confirmAccionHero">
                     <div class="icon" id="confirmAccionIcon"><i class="bi bi-shield-lock-fill"></i></div>
-                    <h5 id="confirmAccionTitulo">Cerrar asiento del cuaderno</h5>
-                    <p id="confirmAccionSubtitulo">Antes de cerrar, revise que la información registrada sea correcta.</p>
+                    <h5 id="confirmAccionTitulo">Enviar asiento al Inspector</h5>
+                    <p id="confirmAccionSubtitulo">Antes de enviar, revise que la información registrada sea correcta.</p>
                 </div>
                 <div class="confirm-seat-body">
                     <div class="confirm-seat-warning" id="confirmAccionMensaje">
@@ -389,7 +389,7 @@ def redaccion_asiento_residente():
                     </div>
                     <div class="confirm-seat-actions">
                         <button type="button" class="confirm-seat-btn cancel" onclick="window.ocultarConfirmarAccionAsiento()">Seguir editando</button>
-                        <button type="button" class="confirm-seat-btn primary" id="confirmAccionBoton" onclick="window.confirmarAccionAsiento()">Cerrar asiento y ver resumen</button>
+                        <button type="button" class="confirm-seat-btn primary" id="confirmAccionBoton" onclick="window.confirmarAccionAsiento()">Enviar a Inspector</button>
                     </div>
                 </div>
             </div>

@@ -7,10 +7,13 @@ from database import get_connection, release_connection
 
 ESTADOS_BORRADOR = {"borrador", "en redacción", "en redaccion", "draft"}
 ESTADOS_CERRADO = {"cerrado", "firmado", "closed", "vista previa y firmar"}
+ESTADOS_ENVIADO_INSPECTOR = {"enviado_inspector", "enviado inspector", "enviar a inspector", "enviado al inspector"}
 
 
 def normalizar_estado(estado):
     valor = str(estado or "").strip().lower()
+    if valor in ESTADOS_ENVIADO_INSPECTOR:
+        return "Enviado Inspector"
     if valor in ESTADOS_CERRADO:
         return "Cerrado"
     if valor in ESTADOS_BORRADOR:
@@ -20,8 +23,10 @@ def normalizar_estado(estado):
 
 def normalizar_tipo(tipo):
     valor = str(tipo or "").strip().lower()
+    if "inspector" in valor:
+        return "Inspector"
     if "super" in valor:
-        return "Supervisor"
+        return "Inspector"
     return "Residente"
 
 
@@ -80,6 +85,22 @@ def asegurar_tablas_cuaderno():
                 accion VARCHAR(80) NOT NULL,
                 detalle TEXT,
                 created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS cuaderno_inspector_asientos (
+                id SERIAL PRIMARY KEY,
+                residencia_numero INTEGER NOT NULL REFERENCES cuaderno_asientos(numero) ON DELETE CASCADE,
+                fecha DATE NOT NULL,
+                estado VARCHAR(40) NOT NULL DEFAULT 'Borrador',
+                contenido TEXT,
+                firmado_por VARCHAR(160),
+                firmado_en TIMESTAMP,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                UNIQUE (residencia_numero)
             )
             """
         )
@@ -170,7 +191,7 @@ def obtener_panel_cuaderno():
         cur.execute(
             """
             SELECT
-                COUNT(*) FILTER (WHERE estado IN ('Cerrado', 'Firmado')) AS cerrados,
+                COUNT(*) FILTER (WHERE estado IN ('Cerrado', 'Firmado', 'Enviado Inspector')) AS cerrados,
                 COUNT(*) FILTER (WHERE estado = 'Borrador') AS borradores,
                 EXTRACT(DAY FROM (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month - 1 day'))::INTEGER AS dias_mes
             FROM cuaderno_asientos
@@ -206,7 +227,7 @@ def obtener_panel_cuaderno():
             SELECT o.asiento_numero AS numero, o.autor, o.texto, o.tipo, o.created_at::TEXT AS created_at
             FROM cuaderno_observaciones o
             WHERE o.resuelto = FALSE
-              AND (o.tipo = 'observacion-tecnica' OR LOWER(o.autor) LIKE '%supervisor%')
+              AND (o.tipo = 'observacion-tecnica' OR LOWER(o.autor) LIKE '%inspector%' OR LOWER(o.autor) LIKE '%supervisor%')
             ORDER BY o.created_at DESC
             LIMIT 1
             """
@@ -297,8 +318,8 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
         tipo_normalizado = normalizar_tipo(tipo)
         contenido_texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
         observaciones = _extraer_observaciones(contenido)
-        bloqueado = estado_normalizado == "Cerrado"
-        firmado_por = usuario if bloqueado else None
+        bloqueado = estado_normalizado in ("Cerrado", "Enviado Inspector")
+        firmado_por = usuario if estado_normalizado == "Cerrado" else None
         cur.execute(
             """
             SELECT estado, bloqueado
@@ -308,7 +329,7 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
             (numero,),
         )
         existente = cur.fetchone()
-        if existente and (existente[0] in ("Cerrado", "Firmado") or existente[1]) and not puede_editar_cerrado:
+        if existente and (existente[0] in ("Cerrado", "Firmado", "Enviado Inspector") or existente[1]) and not puede_editar_cerrado:
             cur.close()
             conn.rollback()
             return {"ok": False, "error": "El asiento está cerrado y bloqueado. Solo Admin puede editarlo."}
@@ -347,7 +368,7 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
             ),
         )
         row = cur.fetchone()
-        accion = "cerró y bloqueó" if estado_normalizado == "Cerrado" else "guardó borrador"
+        accion = "envió a Inspector" if estado_normalizado == "Enviado Inspector" else ("cerró y bloqueó" if estado_normalizado == "Cerrado" else "guardó borrador")
         _registrar_log(
             cur,
             numero,
@@ -355,13 +376,13 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
             accion,
             f"{tipo_normalizado} {accion} el asiento N° {str(numero).zfill(3)}.",
         )
-        if tipo_normalizado == "Supervisor" and observaciones:
+        if tipo_normalizado == "Inspector" and observaciones:
             cur.execute(
                 """
                 INSERT INTO cuaderno_observaciones (asiento_numero, autor, texto, tipo, resuelto)
                 VALUES (%s, %s, %s, 'observacion-tecnica', FALSE)
                 """,
-                (numero, usuario or "Supervisor", observaciones),
+                (numero, usuario or "Inspector", observaciones),
             )
         conn.commit()
         cur.close()
@@ -405,7 +426,7 @@ def obtener_datos_mes_cuaderno(year=None, month=None):
         cur.execute(
             """
             SELECT
-                COUNT(*) FILTER (WHERE estado IN ('Cerrado', 'Firmado')) AS cerrados,
+                COUNT(*) FILTER (WHERE estado IN ('Cerrado', 'Firmado', 'Enviado Inspector')) AS cerrados,
                 COUNT(*) FILTER (WHERE estado = 'Borrador') AS borradores,
                 EXTRACT(DAY FROM ((DATE_TRUNC('month', MAKE_DATE(%s, %s, 1)) + INTERVAL '1 month - 1 day')))::INTEGER AS dias_mes
             FROM cuaderno_asientos
@@ -484,6 +505,128 @@ def obtener_asiento(numero):
         }
     except Exception:
         return None
+    finally:
+        if conn:
+            release_connection(conn)
+
+
+def contenido_asiento_dict(asiento):
+    if not asiento:
+        return {}
+    contenido = asiento.get("contenido")
+    if isinstance(contenido, dict):
+        return contenido
+    try:
+        return json.loads(contenido or "{}")
+    except Exception:
+        return {}
+
+
+def extraer_ocurrencias_residencia(asiento):
+    contenido = contenido_asiento_dict(asiento)
+    for modulo in contenido.get("modulos") or []:
+        if not isinstance(modulo, dict):
+            continue
+        titulo = str(modulo.get("titulo") or "").lower()
+        if titulo.startswith("10.") or "ocurrencia" in titulo or "conocimiento" in titulo:
+            return str(modulo.get("contenido") or "").strip()
+    return str(contenido.get("observaciones") or asiento.get("observaciones") or "").strip()
+
+
+def obtener_inspector_asiento(numero):
+    if not asegurar_tablas_cuaderno():
+        return None
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT residencia_numero, fecha::TEXT AS fecha, estado, contenido,
+                   COALESCE(firmado_por, '') AS firmado_por, firmado_en::TEXT AS firmado_en,
+                   updated_at::TEXT AS updated_at
+            FROM cuaderno_inspector_asientos
+            WHERE residencia_numero = %s
+            """,
+            (numero,),
+        )
+        row = cur.fetchone()
+        cur.close()
+        if not row:
+            return None
+        return {
+            "numero": row[0],
+            "fecha": row[1],
+            "estado": row[2],
+            "contenido": row[3],
+            "firmado_por": row[4],
+            "firmado_en": row[5],
+            "updated_at": row[6],
+        }
+    except Exception:
+        return None
+    finally:
+        if conn:
+            release_connection(conn)
+
+
+def guardar_asiento_inspector(numero, fecha, estado, contenido, usuario=None):
+    conectado = asegurar_tablas_cuaderno()
+    if not conectado:
+        return {"ok": False, "error": "Base de datos no conectada"}
+    estado_normalizado = "Firmado" if str(estado or "").strip().lower() in ("firmado", "firmar", "definitivo") else "Borrador"
+    contenido_texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO cuaderno_inspector_asientos
+                (residencia_numero, fecha, estado, contenido, firmado_por, firmado_en, updated_at)
+            VALUES (%s, %s, %s, %s, %s, CASE WHEN %s = 'Firmado' THEN NOW() ELSE NULL END, NOW())
+            ON CONFLICT (residencia_numero) DO UPDATE SET
+                fecha = EXCLUDED.fecha,
+                estado = EXCLUDED.estado,
+                contenido = EXCLUDED.contenido,
+                firmado_por = CASE
+                    WHEN EXCLUDED.estado = 'Firmado' THEN EXCLUDED.firmado_por
+                    ELSE cuaderno_inspector_asientos.firmado_por
+                END,
+                firmado_en = CASE
+                    WHEN EXCLUDED.estado = 'Firmado' THEN NOW()
+                    ELSE cuaderno_inspector_asientos.firmado_en
+                END,
+                updated_at = NOW()
+            RETURNING residencia_numero, estado
+            """,
+            (numero, fecha, estado_normalizado, contenido_texto, usuario if estado_normalizado == "Firmado" else None, estado_normalizado),
+        )
+        row = cur.fetchone()
+        if estado_normalizado == "Firmado":
+            cur.execute(
+                """
+                UPDATE cuaderno_asientos
+                SET estado = 'Cerrado', firmado_por = %s, firmado_en = NOW(), updated_at = NOW()
+                WHERE numero = %s
+                """,
+                (usuario or "Inspector", numero),
+            )
+        _registrar_log(
+            cur,
+            numero,
+            usuario or "Inspector",
+            "firmó asiento" if estado_normalizado == "Firmado" else "guardó borrador de Inspector",
+            f"Inspector de Obra {('firmó definitivamente' if estado_normalizado == 'Firmado' else 'guardó borrador del')} asiento N° {str(numero).zfill(3)}.",
+        )
+        conn.commit()
+        cur.close()
+        return {"ok": True, "numero": row[0], "estado": row[1]}
+    except Exception as exc:
+        if conn:
+            with suppress(Exception):
+                conn.rollback()
+        return {"ok": False, "error": str(exc)}
     finally:
         if conn:
             release_connection(conn)
