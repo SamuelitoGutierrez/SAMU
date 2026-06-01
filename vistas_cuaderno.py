@@ -655,19 +655,24 @@ def panel_cuaderno():
                 min-height: 430px;
                 display: flex;
                 flex-direction: column;
+                align-items: center;
             }
 
             .chart-wrap {
                 position: relative;
-                flex: 1;
-                min-height: 280px;
+                width: 350px;
+                height: 350px;
+                flex: 0 0 350px;
+                flex-shrink: 0;
                 display: grid;
                 place-items: center;
             }
 
             .chart-wrap canvas {
-                width: min(290px, 100%) !important;
-                height: min(290px, 100%) !important;
+                width: 350px !important;
+                height: 350px !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
             }
 
             .chart-center {
@@ -726,6 +731,13 @@ def panel_cuaderno():
                 gap: 8px;
             }
 
+            .calendar-grid {
+                min-height: 508px;
+                grid-template-rows: repeat(6, minmax(78px, 1fr));
+                align-content: start;
+                padding: 4px;
+            }
+
             .calendar-weekdays {
                 margin-bottom: 8px;
                 color: #94a3b8;
@@ -744,12 +756,13 @@ def panel_cuaderno():
                 background: #fff;
                 color: #334155;
                 cursor: pointer;
-                transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+                transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+                transform-origin: center;
             }
 
             .calendar-day:hover {
-                transform: translateY(-4px) scale(1.02);
-                box-shadow: 0 18px 38px rgba(15,23,42,.13);
+                transform: scale(1.1);
+                box-shadow: 0 20px 42px rgba(15,23,42,.16);
                 z-index: 6;
             }
 
@@ -757,6 +770,11 @@ def panel_cuaderno():
                 opacity: .35;
                 cursor: default;
                 background: transparent;
+                box-shadow: none;
+            }
+
+            .calendar-day.empty:hover {
+                transform: none;
                 box-shadow: none;
             }
 
@@ -948,6 +966,19 @@ def panel_cuaderno():
                 .analytics-grid,
                 .stats-strip { grid-template-columns: 1fr; }
                 .primary-action { min-height: 96px; }
+                .chart-wrap {
+                    width: 320px;
+                    height: 320px;
+                    flex-basis: 320px;
+                }
+                .chart-wrap canvas {
+                    width: 320px !important;
+                    height: 320px !important;
+                }
+                .calendar-grid {
+                    min-height: 418px;
+                    grid-template-rows: repeat(6, minmax(62px, 1fr));
+                }
                 .calendar-day { min-height: 62px; border-radius: 16px; padding: 7px; }
                 .calendar-day .day-caption { display: none; }
                 .card-head { align-items: flex-start; flex-direction: column; }
@@ -960,6 +991,19 @@ def panel_cuaderno():
                 .export-btn { width: 100%; }
                 .calendar-weekdays,
                 .calendar-grid { gap: 5px; }
+                .chart-wrap {
+                    width: 260px;
+                    height: 260px;
+                    flex-basis: 260px;
+                }
+                .chart-wrap canvas {
+                    width: 260px !important;
+                    height: 260px !important;
+                }
+                .calendar-grid {
+                    min-height: 318px;
+                    grid-template-rows: repeat(6, minmax(48px, 1fr));
+                }
                 .calendar-day { min-height: 48px; border-radius: 13px; }
                 .calendar-tooltip { display: none; }
                 .dashboard-title h1 { letter-spacing: -1.2px; }
@@ -1226,6 +1270,12 @@ def panel_cuaderno():
                             responsive: true,
                             maintainAspectRatio: false,
                             cutout: '72%',
+                            animation: {
+                                animateRotate: true,
+                                animateScale: true,
+                                duration: 2500,
+                                easing: 'easeOutQuart'
+                            },
                             plugins: {
                                 legend: { display: false },
                                 tooltip: {
@@ -1239,7 +1289,7 @@ def panel_cuaderno():
                     return;
                 }
                 doughnutChart.data.datasets[0].data = data;
-                doughnutChart.update();
+                doughnutChart.update('active');
             }
 
             function renderCalendar(year, month, totalDias, porDia) {
