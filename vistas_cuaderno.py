@@ -133,12 +133,42 @@ def ver_asiento_cuaderno(numero):
                 return `<div class="modulo-redaccion"><span class="modulo-titulo">${esc(modulo.titulo)}</span><span class="modulo-contenido">${esc(modulo.contenido || '-').replace(/\\n/g, '<br>')}</span></div>`;
             }
 
-            function lineasModuloVista(modulo) {
-                return 1 + estimarLineasTextoVista(String(modulo.contenido || '-'));
+            const PDF_LINE_HEIGHT_PX = 26;
+
+            function obtenerMedidorVistaPDF() {
+                let medidor = document.getElementById('__samuVistaPdfMeasure');
+                if (!medidor) {
+                    medidor = document.createElement('div');
+                    medidor.id = '__samuVistaPdfMeasure';
+                    medidor.style.cssText = [
+                        'position:absolute',
+                        'left:-99999px',
+                        'top:0',
+                        'visibility:hidden',
+                        'pointer-events:none',
+                        'width:650px',
+                        'font-family:Candara, Calibri, Arial, sans-serif',
+                        'font-style:italic',
+                        'font-size:17px',
+                        'line-height:26px',
+                        'font-weight:400',
+                        'text-align:justify',
+                        'color:#0263a0',
+                        'word-wrap:break-word'
+                    ].join(';');
+                    document.body.appendChild(medidor);
+                }
+                return medidor;
+            }
+
+            function lineasModuloVista(modulo, incluirVan=false) {
+                const medidor = obtenerMedidorVistaPDF();
+                medidor.innerHTML = `${htmlModuloVista(modulo)}${incluirVan ? '<span class="van-final">(van ...)</span>' : ''}`;
+                return Math.max(1, Math.ceil(medidor.scrollHeight / PDF_LINE_HEIGHT_PX));
             }
 
             function estimarLineasTextoVista(texto) {
-                return String(texto || '-').split('\\n').reduce((sum, linea) => sum + Math.max(1, Math.ceil(String(linea || '').length / 82)), 0);
+                return String(texto || '-').split('\\n').reduce((sum, linea) => sum + Math.max(1, Math.ceil(String(linea || '').length / 96)), 0);
             }
 
             function dividirModuloVista(modulo, maxLineas) {
@@ -153,7 +183,7 @@ def ver_asiento_cuaderno(numero):
                 while (bajo <= alto) {
                     const medio = Math.floor((bajo + alto) / 2);
                     const candidato = partes.slice(0, medio).join('').trim();
-                    if (estimarLineasTextoVista(candidato) <= lineasDisponibles) {
+                    if (lineasModuloVista({...modulo, contenido: candidato}, true) <= lineasDisponibles) {
                         mejor = medio;
                         bajo = medio + 1;
                     } else {
@@ -1630,6 +1660,49 @@ def panel_cuaderno():
                 return pendientes;
             }
 
+            function repintarDashboardDesdeMapa(year, month, porDia) {
+                const totalDias = diasEnMes(year, month);
+                let cerrados = 0;
+                let borradores = 0;
+                for (const asiento of porDia.values()) {
+                    const estado = normalizarEstado(asiento.estado);
+                    if (estado === 'cerrado') cerrados += 1;
+                    if (estado === 'borrador' || estado === 'observado') borradores += 1;
+                }
+                const pendientes = contarPendientesVencidos(year, month, totalDias, porDia);
+                const avance = totalDias > 0 ? Math.round((cerrados / totalDias) * 100) : 0;
+                asientosMesActivo = porDia;
+                document.getElementById('monthLabel').textContent = nombreMes(mesActivo);
+                renderChart(cerrados, borradores, pendientes, avance);
+                renderCalendar(year, month, totalDias, porDia);
+            }
+
+            function aplicarCambioDashboardLocal(cambio) {
+                const partes = parseFechaLocal(cambio?.fecha);
+                if (!partes) return;
+                const year = partes.year;
+                const month = partes.monthIndex;
+                const dia = partes.day;
+                if (mesActivo.getFullYear() !== year || mesActivo.getMonth() !== month) {
+                    mesActivo = new Date(year, month, 1);
+                }
+                const mapa = new Map(asientosMesActivo);
+                mapa.set(dia, {
+                    numero: cambio.numero,
+                    fecha: cambio.fecha,
+                    estado: cambio.estado || 'Borrador',
+                    avance: String(cambio.estado || '').toLowerCase().includes('cerrado') ? 100 : 60,
+                    supervisor: '-',
+                    observacion: 'Sin observaciones activas.',
+                    updated_at: cambio.updated_at || new Date().toISOString()
+                });
+                dashboardSeed.asientos = [
+                    ...dashboardSeed.asientos.filter(asiento => asiento.fecha !== cambio.fecha && String(asiento.numero) !== String(cambio.numero)),
+                    mapa.get(dia)
+                ];
+                repintarDashboardDesdeMapa(year, month, mapa);
+            }
+
             function fechaPorDefectoModal() {
                 const hoy = new Date();
                 const year = mesActivo.getFullYear();
@@ -1945,7 +2018,14 @@ def panel_cuaderno():
                 if (partes) {
                     mesActivo = new Date(partes.year, partes.monthIndex, 1);
                 }
+                aplicarCambioDashboardLocal(cambio);
                 await renderDashboardMes();
+                const asientoActual = buscarAsientoPorFecha(cambio.fecha);
+                const estadoActual = normalizarEstado(asientoActual?.estado);
+                const estadoEsperado = normalizarEstado(cambio.estado);
+                if (!asientoActual || estadoActual !== estadoEsperado) {
+                    aplicarCambioDashboardLocal(cambio);
+                }
                 try { localStorage.removeItem('samu_dashboard_refresh'); } catch (e) {}
                 const estado = String(cambio.estado || '').toLowerCase().includes('cerrado') ? 'Asiento cerrado exitosamente' : 'Borrador guardado exitosamente';
                 mostrarModalElegante(estado, `El Asiento N° ${String(cambio.numero || '').padStart(3, '0')} ya fue sincronizado en el calendario.`, 'success');

@@ -1165,18 +1165,52 @@ def redaccion_asiento_residente():
                     `;
                 }}
 
-                function lineasModulo(modulo) {{
-                    const base = 1;
-                    const contenido = String(modulo.contenido || '-');
-                    const lineasTexto = estimarLineasTexto(contenido);
-                    return base + lineasTexto;
+                const PDF_LINE_HEIGHT_PX = 26;
+
+                function obtenerMedidorPDF() {{
+                    let medidor = document.getElementById('__samuPdfMeasure');
+                    if (!medidor) {{
+                        medidor = document.createElement('div');
+                        medidor.id = '__samuPdfMeasure';
+                        medidor.style.cssText = [
+                            'position:absolute',
+                            'left:-99999px',
+                            'top:0',
+                            'visibility:hidden',
+                            'pointer-events:none',
+                            'width:650px',
+                            'font-family:Candara, Calibri, Arial, sans-serif',
+                            'font-style:italic',
+                            'font-size:17px',
+                            'line-height:26px',
+                            'font-weight:400',
+                            'text-align:justify',
+                            'color:#0263a0',
+                            'word-wrap:break-word'
+                        ].join(';');
+                        document.body.appendChild(medidor);
+                    }}
+                    return medidor;
+                }}
+
+                function htmlModuloMedicion(modulo, incluirVan=false) {{
+                    return `
+                        <div class="modulo-redaccion">
+                            <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
+                            ${{htmlContenidoModulo(modulo)}}
+                        </div>
+                        ${{incluirVan ? '<span class="van-final">(van ...)</span>' : ''}}
+                    `;
+                }}
+
+                function lineasModulo(modulo, incluirVan=false) {{
+                    const medidor = obtenerMedidorPDF();
+                    medidor.innerHTML = htmlModuloMedicion(modulo, incluirVan);
+                    return Math.max(1, Math.ceil(medidor.scrollHeight / PDF_LINE_HEIGHT_PX));
                 }}
 
                 function estimarLineasTexto(texto) {{
-                    return String(texto || '-').split('\\n').reduce((sum, linea) => {{
-                        const largo = Math.max(1, Math.ceil(String(linea || '').length / 82));
-                        return sum + largo;
-                    }}, 0);
+                    return String(texto || '-').split('\\n').reduce((sum, linea) => sum + Math.max(1, Math.ceil(String(linea || '').length / 96)), 0);
                 }}
 
                 function dividirModuloPorLineas(modulo, maxLineas) {{
@@ -1196,7 +1230,7 @@ def redaccion_asiento_residente():
                     while (bajo <= alto) {{
                         const medio = Math.floor((bajo + alto) / 2);
                         const candidato = palabras.slice(0, medio).join('').trim();
-                        if (estimarLineasTexto(candidato) <= lineasDisponibles) {{
+                        if (lineasModulo({{ ...modulo, contenido: candidato }}, true) <= lineasDisponibles) {{
                             mejor = medio;
                             bajo = medio + 1;
                         }} else {{
