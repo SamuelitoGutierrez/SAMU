@@ -279,7 +279,10 @@ PARTIDAS_HTML = """
         const und = document.getElementById('man_und').value.trim().toUpperCase() || 'GLB';
         const met = m3_modo_registro === 'diario' ? document.getElementById('man_met').value.trim() : '';
 
-        if(!desc) { alert("La descripción de la partida es obligatoria."); return; }
+        if(!desc) {
+            if (typeof mostrarAlerta === "function") mostrarAlerta("La descripción de la partida es obligatoria.", "error");
+            return;
+        }
 
         let existe = window.catalogoMaestro.find(c => c.descripcion.toLowerCase() === desc.toLowerCase());
         if(existe) {

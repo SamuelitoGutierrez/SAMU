@@ -122,6 +122,11 @@ def redaccion_asiento_residente():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <script>
+            window.tailwind = window.tailwind || {{}};
+            window.tailwind.config = {{ corePlugins: {{ preflight: false }} }};
+        </script>
+        <script src="https://cdn.tailwindcss.com"></script>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Caveat:wght@600;700&display=swap');
             :root {{ --apple-text: #1d1d1f; --celeste-obra: #0263a0; --nav-height: 52px; }}
@@ -259,6 +264,19 @@ def redaccion_asiento_residente():
             <div>
                 <p class="save-success-title" id="saveSuccessTitle">Guardado exitosamente</p>
                 <p class="save-success-text" id="saveSuccessText">Abriendo resumen del cuaderno...</p>
+            </div>
+        </div>
+
+        <div id="residenciaGlobalModal" class="hidden fixed inset-0 z-[2200] grid place-items-center bg-slate-950/70 p-4 backdrop-blur-md transition-opacity duration-150" role="dialog" aria-modal="true">
+            <div id="residenciaGlobalModalCard" class="w-full max-w-md rounded-2xl bg-white p-6 opacity-0 shadow-2xl ring-1 ring-slate-200 transition-all duration-150 scale-95">
+                <div id="residenciaGlobalModalIcon" class="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-green-50 text-2xl text-green-600">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <h3 id="residenciaGlobalModalTitle" class="m-0 text-xl font-black tracking-tight text-slate-900">Guardado exitosamente</h3>
+                <p id="residenciaGlobalModalMessage" class="mb-5 mt-2 text-sm font-semibold leading-6 text-slate-600">Abriendo resumen del cuaderno...</p>
+                <div class="flex justify-end">
+                    <button id="residenciaGlobalModalOk" type="button" class="rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:scale-[1.02] hover:bg-blue-700">Continuar</button>
+                </div>
             </div>
         </div>
 
@@ -413,8 +431,6 @@ def redaccion_asiento_residente():
                     if (alerta) {{
                         alerta.classList.add('show');
                         setTimeout(() => alerta.classList.remove('show'), 3000);
-                    }} else {{
-                        alert('Complete los datos para iniciar.');
                     }}
                     return;
                 }}
@@ -528,6 +544,38 @@ def redaccion_asiento_residente():
                 if(tipo === "error") {{ icono.innerHTML = '<i class="bi bi-exclamation-circle-fill text-danger"></i>'; }} 
                 else {{ icono.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>'; }}
                 alerta.classList.add('show'); setTimeout(() => {{ alerta.classList.remove('show'); }}, 3500);
+            }}
+
+            function mostrarModalResidencia(title, message, type="success", autoCloseMs=900) {{
+                return new Promise(resolve => {{
+                    const overlay = document.getElementById('residenciaGlobalModal');
+                    const card = document.getElementById('residenciaGlobalModalCard');
+                    const icon = document.getElementById('residenciaGlobalModalIcon');
+                    const titleEl = document.getElementById('residenciaGlobalModalTitle');
+                    const messageEl = document.getElementById('residenciaGlobalModalMessage');
+                    const okBtn = document.getElementById('residenciaGlobalModalOk');
+                    const classes = {{
+                        success: 'mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-green-50 text-2xl text-green-600',
+                        error: 'mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-red-50 text-2xl text-red-600',
+                        warning: 'mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-amber-50 text-2xl text-amber-600'
+                    }};
+                    icon.className = classes[type] || classes.success;
+                    icon.innerHTML = type === "error" ? '<i class="bi bi-exclamation-circle-fill"></i>' : '<i class="bi bi-check-circle-fill"></i>';
+                    titleEl.textContent = title;
+                    messageEl.textContent = message;
+                    const cerrar = () => {{
+                        card.classList.add('opacity-0', 'scale-95');
+                        setTimeout(() => {{
+                            overlay.classList.add('hidden');
+                            okBtn.onclick = null;
+                            resolve(true);
+                        }}, 150);
+                    }};
+                    okBtn.onclick = cerrar;
+                    overlay.classList.remove('hidden');
+                    requestAnimationFrame(() => card.classList.remove('opacity-0', 'scale-95'));
+                    if (autoCloseMs) setTimeout(cerrar, autoCloseMs);
+                }});
             }}
 
             document.addEventListener("DOMContentLoaded", function() {{
@@ -1133,7 +1181,7 @@ def redaccion_asiento_residente():
 
                 function dividirModuloPorLineas(modulo, maxLineas) {{
                     const texto = String(modulo.contenido || '-').trim();
-                    const lineasDisponibles = Math.max(1, maxLineas - 1);
+                    const lineasDisponibles = Math.max(1, maxLineas);
                     const palabras = texto.split(/(\\s+)/).filter(parte => parte.length > 0);
                     if (palabras.length <= 1) {{
                         return [
@@ -1172,7 +1220,7 @@ def redaccion_asiento_residente():
                     let actual = [];
                     let usadas = 1;
                     let continuacion = false;
-                    const maxLineasPagina = () => continuacion ? 32 : 24;
+                    const maxLineasPagina = () => continuacion ? 32 : 27;
 
                     modulos.forEach(moduloOriginal => {{
                         let pendiente = {{ ...moduloOriginal }};
@@ -1321,7 +1369,6 @@ def redaccion_asiento_residente():
                     const fecha = String(document.getElementById('initFecha')?.value || '').trim();
                     if (!numero || !fecha) {{
                         if (typeof mostrarAlerta === 'function') mostrarAlerta('Complete los datos para iniciar.', 'error');
-                        else alert('Complete los datos para iniciar.');
                         return;
                     }}
 
@@ -1404,6 +1451,14 @@ def redaccion_asiento_residente():
                             console.warn('No se pudo guardar en servidor:', data.error || resp.status);
                         }} else {{
                             guardadoServidor = true;
+                            try {{
+                                localStorage.setItem('samu_dashboard_refresh', JSON.stringify({{
+                                    numero,
+                                    fecha,
+                                    estado,
+                                    updated_at: new Date().toISOString()
+                                }}));
+                            }} catch (e) {{}}
                         }}
                     }} catch (error) {{
                         console.error('Error guardando asiento:', error);
@@ -1415,26 +1470,21 @@ def redaccion_asiento_residente():
                 }}
 
                 function mostrarVentanaExitoGuardado(estado, guardadoServidor=true) {{
-                    const toast = document.getElementById('saveSuccessToast');
-                    const titulo = document.getElementById('saveSuccessTitle');
-                    const texto = document.getElementById('saveSuccessText');
-                    if (titulo) titulo.innerText = estado === 'Cerrado' ? 'Cerrado exitosamente' : 'Guardado exitosamente';
-                    if (texto) texto.innerText = guardadoServidor
-                        ? 'Abriendo resumen del cuaderno de obra...'
-                        : 'Respaldo local creado. Abriendo resumen...';
-                    if (toast) {{
-                        toast.classList.add('show');
-                        clearTimeout(window.__samuSaveToastTimer);
-                        window.__samuSaveToastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
-                    }}
-                    setTimeout(() => {{
+                    const titulo = guardadoServidor
+                        ? (estado === 'Cerrado' ? 'Asiento cerrado exitosamente' : 'Borrador guardado exitosamente')
+                        : 'No se pudo sincronizar con el servidor';
+                    const texto = guardadoServidor
+                        ? 'El calendario se actualizará automáticamente y ahora se abrirá el resumen del cuaderno.'
+                        : 'Se creó un respaldo local para no perder información. Revise la conexión antes de cerrar definitivamente.';
+                    const tipo = guardadoServidor ? 'success' : 'warning';
+                    mostrarModalResidencia(titulo, texto, tipo, 1100).then(() => {{
                         window.redirigirCuadernoAlCerrarResumen = true;
                         if (typeof abrirResumenCuaderno === 'function') {{
                             abrirResumenCuaderno();
                         }} else {{
                             window.location.href = '/cuaderno';
                         }}
-                    }}, 950);
+                    }});
                 }}
 
                 window.accionAsientoPendiente = 'Borrador';

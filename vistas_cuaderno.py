@@ -143,7 +143,7 @@ def ver_asiento_cuaderno(numero):
 
             function dividirModuloVista(modulo, maxLineas) {
                 const texto = String(modulo.contenido || '-').trim();
-                const lineasDisponibles = Math.max(1, maxLineas - 1);
+                const lineasDisponibles = Math.max(1, maxLineas);
                 const partes = texto.split(/(\\s+)/).filter(parte => parte.length > 0);
                 if (partes.length <= 1) return [{...modulo, contenido: texto || '-'}, {...modulo, contenido: ''}];
 
@@ -172,7 +172,7 @@ def ver_asiento_cuaderno(numero):
                 let actual = [];
                 let usadas = 1;
                 let continuacion = false;
-                const maxLineasPagina = () => continuacion ? 32 : 24;
+                const maxLineasPagina = () => continuacion ? 32 : 27;
                 modulos.forEach(original => {
                     let pendiente = {...original};
                     while (pendiente && String(pendiente.contenido || '').trim()) {
@@ -1367,6 +1367,26 @@ def panel_cuaderno():
             </div>
         </div>
 
+        <div id="samuGlobalModal" class="hidden fixed inset-0 z-[2100] grid place-items-center bg-slate-950/70 p-4 backdrop-blur-md transition-opacity duration-150" role="dialog" aria-modal="true">
+            <div id="samuGlobalModalCard" class="w-full max-w-md rounded-2xl bg-white p-6 opacity-0 shadow-2xl ring-1 ring-slate-200 transition-all duration-150 scale-95">
+                <div class="mb-4">
+                    <div id="samuGlobalModalIcon" class="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-2xl text-blue-600">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </div>
+                    <h3 id="samuGlobalModalTitle" class="m-0 text-xl font-black tracking-tight text-slate-900">Mensaje</h3>
+                    <p id="samuGlobalModalMessage" class="mb-0 mt-2 text-sm font-semibold leading-6 text-slate-600"></p>
+                </div>
+                <div id="samuGlobalModalInputWrap" class="mb-4 hidden">
+                    <label id="samuGlobalModalInputLabel" class="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">Número de asiento</label>
+                    <input id="samuGlobalModalInput" type="text" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-lg font-black text-slate-900 outline-none transition focus:ring-2 focus:ring-blue-500" placeholder="Ingrese Número de Asiento">
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button id="samuGlobalModalCancel" type="button" class="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-200">Cancelar</button>
+                    <button id="samuGlobalModalOk" type="button" class="rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:scale-[1.02] hover:bg-blue-700">Aceptar</button>
+                </div>
+            </div>
+        </div>
+
         <script>
             // Datos iniciales Jinja2. Luego se pueden reemplazar por Fetch/AJAX desde PostgreSQL.
             const dashboardSeed = {
@@ -1695,9 +1715,82 @@ def panel_cuaderno():
                     irAAsiento(asiento.numero);
                     return;
                 }
-                const numero = prompt('Iniciando nuevo registro. Ingrese el Número de Asiento:');
-                if (!numero || !String(numero).trim()) return;
-                iniciarNuevoAsientoSeguro(fechaISO, String(numero).trim());
+                pedirNumeroAsientoElegante(fechaISO).then(numero => {
+                    if (!numero || !String(numero).trim()) return;
+                    iniciarNuevoAsientoSeguro(fechaISO, String(numero).trim());
+                });
+            }
+
+            function abrirModalGlobal({ title, message, icon='bi-info-circle-fill', type='info', input=false, inputLabel='Número de asiento', inputPlaceholder='Ingrese Número de Asiento', okText='Aceptar', cancelText='Cancelar' }) {
+                return new Promise(resolve => {
+                    const overlay = document.getElementById('samuGlobalModal');
+                    const card = document.getElementById('samuGlobalModalCard');
+                    const titleEl = document.getElementById('samuGlobalModalTitle');
+                    const msgEl = document.getElementById('samuGlobalModalMessage');
+                    const iconEl = document.getElementById('samuGlobalModalIcon');
+                    const inputWrap = document.getElementById('samuGlobalModalInputWrap');
+                    const inputEl = document.getElementById('samuGlobalModalInput');
+                    const inputLabelEl = document.getElementById('samuGlobalModalInputLabel');
+                    const okBtn = document.getElementById('samuGlobalModalOk');
+                    const cancelBtn = document.getElementById('samuGlobalModalCancel');
+                    const iconClasses = {
+                        success: 'mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-green-50 text-2xl text-green-600',
+                        error: 'mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-red-50 text-2xl text-red-600',
+                        warning: 'mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-amber-50 text-2xl text-amber-600',
+                        info: 'mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-2xl text-blue-600'
+                    };
+                    titleEl.textContent = title || 'Mensaje';
+                    msgEl.textContent = message || '';
+                    iconEl.className = iconClasses[type] || iconClasses.info;
+                    iconEl.innerHTML = `<i class="bi ${icon}"></i>`;
+                    inputWrap.classList.toggle('hidden', !input);
+                    inputLabelEl.textContent = inputLabel;
+                    inputEl.value = '';
+                    inputEl.placeholder = inputPlaceholder;
+                    okBtn.textContent = okText;
+                    cancelBtn.textContent = cancelText;
+                    cancelBtn.classList.toggle('hidden', !input);
+
+                    const cerrar = valor => {
+                        card.classList.add('opacity-0', 'scale-95');
+                        setTimeout(() => {
+                            overlay.classList.add('hidden');
+                            okBtn.onclick = null;
+                            cancelBtn.onclick = null;
+                            inputEl.onkeydown = null;
+                            resolve(valor);
+                        }, 150);
+                    };
+
+                    okBtn.onclick = () => cerrar(input ? inputEl.value.trim() : true);
+                    cancelBtn.onclick = () => cerrar(null);
+                    inputEl.onkeydown = event => {
+                        if (event.key === 'Enter') cerrar(inputEl.value.trim());
+                        if (event.key === 'Escape') cerrar(null);
+                    };
+                    overlay.classList.remove('hidden');
+                    requestAnimationFrame(() => card.classList.remove('opacity-0', 'scale-95'));
+                    if (input) setTimeout(() => inputEl.focus(), 180);
+                });
+            }
+
+            function mostrarModalElegante(title, message, type='info') {
+                const icon = type === 'success' ? 'bi-check-circle-fill' : (type === 'error' ? 'bi-exclamation-circle-fill' : 'bi-info-circle-fill');
+                return abrirModalGlobal({ title, message, type, icon, input: false, okText: 'Entendido' });
+            }
+
+            function pedirNumeroAsientoElegante(fechaISO) {
+                return abrirModalGlobal({
+                    title: 'Iniciar nuevo registro',
+                    message: `Fecha seleccionada: ${fechaISO}. Ingrese el número de asiento para empezar la redacción.`,
+                    type: 'info',
+                    icon: 'bi-journal-plus',
+                    input: true,
+                    inputLabel: 'Número de Asiento',
+                    inputPlaceholder: 'Ingrese Número de Asiento',
+                    okText: 'Iniciar Redacción',
+                    cancelText: 'Cancelar'
+                });
             }
 
             function iniciarNuevoAsientoSeguro(fechaISO, numero) {
@@ -1711,7 +1804,7 @@ def panel_cuaderno():
 
             function continuarBorradorSeguro(fechaISO, numero) {
                 if (!fechaISO || !numero) {
-                    alert('No se pudo identificar el borrador seleccionado.');
+                    mostrarModalElegante('Borrador no identificado', 'No se pudo identificar el borrador seleccionado.', 'error');
                     return;
                 }
                 const params = new URLSearchParams({
@@ -1832,23 +1925,46 @@ def panel_cuaderno():
                 const desde = document.getElementById('exportDesde').value;
                 const hasta = document.getElementById('exportHasta').value;
                 if (!desde || !hasta) {
-                    alert('Seleccione fecha Desde y Hasta para exportar el rango.');
+                    mostrarModalElegante('Rango incompleto', 'Seleccione fecha Desde y Hasta para exportar el rango.', 'warning');
                     return;
                 }
                 // Endpoint sugerido para conectar luego:
                 // window.location.href = `/cuaderno/export/pdf?desde=${desde}&hasta=${hasta}`;
-                alert(`Exportación preparada: ${desde} al ${hasta}. Falta conectar el endpoint PDF real.`);
+                mostrarModalElegante('Exportación preparada', `Rango seleccionado: ${desde} al ${hasta}. Falta conectar el endpoint PDF real.`, 'success');
+            }
+
+            async function refrescarDashboardSiHayCambios() {
+                let cambio = null;
+                try {
+                    cambio = JSON.parse(localStorage.getItem('samu_dashboard_refresh') || 'null');
+                } catch (e) {
+                    cambio = null;
+                }
+                if (!cambio) return;
+                const partes = parseFechaLocal(cambio.fecha);
+                if (partes) {
+                    mesActivo = new Date(partes.year, partes.monthIndex, 1);
+                }
+                await renderDashboardMes();
+                try { localStorage.removeItem('samu_dashboard_refresh'); } catch (e) {}
+                const estado = String(cambio.estado || '').toLowerCase().includes('cerrado') ? 'Asiento cerrado exitosamente' : 'Borrador guardado exitosamente';
+                mostrarModalElegante(estado, `El Asiento N° ${String(cambio.numero || '').padStart(3, '0')} ya fue sincronizado en el calendario.`, 'success');
             }
 
             document.addEventListener('DOMContentLoaded', () => {
                 renderDashboardMes();
                 renderTimeline();
                 prepararAnimacionFlotarAdentro();
+                refrescarDashboardSiHayCambios();
                 document.getElementById('seatEntryModal')?.addEventListener('click', event => {
                     if (event.target.id === 'seatEntryModal') cerrarModalAsiento();
                 });
                 document.addEventListener('keydown', event => {
                     if (event.key === 'Escape') cerrarModalAsiento();
+                });
+                window.addEventListener('focus', refrescarDashboardSiHayCambios);
+                window.addEventListener('storage', event => {
+                    if (event.key === 'samu_dashboard_refresh') refrescarDashboardSiHayCambios();
                 });
             });
         </script>

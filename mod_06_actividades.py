@@ -317,7 +317,10 @@ ACTIVIDADES_HTML = """
         const met = document.getElementById('m6_input_met').value;
         const und = document.getElementById('m6_input_und').value.trim().toUpperCase();
         
-        if(desc === '') { alert("La descripción es obligatoria."); return; }
+        if(desc === '') {
+            if (typeof mostrarAlerta === "function") mostrarAlerta("La descripción es obligatoria.", "error");
+            return;
+        }
         
         window.m6_lista.push({
             item: m6_temp_item,
