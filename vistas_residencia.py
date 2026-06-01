@@ -262,29 +262,8 @@ def redaccion_asiento_residente():
             </div>
         </div>
 
-        <div class="modal fade" id="modalConfigInicial" data-bs-backdrop="static" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content inicio-asiento-card">
-                    <div class="inicio-asiento-hero">
-                        <div class="inicio-asiento-icon"><i class="bi bi-journal-richtext"></i></div>
-                        <h4>Apertura de Asiento</h4>
-                        <p>Ingrese el número y fecha para comenzar la redacción del cuaderno.</p>
-                    </div>
-                    <div class="inicio-asiento-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-muted">N° de Asiento</label>
-                            <input type="text" inputmode="numeric" pattern="[0-9]*" id="initNumAsiento" class="form-control form-control-lg inicio-input" placeholder="Ej: XXXX" oninput="this.value=this.value.replace(/\\D/g,'')" onkeydown="if(event.key==='Enter'){{event.preventDefault(); document.getElementById('initFecha').focus();}}">
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label fw-bold text-muted">Fecha del Asiento</label>
-                            <input type="date" id="initFecha" class="form-control form-control-lg inicio-input" value="{fecha_hoy_iso}">
-                        </div>
-                        <button type="button" id="btnComenzarRegistro" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold shadow-sm">Comenzar registro <i class="bi bi-arrow-right ms-1"></i></button>
-                        <div class="text-center text-muted small mt-3">También puede presionar <b>Enter</b> para avanzar.</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <input type="hidden" id="initNumAsiento" value="">
+        <input type="hidden" id="initFecha" value="{fecha_hoy_iso}">
 
         <div class="modal fade" id="modalPegadoInteligente" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -406,46 +385,15 @@ def redaccion_asiento_residente():
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
+            function samuTieneParametrosAsiento() {{
+                const params = new URLSearchParams(window.location.search || '');
+                return !!(params.get('fecha') && params.get('asiento'));
+            }}
             function abrirModalInicialSeguro() {{
-                const modalInicial = document.getElementById('modalConfigInicial');
-                if (!modalInicial || modalInicial.dataset.abierto === '1') return;
-                modalInicial.dataset.abierto = '1';
-                try {{
-                    if (window.bootstrap && bootstrap.Modal) {{
-                        new bootstrap.Modal(modalInicial).show();
-                    }} else {{
-                        modalInicial.style.display = 'block';
-                        modalInicial.removeAttribute('aria-hidden');
-                        modalInicial.setAttribute('aria-modal', 'true');
-                        modalInicial.classList.add('show');
-                        document.body.classList.add('modal-open');
-                        if (!document.querySelector('.modal-backdrop')) {{
-                            const fondo = document.createElement('div');
-                            fondo.className = 'modal-backdrop fade show';
-                            document.body.appendChild(fondo);
-                        }}
-                    }}
-                    setTimeout(() => document.getElementById('initNumAsiento')?.focus(), 250);
-                }} catch (e) {{
-                    modalInicial.style.display = 'block';
-                    modalInicial.classList.add('show');
-                }}
+                if (samuTieneParametrosAsiento()) return;
+                window.location.href = '/cuaderno';
             }}
             function cerrarModalInicialSeguro() {{
-                const modalInicial = document.getElementById('modalConfigInicial');
-                if (!modalInicial) return;
-                try {{
-                    const instancia = window.bootstrap && bootstrap.Modal
-                        ? (bootstrap.Modal.getInstance(modalInicial) || new bootstrap.Modal(modalInicial))
-                        : null;
-                    if (instancia) {{
-                        instancia.hide();
-                    }}
-                }} catch (e) {{}}
-                modalInicial.classList.remove('show');
-                modalInicial.style.display = 'none';
-                modalInicial.setAttribute('aria-hidden', 'true');
-                modalInicial.removeAttribute('aria-modal');
                 document.body.classList.remove('modal-open');
                 document.body.style.removeProperty('overflow');
                 document.body.style.removeProperty('padding-right');
@@ -536,16 +484,6 @@ def redaccion_asiento_residente():
                 window.irModulo((window.samuCurrentStep || 1) - 1);
             }};
             document.addEventListener('DOMContentLoaded', function() {{
-                document.getElementById('btnComenzarRegistro')?.addEventListener('click', function(event) {{
-                    event.preventDefault();
-                    window.iniciarAsientoSeguro();
-                }});
-                document.getElementById('initFecha')?.addEventListener('keydown', function(event) {{
-                    if (event.key === 'Enter') {{
-                        event.preventDefault();
-                        window.iniciarAsientoSeguro();
-                    }}
-                }});
                 document.getElementById('formResidencia')?.addEventListener('input', function() {{
                     if (typeof sincronizarDatos === 'function') sincronizarDatos();
                 }});
@@ -593,8 +531,6 @@ def redaccion_asiento_residente():
             }}
 
             document.addEventListener("DOMContentLoaded", function() {{
-                const modalInicial = document.getElementById('modalConfigInicial');
-                modalInicial.addEventListener('shown.bs.modal', function () {{ document.getElementById('initNumAsiento').focus(); }});
                 abrirModalInicialSeguro();
                 instalarTooltipStepper();
                 actualizarStepper();
@@ -1081,12 +1017,6 @@ def redaccion_asiento_residente():
                 }}
 
                 function desbloquearPantallaAsiento() {{
-                    document.getElementById('modalConfigInicial')?.classList.remove('show');
-                    const modal = document.getElementById('modalConfigInicial');
-                    if (modal) {{
-                        modal.style.display = 'none';
-                        modal.setAttribute('aria-hidden', 'true');
-                    }}
                     document.body.classList.remove('modal-open');
                     document.body.style.removeProperty('overflow');
                     document.body.style.removeProperty('padding-right');
@@ -1391,12 +1321,6 @@ def redaccion_asiento_residente():
                     const fechaCuaderno = document.getElementById('lbl_hoja_fecha');
                     if (fechaCuaderno) fechaCuaderno.innerText = window.g_fechaAsiento;
 
-                    document.getElementById('modalConfigInicial')?.classList.remove('show');
-                    const modal = document.getElementById('modalConfigInicial');
-                    if (modal) {{
-                        modal.style.display = 'none';
-                        modal.setAttribute('aria-hidden', 'true');
-                    }}
                     document.body.classList.remove('modal-open');
                     document.body.style.removeProperty('overflow');
                     document.body.style.removeProperty('padding-right');
@@ -1433,7 +1357,8 @@ def redaccion_asiento_residente():
                             fecha,
                             fecha_texto: window.g_fechaAsiento || '',
                             modulos: modulosCuadernoCompleto(),
-                            texto_html: document.getElementById('contenedorLineasCuaderno')?.innerHTML || ''
+                            texto_html: document.getElementById('contenedorLineasCuaderno')?.innerHTML || '',
+                            estado_local: estadoActualAsiento()
                         }}
                     }};
                     const respaldoKey = `samu_asiento_guardado_${{numero}}`;
@@ -1532,17 +1457,108 @@ def redaccion_asiento_residente():
                 window.guardarBorradorAsiento = window.mostrarConfirmarGuardarBorrador;
                 window.cerrarAsiento = window.mostrarConfirmarCerrarAsiento;
 
-                document.addEventListener('DOMContentLoaded', function() {{
-                    document.getElementById('btnComenzarRegistro')?.addEventListener('click', function(event) {{
-                        event.preventDefault();
-                        window.iniciarAsientoSeguro();
-                    }});
-                    document.getElementById('initFecha')?.addEventListener('keydown', function(event) {{
-                        if (event.key === 'Enter') {{
-                            event.preventDefault();
-                            window.iniciarAsientoSeguro();
+                function fechaTextoLocal(fechaISO) {{
+                    const partes = String(fechaISO || '').split('-');
+                    if (partes.length !== 3) return fechaISO || '';
+                    const y = parseInt(partes[0], 10);
+                    const m = parseInt(partes[1], 10);
+                    const d = parseInt(partes[2], 10);
+                    const dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"];
+                    const fecha = new Date(y, m - 1, d);
+                    let dayIndex = fecha.getDay() - 1;
+                    if (dayIndex === -1) dayIndex = 6;
+                    return `${{dias[dayIndex]}}, ${{String(d).padStart(2, '0')}}/${{String(m).padStart(2, '0')}}/${{y}}`;
+                }}
+
+                function aplicarContenidoGuardado(contenido) {{
+                    if (!contenido || typeof contenido !== 'object') return;
+                    if (contenido.estado_local?.campos) aplicarCamposFormulario(contenido.estado_local.campos);
+                    const listasGuardadas = contenido.estado_local?.listas || {{}};
+                    if (Array.isArray(listasGuardadas.catalogoMaestro)) window.catalogoMaestro = listasGuardadas.catalogoMaestro;
+                    if (Array.isArray(listasGuardadas.m3_lista)) window.m3_lista = listasGuardadas.m3_lista;
+                    if (Array.isArray(listasGuardadas.m4_lista)) window.m4_lista = listasGuardadas.m4_lista;
+                    if (Array.isArray(listasGuardadas.m5_lista)) window.m5_lista = listasGuardadas.m5_lista;
+                    if (Array.isArray(listasGuardadas.m6_lista)) window.m6_lista = listasGuardadas.m6_lista;
+                    if (listasGuardadas.m8_base) window.m8_base = listasGuardadas.m8_base;
+                    if (listasGuardadas.m8_registros) window.m8_registros = listasGuardadas.m8_registros;
+                    if (listasGuardadas.m8_entidad_actual) window.m8_entidad_actual = listasGuardadas.m8_entidad_actual;
+                    if (listasGuardadas.m8_entidades_registradas) window.m8_entidades_registradas = listasGuardadas.m8_entidades_registradas;
+                    if (Array.isArray(listasGuardadas.m9_herramientas)) window.m9_herramientas = listasGuardadas.m9_herramientas;
+                    if (Array.isArray(listasGuardadas.m9_seleccionadas)) window.m9_seleccionadas = listasGuardadas.m9_seleccionadas;
+                    if (listasGuardadas.m10_tipo_actual) window.m10_tipo_actual = listasGuardadas.m10_tipo_actual;
+                    const datos = contenido.datos || {{}};
+                    const asignar = (id, valor) => {{
+                        const el = document.getElementById(id);
+                        if (el && typeof valor !== 'undefined' && valor !== null) el.value = valor;
+                    }};
+                    asignar('v_jornal_m', datos.jornal_m);
+                    asignar('v_jornal_t', datos.jornal_t);
+                    asignar('v_clima', datos.clima);
+                    asignar('v_oper', datos.personal?.operario);
+                    asignar('v_ofic', datos.personal?.oficiales);
+                    asignar('v_peon', datos.personal?.peones);
+                    asignar('v_meca', datos.personal?.mecanicos);
+                    asignar('v_ctrl', datos.personal?.controladores);
+                    asignar('v_ope_maq', datos.personal?.operadores);
+                    asignar('v_almacen', datos.almacen);
+                    asignar('v_maquina', datos.maquinaria);
+                    asignar('v_herram', datos.herramientas);
+                    asignar('v_ocurrencia', datos.ocurrencia);
+                    if (Array.isArray(datos.m3)) window.m3_lista = datos.m3;
+                    if (Array.isArray(datos.m4)) window.m4_lista = datos.m4;
+                    if (Array.isArray(datos.m5)) window.m5_lista = datos.m5;
+                    if (Array.isArray(datos.m6)) window.m6_lista = datos.m6;
+                    restaurarRenderModulos();
+                    window.samuActualizarCuaderno();
+                }}
+
+                async function iniciarAsientoDesdeParametrosURL() {{
+                    const params = new URLSearchParams(window.location.search || '');
+                    const fecha = params.get('fecha');
+                    const numero = params.get('asiento');
+                    const modo = params.get('modo') || 'nuevo';
+                    if (!fecha || !numero) return false;
+
+                    try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
+                    const inputNumero = document.getElementById('initNumAsiento');
+                    const inputFecha = document.getElementById('initFecha');
+                    if (inputNumero) inputNumero.value = String(numero).replace(/\\D/g, '');
+                    if (inputFecha) inputFecha.value = fecha;
+                    window.iniciarAsientoSeguro();
+
+                    if (modo === 'continuar') {{
+                        try {{
+                            const resp = await fetch(`/residencia/api/asiento/${{encodeURIComponent(numero)}}`);
+                            const data = await resp.json().catch(() => null);
+                            const asiento = data && data.ok ? data.asiento : null;
+                            if (!asiento) return true;
+                            if (asiento.estado === 'Cerrado' || asiento.bloqueado) {{
+                                window.location.href = `/cuaderno/asiento/${{encodeURIComponent(numero)}}`;
+                                return true;
+                            }}
+                            let contenido = asiento.contenido || {{}};
+                            if (typeof contenido === 'string') {{
+                                try {{ contenido = JSON.parse(contenido); }} catch (e) {{ contenido = {{}}; }}
+                            }}
+                            window.g_numAsiento = String(asiento.numero || numero);
+                            window.g_fechaRaw = asiento.fecha || fecha;
+                            window.g_fechaAsiento = contenido.fecha_texto || fechaTextoLocal(window.g_fechaRaw);
+                            if (typeof g_numAsiento !== 'undefined') g_numAsiento = window.g_numAsiento;
+                            if (typeof g_fechaRaw !== 'undefined') g_fechaRaw = window.g_fechaRaw;
+                            if (typeof g_fechaAsiento !== 'undefined') g_fechaAsiento = window.g_fechaAsiento;
+                            const lblFecha = document.getElementById('lbl_hoja_fecha');
+                            if (lblFecha) lblFecha.innerText = window.g_fechaAsiento;
+                            aplicarContenidoGuardado(contenido);
+                            guardarEstadoLocal();
+                            if (typeof mostrarAlerta === 'function') mostrarAlerta(`Borrador N° ${{numero}} cargado sin modificar la base de datos.`, 'success');
+                        }} catch (error) {{
+                            console.error('No se pudo cargar el borrador guardado.', error);
                         }}
-                    }});
+                    }}
+                    return true;
+                }}
+
+                document.addEventListener('DOMContentLoaded', function() {{
                     const form = document.getElementById('formResidencia');
                     if (form) {{
                         const refrescarYGuardar = () => {{
@@ -1556,7 +1572,10 @@ def redaccion_asiento_residente():
                             form.addEventListener(evento, refrescarYGuardar);
                         }});
                     }}
-                    setTimeout(restaurarEstadoLocal, 450);
+                    setTimeout(async () => {{
+                        const iniciadoDesdeURL = await iniciarAsientoDesdeParametrosURL();
+                        if (!iniciadoDesdeURL) restaurarEstadoLocal();
+                    }}, 120);
                     window.addEventListener('beforeunload', guardarEstadoLocal);
                 }});
             }})();

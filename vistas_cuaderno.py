@@ -964,7 +964,7 @@ def panel_cuaderno():
             }
 
             .seat-modal-card {
-                width: min(100%, 560px);
+                width: min(100%, 920px);
                 border: 1px solid rgba(255,255,255,.72);
                 border-radius: 30px;
                 padding: 24px;
@@ -1011,19 +1011,16 @@ def panel_cuaderno():
                 font-weight: 900;
             }
 
-            .seat-modal-form {
-                display: grid;
-                gap: 14px;
-            }
-
             .mini-seat-calendar {
                 display: grid;
                 grid-template-columns: repeat(7, minmax(0, 1fr));
                 gap: 7px;
+                min-height: 344px;
+                grid-template-rows: repeat(6, minmax(52px, 1fr));
             }
 
             .mini-seat-day {
-                min-height: 44px;
+                min-height: 52px;
                 border: 1px solid #e2e8f0;
                 border-radius: 14px;
                 background: #fff;
@@ -1073,41 +1070,6 @@ def panel_cuaderno():
                 outline: 3px solid rgba(2,99,160,.26);
                 transform: scale(1.04);
                 box-shadow: 0 16px 34px rgba(2,99,160,.18);
-            }
-
-            .seat-field label {
-                display: block;
-                margin-bottom: 7px;
-                color: #334155;
-                font-size: 12px;
-                font-weight: 900;
-                text-transform: uppercase;
-                letter-spacing: .5px;
-            }
-
-            .seat-field input {
-                width: 100%;
-                border: 1px solid #cbd5e1;
-                border-radius: 18px;
-                padding: 13px 14px;
-                background: #fff;
-                color: #0f172a;
-                font-size: 14px;
-                font-weight: 800;
-                outline: none;
-                transition: border-color .2s ease, box-shadow .2s ease;
-            }
-
-            .seat-field input:focus {
-                border-color: var(--samu-blue);
-                box-shadow: 0 0 0 4px rgba(2,99,160,.12);
-            }
-
-            .seat-field input[readonly] {
-                background: #fef3c7;
-                border-color: #facc15;
-                color: #713f12;
-                cursor: not-allowed;
             }
 
             .seat-modal-state {
@@ -1327,14 +1289,22 @@ def panel_cuaderno():
             <div class="seat-modal-card">
                 <div class="seat-modal-head">
                     <div>
-                        <h3 id="seatEntryTitle">Nuevo Asiento / Continuar</h3>
-                        <p>Seleccione un día del calendario para crear, continuar o revisar el asiento.</p>
+                        <h3 id="seatEntryTitle">Redactar Asiento</h3>
+                        <p>Seleccione una fecha. Rojo crea un asiento nuevo, amarillo continúa borrador y verde abre solo lectura.</p>
                     </div>
                     <button type="button" class="seat-modal-close" onclick="cerrarModalAsiento()" aria-label="Cerrar">&times;</button>
                 </div>
                 <div class="grid gap-3">
-                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2">
-                        <span id="miniMonthLabel" class="text-xs font-black uppercase tracking-wide text-slate-700">Mes actual</span>
+                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-2">
+                        <div class="inline-flex items-center gap-2 rounded-full bg-white p-1 shadow-sm">
+                            <button type="button" class="rounded-full bg-slate-100 px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-200" onclick="cambiarMesModal(-1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <span id="miniMonthLabel" class="min-w-[150px] text-center text-xs font-black uppercase tracking-wide text-slate-700">Mes actual</span>
+                            <button type="button" class="rounded-full bg-slate-100 px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-200" onclick="cambiarMesModal(1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
                         <span class="inline-flex items-center gap-2 text-[11px] font-black text-slate-500">
                             <span class="inline-block h-2.5 w-2.5 rounded-full bg-red-500"></span>Nuevo
                             <span class="inline-block h-2.5 w-2.5 rounded-full bg-yellow-400"></span>Borrador
@@ -1345,9 +1315,6 @@ def panel_cuaderno():
                         <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
                     </div>
                     <div id="miniSeatCalendar" class="mini-seat-calendar"></div>
-                    <div id="seatActionPanel" class="rounded-3xl border border-slate-200 bg-slate-50 p-3">
-                        <div class="text-sm font-extrabold text-slate-600">Seleccione un día para continuar.</div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1379,6 +1346,8 @@ def panel_cuaderno():
             mesActivo.setDate(1);
             let doughnutChart = null;
             let asientosMesActivo = new Map();
+            let modalMesActivo = new Date(mesActivo.getFullYear(), mesActivo.getMonth(), 1);
+            let modalAsientosMes = new Map();
             let asientoModalActual = null;
             let fechaModalSeleccionada = null;
 
@@ -1399,12 +1368,22 @@ def panel_cuaderno():
                 return 'pendiente';
             }
 
+            function parseFechaLocal(fechaISO) {
+                const partes = String(fechaISO || '').split('-').map(Number);
+                if (partes.length !== 3 || partes.some(Number.isNaN)) return null;
+                return { year: partes[0], monthIndex: partes[1] - 1, day: partes[2] };
+            }
+
             function fechaAsiento(asiento, year, month) {
-                if (asiento.fecha) {
-                    const fecha = new Date(`${asiento.fecha}T00:00:00`);
-                    if (!Number.isNaN(fecha.getTime())) return fecha;
-                }
-                return new Date(year, month, Number(asiento.dia || 1));
+                const partes = parseFechaLocal(asiento.fecha);
+                if (partes) return partes;
+                return { year, monthIndex: month, day: Number(asiento.dia || 1) };
+            }
+
+            function fechaHoraLocal(fechaISO, hora=18, minuto=30) {
+                const partes = parseFechaLocal(fechaISO);
+                if (!partes) return new Date();
+                return new Date(partes.year, partes.monthIndex, partes.day, hora, minuto);
             }
 
             async function cargarDatosMes(year, month) {
@@ -1417,7 +1396,7 @@ def panel_cuaderno():
                 }
                 const asientos = dashboardSeed.asientos.filter(asiento => {
                     const fecha = fechaAsiento(asiento, year, month);
-                    return fecha.getFullYear() === year && fecha.getMonth() === month;
+                    return fecha.year === year && fecha.monthIndex === month;
                 });
                 return { asientos, observaciones: dashboardSeed.observaciones, estadisticas: null };
             }
@@ -1442,7 +1421,7 @@ def panel_cuaderno():
                 const porDia = new Map();
                 datos.asientos.forEach(asiento => {
                     const fecha = fechaAsiento(asiento, year, month);
-                    porDia.set(fecha.getDate(), asiento);
+                    porDia.set(fecha.day, asiento);
                 });
                 asientosMesActivo = porDia;
 
@@ -1574,33 +1553,47 @@ def panel_cuaderno():
                 return fechaISODesdePartes(year, month, Math.min(dia, diasEnMes(year, month)));
             }
 
-            function buscarAsientoPorFecha(fechaISO) {
+            function buscarAsientoPorFecha(fechaISO, mapa=asientosMesActivo, year=mesActivo.getFullYear(), month=mesActivo.getMonth()) {
                 if (!fechaISO) return null;
-                const fecha = new Date(`${fechaISO}T00:00:00`);
-                if (Number.isNaN(fecha.getTime())) return null;
-                if (fecha.getFullYear() !== mesActivo.getFullYear() || fecha.getMonth() !== mesActivo.getMonth()) return null;
-                return asientosMesActivo.get(fecha.getDate()) || null;
+                const fecha = parseFechaLocal(fechaISO);
+                if (!fecha) return null;
+                if (fecha.year !== year || fecha.monthIndex !== month) return null;
+                return mapa.get(fecha.day) || null;
             }
 
             function abrirModalAsientoResidencia(event, fechaISO=null) {
                 if (event) event.preventDefault();
                 const modal = document.getElementById('seatEntryModal');
+                const fecha = parseFechaLocal(fechaISO || fechaPorDefectoModal());
+                if (fecha) modalMesActivo = new Date(fecha.year, fecha.monthIndex, 1);
                 modal.classList.remove('hidden');
-                renderMiniCalendarioAsiento(fechaISO || fechaPorDefectoModal());
+                renderCalendarioModalAsiento();
             }
 
             function cerrarModalAsiento() {
                 document.getElementById('seatEntryModal')?.classList.add('hidden');
             }
 
-            function renderMiniCalendarioAsiento(fechaSeleccionada=null) {
-                const year = mesActivo.getFullYear();
-                const month = mesActivo.getMonth();
+            async function cambiarMesModal(delta) {
+                modalMesActivo.setMonth(modalMesActivo.getMonth() + delta);
+                await renderCalendarioModalAsiento();
+            }
+
+            async function renderCalendarioModalAsiento() {
+                const year = modalMesActivo.getFullYear();
+                const month = modalMesActivo.getMonth();
                 const grid = document.getElementById('miniSeatCalendar');
                 const label = document.getElementById('miniMonthLabel');
                 if (!grid || !label) return;
-                label.textContent = nombreMes(mesActivo);
+                label.textContent = nombreMes(modalMesActivo);
                 grid.innerHTML = '';
+
+                const datos = await cargarDatosMes(year, month);
+                modalAsientosMes = new Map();
+                datos.asientos.forEach(asiento => {
+                    const fecha = fechaAsiento(asiento, year, month);
+                    modalAsientosMes.set(fecha.day, asiento);
+                });
 
                 const espacios = primerDiaLunes(year, month);
                 for (let i = 0; i < espacios; i += 1) {
@@ -1612,100 +1605,52 @@ def panel_cuaderno():
                 const totalDias = diasEnMes(year, month);
                 for (let dia = 1; dia <= totalDias; dia += 1) {
                     const fechaISO = fechaISODesdePartes(year, month, dia);
-                    const asiento = buscarAsientoPorFecha(fechaISO);
+                    const asiento = buscarAsientoPorFecha(fechaISO, modalAsientosMes, year, month);
                     const estado = asiento ? normalizarEstado(asiento.estado) : 'pendiente';
                     const estadoVisual = estado === 'observado' ? 'draft' : estado;
                     const day = document.createElement('button');
                     day.type = 'button';
-                    day.className = `mini-seat-day ${estadoVisual} ${fechaISO === fechaSeleccionada ? 'selected' : ''}`;
+                    day.className = `mini-seat-day ${estadoVisual}`;
                     day.textContent = dia;
-                    day.addEventListener('click', () => seleccionarDiaMiniCalendario(fechaISO));
+                    day.addEventListener('click', () => gestionarClickDiaRedaccion(fechaISO, asiento));
                     grid.appendChild(day);
                 }
-
-                if (fechaSeleccionada) {
-                    seleccionarDiaMiniCalendario(fechaSeleccionada, false);
-                } else {
-                    document.getElementById('seatActionPanel').innerHTML = '<div class="text-sm font-extrabold text-slate-600">Seleccione un día para continuar.</div>';
-                }
             }
 
-            function seleccionarDiaMiniCalendario(fechaISO, rerender=true) {
-                if (rerender) renderMiniCalendarioAsiento(fechaISO);
-                const asiento = buscarAsientoPorFecha(fechaISO);
-                asientoModalActual = asiento || null;
-                fechaModalSeleccionada = fechaISO;
-                renderPanelAccionAsiento(fechaISO, asiento);
-            }
-
-            function renderPanelAccionAsiento(fechaISO, asiento) {
-                const panel = document.getElementById('seatActionPanel');
-                if (!panel) return;
+            function gestionarClickDiaRedaccion(fechaISO, asiento) {
                 if (asiento && normalizarEstado(asiento.estado) === 'borrador') {
-                    panel.innerHTML = `
-                        <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-3">
-                            <div class="text-sm font-black text-yellow-800"><i class="bi bi-pencil-square me-1"></i> Borrador encontrado</div>
-                            <p class="mb-3 mt-1 text-xs font-bold text-yellow-700">Asiento N° ${escapeHtml(String(asiento.numero).padStart(3, '0'))} listo para continuar.</p>
-                            <button type="button" class="w-full rounded-2xl bg-yellow-500 px-4 py-3 text-sm font-black text-white shadow-lg shadow-yellow-500/20 transition hover:scale-[1.02]" onclick="continuarBorradorAsiento()">
-                                Continuar Borrador
-                            </button>
-                        </div>
-                    `;
+                    continuarBorradorSeguro(fechaISO, asiento.numero);
                     return;
                 }
-
                 if (asiento) {
-                    panel.innerHTML = `
-                        <div class="rounded-2xl border border-green-200 bg-green-50 p-3">
-                            <div class="text-sm font-black text-green-800"><i class="bi bi-lock-fill me-1"></i> Asiento Cerrado</div>
-                            <p class="mb-3 mt-1 text-xs font-bold text-green-700">El Asiento N° ${escapeHtml(String(asiento.numero).padStart(3, '0'))} ya está cerrado. Solo puede consultarse.</p>
-                            <button type="button" class="w-full rounded-2xl bg-green-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-green-600/20 transition hover:scale-[1.02]" onclick="verAsientoCerrado()">
-                                Ver Cuaderno
-                            </button>
-                        </div>
-                    `;
+                    irAAsiento(asiento.numero);
                     return;
                 }
-
-                panel.innerHTML = `
-                    <div class="rounded-2xl border border-red-200 bg-red-50 p-3">
-                        <div class="text-sm font-black text-red-800"><i class="bi bi-plus-circle-fill me-1"></i> Día sin registro</div>
-                        <p class="mb-3 mt-1 text-xs font-bold text-red-700">Fecha seleccionada: ${escapeHtml(fechaISO)}. Ingrese el número para crear el asiento.</p>
-                        <input type="text" id="newSeatNumberInput" class="mb-3 w-full rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-800 outline-none transition focus:border-red-400 focus:ring-4 focus:ring-red-100" placeholder="Ingrese Número de Asiento">
-                        <button type="button" class="w-full rounded-2xl bg-green-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-green-600/20 transition hover:scale-[1.02]" onclick="crearNuevoAsientoDesdeModal()">
-                            Crear Nuevo Asiento
-                        </button>
-                    </div>
-                `;
-                setTimeout(() => document.getElementById('newSeatNumberInput')?.focus(), 80);
+                const numero = prompt('Iniciando nuevo registro. Ingrese el Número de Asiento:');
+                if (!numero || !String(numero).trim()) return;
+                iniciarNuevoAsientoSeguro(fechaISO, String(numero).trim());
             }
 
-            function crearNuevoAsientoDesdeModal() {
-                const numero = String(document.getElementById('newSeatNumberInput')?.value || '').trim();
-                if (!fechaModalSeleccionada || !numero) {
-                    alert('Ingrese el número de asiento para continuar.');
-                    return;
-                }
+            function iniciarNuevoAsientoSeguro(fechaISO, numero) {
                 const params = new URLSearchParams({
-                    fecha: fechaModalSeleccionada,
+                    fecha: fechaISO,
                     asiento: numero,
                     modo: 'nuevo'
                 });
                 window.location.href = `/residencia?${params.toString()}`;
             }
 
-            function continuarBorradorAsiento() {
-                if (!fechaModalSeleccionada || !asientoModalActual) return;
+            function continuarBorradorSeguro(fechaISO, numero) {
+                if (!fechaISO || !numero) {
+                    alert('No se pudo identificar el borrador seleccionado.');
+                    return;
+                }
                 const params = new URLSearchParams({
-                    fecha: fechaModalSeleccionada,
-                    asiento: asientoModalActual.numero,
+                    fecha: fechaISO,
+                    asiento: numero,
                     modo: 'continuar'
                 });
                 window.location.href = `/residencia?${params.toString()}`;
-            }
-
-            function verAsientoCerrado() {
-                if (asientoModalActual?.numero) irAAsiento(asientoModalActual.numero);
             }
 
             function textoEstado(asiento, estado) {
@@ -1751,7 +1696,7 @@ def panel_cuaderno():
                 dashboardSeed.asientos.slice(0, 5).forEach(asiento => {
                     const actor = normalizarEstado(asiento.estado) === 'borrador' ? 'Supervisión guardó' : 'Residencia cerró';
                     acciones.push({
-                        hora: asiento.updated_at ? new Date(asiento.updated_at) : (asiento.fecha ? new Date(`${asiento.fecha}T18:30:00`) : new Date()),
+                        hora: asiento.updated_at ? new Date(asiento.updated_at) : (asiento.fecha ? fechaHoraLocal(asiento.fecha, 18, 30) : new Date()),
                         titulo: `${actor} el Asiento N° ${String(asiento.numero || '').padStart(3, '0')}`,
                         detalle: `Estado actual: ${asiento.estado || '-'} · Avance ${asiento.avance || 0}%`
                     });
