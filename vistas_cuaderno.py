@@ -944,6 +944,133 @@ def panel_cuaderno():
                 text-align: center;
             }
 
+            .hidden { display: none !important; }
+
+            .seat-modal-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 2000;
+                display: grid;
+                place-items: center;
+                padding: 20px;
+                background: rgba(15, 23, 42, .68);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+
+            .seat-modal-card {
+                width: min(100%, 460px);
+                border: 1px solid rgba(255,255,255,.72);
+                border-radius: 30px;
+                padding: 24px;
+                background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(248,250,252,.94));
+                box-shadow: 0 30px 90px rgba(15,23,42,.32);
+                animation: modalSeatIn .24s ease both;
+            }
+
+            @keyframes modalSeatIn {
+                from { opacity: 0; transform: translateY(18px) scale(.96); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+
+            .seat-modal-head {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 14px;
+                margin-bottom: 18px;
+            }
+
+            .seat-modal-head h3 {
+                margin: 0;
+                font-size: 22px;
+                font-weight: 900;
+                letter-spacing: -.8px;
+            }
+
+            .seat-modal-head p {
+                margin: 6px 0 0;
+                color: #64748b;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .seat-modal-close {
+                width: 36px;
+                height: 36px;
+                border: 0;
+                border-radius: 999px;
+                background: #e2e8f0;
+                color: #0f172a;
+                font-size: 20px;
+                font-weight: 900;
+            }
+
+            .seat-modal-form {
+                display: grid;
+                gap: 14px;
+            }
+
+            .seat-field label {
+                display: block;
+                margin-bottom: 7px;
+                color: #334155;
+                font-size: 12px;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: .5px;
+            }
+
+            .seat-field input {
+                width: 100%;
+                border: 1px solid #cbd5e1;
+                border-radius: 18px;
+                padding: 13px 14px;
+                background: #fff;
+                color: #0f172a;
+                font-size: 14px;
+                font-weight: 800;
+                outline: none;
+                transition: border-color .2s ease, box-shadow .2s ease;
+            }
+
+            .seat-field input:focus {
+                border-color: var(--samu-blue);
+                box-shadow: 0 0 0 4px rgba(2,99,160,.12);
+            }
+
+            .seat-field input[readonly] {
+                background: #fef3c7;
+                border-color: #facc15;
+                color: #713f12;
+                cursor: not-allowed;
+            }
+
+            .seat-modal-state {
+                border-radius: 18px;
+                padding: 12px 14px;
+                background: #fee2e2;
+                color: #991b1b;
+                font-size: 13px;
+                font-weight: 800;
+            }
+
+            .seat-modal-state.draft {
+                background: #fef3c7;
+                color: #713f12;
+            }
+
+            .seat-modal-submit {
+                border: 0;
+                border-radius: 18px;
+                padding: 14px 16px;
+                background: linear-gradient(135deg, #0263a0, #0f172a);
+                color: #fff;
+                font-size: 13px;
+                font-weight: 900;
+                box-shadow: 0 18px 36px rgba(2,99,160,.22);
+            }
+
             .fade-up {
                 animation: fadeUp .55s cubic-bezier(.16,.84,.24,1) both;
             }
@@ -1030,7 +1157,7 @@ def panel_cuaderno():
                 </div>
 
                 <div class="action-topbar">
-                    <a class="primary-action residencia" href="/residencia">
+                    <a class="primary-action residencia" href="/residencia" onclick="abrirModalAsientoResidencia(event)">
                         <span class="action-icon"><i class="bi bi-journal-richtext"></i></span>
                         <span>
                             <small>Permiso residencia</small>
@@ -1132,6 +1259,34 @@ def panel_cuaderno():
             </section>
         </main>
 
+        <div id="seatEntryModal" class="seat-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="seatEntryTitle">
+            <div class="seat-modal-card">
+                <div class="seat-modal-head">
+                    <div>
+                        <h3 id="seatEntryTitle">Nuevo Asiento / Continuar</h3>
+                        <p>Seleccione la fecha y confirme el número de asiento para ingresar al cuaderno.</p>
+                    </div>
+                    <button type="button" class="seat-modal-close" onclick="cerrarModalAsiento()" aria-label="Cerrar">&times;</button>
+                </div>
+                <div class="seat-modal-form">
+                    <div class="seat-field">
+                        <label for="seatModalDate">Fecha del asiento</label>
+                        <input type="date" id="seatModalDate" onchange="evaluarFechaAsientoModal()">
+                    </div>
+                    <div class="seat-field">
+                        <label for="seatModalNumber">Número de asiento</label>
+                        <input type="text" id="seatModalNumber" placeholder="Ingrese el número de asiento">
+                    </div>
+                    <div id="seatModalState" class="seat-modal-state">
+                        Día sin registro. Ingrese manualmente el número de asiento.
+                    </div>
+                    <button type="button" id="seatModalSubmit" class="seat-modal-submit" onclick="ingresarAlCuadernoResidencia()">
+                        <i class="bi bi-journal-arrow-up me-1"></i> Ingresar al Cuaderno
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <script>
             // Datos iniciales Jinja2. Luego se pueden reemplazar por Fetch/AJAX desde PostgreSQL.
             const dashboardSeed = {
@@ -1158,6 +1313,8 @@ def panel_cuaderno():
             let mesActivo = new Date();
             mesActivo.setDate(1);
             let doughnutChart = null;
+            let asientosMesActivo = new Map();
+            let asientoModalActual = null;
 
             function escapeHtml(valor) {
                 return String(valor ?? '')
@@ -1221,6 +1378,7 @@ def panel_cuaderno():
                     const fecha = fechaAsiento(asiento, year, month);
                     porDia.set(fecha.getDate(), asiento);
                 });
+                asientosMesActivo = porDia;
 
                 document.getElementById('monthLabel').textContent = nombreMes(mesActivo);
 
@@ -1253,43 +1411,42 @@ def panel_cuaderno():
 
                 const ctx = document.getElementById('monthlyDoughnut');
                 const data = [cerrados, borradores, sinRegistro];
-                if (!doughnutChart) {
-                    doughnutChart = new Chart(ctx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Días con asientos cerrados', 'Días en borrador', 'Días sin registro'],
-                            datasets: [{
-                                data,
-                                backgroundColor: ['#22c55e', '#facc15', '#ef4444'],
-                                borderColor: '#ffffff',
-                                borderWidth: 6,
-                                hoverOffset: 8
-                            }]
+                if (doughnutChart) {
+                    doughnutChart.destroy();
+                    doughnutChart = null;
+                }
+                doughnutChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Días con asientos cerrados', 'Días en borrador', 'Días sin registro'],
+                        datasets: [{
+                            data,
+                            backgroundColor: ['#22c55e', '#facc15', '#ef4444'],
+                            borderColor: '#ffffff',
+                            borderWidth: 6,
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '72%',
+                        animation: {
+                            animateRotate: true,
+                            animateScale: false,
+                            duration: 2000,
+                            easing: 'easeOutQuart'
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            cutout: '72%',
-                            animation: {
-                                animateRotate: true,
-                                animateScale: true,
-                                duration: 2500,
-                                easing: 'easeOutQuart'
-                            },
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: ctx => `${ctx.label}: ${ctx.raw} día(s)`
-                                    }
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.label}: ${ctx.raw} día(s)`
                                 }
                             }
                         }
-                    });
-                    return;
-                }
-                doughnutChart.data.datasets[0].data = data;
-                doughnutChart.update('active');
+                    }
+                });
             }
 
             function renderCalendar(year, month, totalDias, porDia) {
@@ -1324,11 +1481,112 @@ def panel_cuaderno():
                             `}
                         </span>
                     `;
-                    if (asiento && asiento.numero) {
+                    const fechaISO = fechaISODesdePartes(year, month, dia);
+                    item.dataset.fecha = fechaISO;
+                    if (asiento && asiento.numero && estado === 'borrador') {
+                        item.addEventListener('click', () => abrirModalAsientoResidencia(null, fechaISO));
+                    } else if (!asiento) {
+                        item.addEventListener('click', () => abrirModalAsientoResidencia(null, fechaISO));
+                    } else if (asiento && asiento.numero) {
                         item.addEventListener('click', () => irAAsiento(asiento.numero));
                     }
                     grid.appendChild(item);
                 }
+            }
+
+            function fechaISODesdePartes(year, month, day) {
+                return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            }
+
+            function fechaPorDefectoModal() {
+                const hoy = new Date();
+                const year = mesActivo.getFullYear();
+                const month = mesActivo.getMonth();
+                const dia = hoy.getFullYear() === year && hoy.getMonth() === month
+                    ? hoy.getDate()
+                    : 1;
+                return fechaISODesdePartes(year, month, Math.min(dia, diasEnMes(year, month)));
+            }
+
+            function buscarAsientoPorFecha(fechaISO) {
+                if (!fechaISO) return null;
+                const fecha = new Date(`${fechaISO}T00:00:00`);
+                if (Number.isNaN(fecha.getTime())) return null;
+                if (fecha.getFullYear() !== mesActivo.getFullYear() || fecha.getMonth() !== mesActivo.getMonth()) return null;
+                return asientosMesActivo.get(fecha.getDate()) || null;
+            }
+
+            function abrirModalAsientoResidencia(event, fechaISO=null) {
+                if (event) event.preventDefault();
+                const modal = document.getElementById('seatEntryModal');
+                const fechaInput = document.getElementById('seatModalDate');
+                const fechaBase = fechaISO || fechaPorDefectoModal();
+                fechaInput.value = fechaBase;
+                modal.classList.remove('hidden');
+                evaluarFechaAsientoModal();
+                setTimeout(() => fechaInput.focus(), 80);
+            }
+
+            function cerrarModalAsiento() {
+                document.getElementById('seatEntryModal')?.classList.add('hidden');
+            }
+
+            function evaluarFechaAsientoModal() {
+                const fechaInput = document.getElementById('seatModalDate');
+                const numeroInput = document.getElementById('seatModalNumber');
+                const estadoBox = document.getElementById('seatModalState');
+                const boton = document.getElementById('seatModalSubmit');
+                const fechaISO = fechaInput.value;
+                const asiento = buscarAsientoPorFecha(fechaISO);
+                asientoModalActual = asiento || null;
+
+                if (asiento && normalizarEstado(asiento.estado) === 'borrador') {
+                    numeroInput.value = `Continuando Asiento N° ${String(asiento.numero).padStart(3, '0')}`;
+                    numeroInput.dataset.numero = asiento.numero;
+                    numeroInput.readOnly = true;
+                    estadoBox.classList.add('draft');
+                    estadoBox.innerHTML = '<i class="bi bi-pencil-square me-1"></i> Día amarillo: existe un borrador. Continuará el asiento registrado.';
+                    boton.innerHTML = '<i class="bi bi-journal-arrow-up me-1"></i> Continuar Borrador';
+                    return;
+                }
+
+                numeroInput.value = '';
+                numeroInput.dataset.numero = '';
+                numeroInput.readOnly = false;
+                estadoBox.classList.remove('draft');
+                if (asiento) {
+                    numeroInput.value = `Asiento cerrado N° ${String(asiento.numero).padStart(3, '0')}`;
+                    numeroInput.dataset.numero = asiento.numero;
+                    numeroInput.readOnly = true;
+                    estadoBox.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Esta fecha ya tiene un asiento cerrado. Puede revisarlo desde el calendario.';
+                    boton.innerHTML = '<i class="bi bi-eye-fill me-1"></i> Ver Asiento';
+                } else {
+                    estadoBox.innerHTML = '<i class="bi bi-plus-circle-fill me-1"></i> Día rojo: sin registro. Ingrese manualmente el número de asiento.';
+                    boton.innerHTML = '<i class="bi bi-journal-arrow-up me-1"></i> Ingresar al Cuaderno';
+                }
+            }
+
+            function ingresarAlCuadernoResidencia() {
+                const fecha = document.getElementById('seatModalDate').value;
+                const numeroInput = document.getElementById('seatModalNumber');
+                const asientoExistente = asientoModalActual;
+                if (asientoExistente && normalizarEstado(asientoExistente.estado) === 'cerrado') {
+                    irAAsiento(asientoExistente.numero);
+                    return;
+                }
+                const numero = asientoExistente && normalizarEstado(asientoExistente.estado) === 'borrador'
+                    ? asientoExistente.numero
+                    : String(numeroInput.value || '').trim();
+                if (!fecha || !numero || String(numero).includes('Continuando')) {
+                    alert('Seleccione la fecha e ingrese un número de asiento válido.');
+                    return;
+                }
+                const params = new URLSearchParams({
+                    fecha,
+                    asiento: numero,
+                    modo: asientoExistente ? 'continuar' : 'nuevo'
+                });
+                window.location.href = `/residencia?${params.toString()}`;
             }
 
             function textoEstado(asiento, estado) {
@@ -1430,6 +1688,12 @@ def panel_cuaderno():
             document.addEventListener('DOMContentLoaded', () => {
                 renderDashboardMes();
                 renderTimeline();
+                document.getElementById('seatEntryModal')?.addEventListener('click', event => {
+                    if (event.target.id === 'seatEntryModal') cerrarModalAsiento();
+                });
+                document.addEventListener('keydown', event => {
+                    if (event.key === 'Escape') cerrarModalAsiento();
+                });
             });
         </script>
     </body>
