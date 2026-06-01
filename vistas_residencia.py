@@ -1099,7 +1099,7 @@ def redaccion_asiento_residente():
                                         ${{htmlContenidoModulo(modulo)}}
                                     </div>
                                 `).join('')}}
-                                ${{pagina.van ? '<span class="van-final">Van ...</span>' : ''}}
+                                ${{pagina.van ? '<span class="van-final">(van ...)</span>' : ''}}
                             </div>
                         </div>
                     `).join('');
@@ -1120,30 +1120,50 @@ def redaccion_asiento_residente():
                 function lineasModulo(modulo) {{
                     const base = 1;
                     const contenido = String(modulo.contenido || '-');
-                    const lineasTexto = contenido.split('\\n').reduce((sum, linea) => {{
-                        const largo = Math.max(1, Math.ceil(String(linea || '').length / 82));
-                        return sum + largo;
-                    }}, 0);
+                    const lineasTexto = estimarLineasTexto(contenido);
                     return base + lineasTexto;
                 }}
 
+                function estimarLineasTexto(texto) {{
+                    return String(texto || '-').split('\\n').reduce((sum, linea) => {{
+                        const largo = Math.max(1, Math.ceil(String(linea || '').length / 82));
+                        return sum + largo;
+                    }}, 0);
+                }}
+
                 function dividirModuloPorLineas(modulo, maxLineas) {{
-                    const lineas = String(modulo.contenido || '-').split('\\n');
-                    const primera = [];
-                    const segunda = [];
-                    let usadas = 1;
-                    lineas.forEach(linea => {{
-                        const peso = Math.max(1, Math.ceil(String(linea || '').length / 82));
-                        if (usadas + peso <= maxLineas || primera.length === 0) {{
-                            primera.push(linea);
-                            usadas += peso;
+                    const texto = String(modulo.contenido || '-').trim();
+                    const lineasDisponibles = Math.max(1, maxLineas - 1);
+                    const palabras = texto.split(/(\\s+)/).filter(parte => parte.length > 0);
+                    if (palabras.length <= 1) {{
+                        return [
+                            {{ titulo: modulo.titulo, contenido: texto || '-' }},
+                            {{ titulo: modulo.titulo, contenido: '' }}
+                        ];
+                    }}
+
+                    let bajo = 1;
+                    let alto = palabras.length;
+                    let mejor = 1;
+                    while (bajo <= alto) {{
+                        const medio = Math.floor((bajo + alto) / 2);
+                        const candidato = palabras.slice(0, medio).join('').trim();
+                        if (estimarLineasTexto(candidato) <= lineasDisponibles) {{
+                            mejor = medio;
+                            bajo = medio + 1;
                         }} else {{
-                            segunda.push(linea);
+                            alto = medio - 1;
                         }}
-                    }});
+                    }}
+
+                    if (mejor >= palabras.length) {{
+                        mejor = Math.max(1, palabras.length - 1);
+                    }}
+                    const primera = palabras.slice(0, mejor).join('').trim();
+                    const segunda = palabras.slice(mejor).join('').trim();
                     return [
-                        {{ titulo: modulo.titulo, contenido: primera.join('\\n') || '-' }},
-                        {{ titulo: modulo.titulo, contenido: segunda.join('\\n') }}
+                        {{ titulo: modulo.titulo, contenido: primera || '-' }},
+                        {{ titulo: modulo.titulo, contenido: segunda }}
                     ];
                 }}
 
@@ -1265,7 +1285,7 @@ def redaccion_asiento_residente():
                                                 ${{htmlContenidoModulo(modulo)}}
                                             </div>
                                         `).join('')}}
-                                        ${{pagina.van ? '<span class="van-final">Van ...</span>' : ''}}
+                                        ${{pagina.van ? '<span class="van-final">(van ...)</span>' : ''}}
                                     </div>
                                 </div>
                             </div>

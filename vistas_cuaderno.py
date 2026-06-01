@@ -134,24 +134,37 @@ def ver_asiento_cuaderno(numero):
             }
 
             function lineasModuloVista(modulo) {
-                return 1 + String(modulo.contenido || '-').split('\\n').reduce((sum, linea) => sum + Math.max(1, Math.ceil(String(linea || '').length / 82)), 0);
+                return 1 + estimarLineasTextoVista(String(modulo.contenido || '-'));
+            }
+
+            function estimarLineasTextoVista(texto) {
+                return String(texto || '-').split('\\n').reduce((sum, linea) => sum + Math.max(1, Math.ceil(String(linea || '').length / 82)), 0);
             }
 
             function dividirModuloVista(modulo, maxLineas) {
-                const lineas = String(modulo.contenido || '-').split('\\n');
-                const primera = [];
-                const segunda = [];
-                let usadas = 1;
-                lineas.forEach(linea => {
-                    const peso = Math.max(1, Math.ceil(String(linea || '').length / 82));
-                    if (usadas + peso <= maxLineas || primera.length === 0) {
-                        primera.push(linea);
-                        usadas += peso;
+                const texto = String(modulo.contenido || '-').trim();
+                const lineasDisponibles = Math.max(1, maxLineas - 1);
+                const partes = texto.split(/(\\s+)/).filter(parte => parte.length > 0);
+                if (partes.length <= 1) return [{...modulo, contenido: texto || '-'}, {...modulo, contenido: ''}];
+
+                let bajo = 1;
+                let alto = partes.length;
+                let mejor = 1;
+                while (bajo <= alto) {
+                    const medio = Math.floor((bajo + alto) / 2);
+                    const candidato = partes.slice(0, medio).join('').trim();
+                    if (estimarLineasTextoVista(candidato) <= lineasDisponibles) {
+                        mejor = medio;
+                        bajo = medio + 1;
                     } else {
-                        segunda.push(linea);
+                        alto = medio - 1;
                     }
-                });
-                return [{...modulo, contenido: primera.join('\\n') || '-'}, {...modulo, contenido: segunda.join('\\n')}];
+                }
+                if (mejor >= partes.length) mejor = Math.max(1, partes.length - 1);
+                return [
+                    {...modulo, contenido: partes.slice(0, mejor).join('').trim() || '-'},
+                    {...modulo, contenido: partes.slice(mejor).join('').trim()}
+                ];
             }
 
             function paginarVista(modulos) {
@@ -217,7 +230,7 @@ def ver_asiento_cuaderno(numero):
                             <div class="pagina-cuaderno"><div class="lapicero">
                                 ${encabezadoVista(p.continuacion)}
                                 ${p.modulos.map(htmlModuloVista).join('')}
-                                ${p.van ? '<span class="van-final">Van ...</span>' : ''}
+                                ${p.van ? '<span class="van-final">(van ...)</span>' : ''}
                             </div></div>
                         </div>
                         ${firmasVista()}
@@ -819,6 +832,17 @@ def panel_cuaderno():
                 background: linear-gradient(135deg, #fff1f2, #fee2e2);
             }
             .calendar-day.pending .day-number { background: var(--samu-red); color: #fff; }
+            .calendar-day.future {
+                border-color: #e2e8f0;
+                background: linear-gradient(135deg, #ffffff, #f8fafc);
+                color: #94a3b8;
+                cursor: default;
+            }
+            .calendar-day.future .day-number { background: #e2e8f0; color: #64748b; }
+            .calendar-day.future:hover {
+                transform: none;
+                box-shadow: none;
+            }
             .calendar-day.observed {
                 border-color: #fdba74;
                 background: linear-gradient(135deg, #fff7ed, #ffedd5);
@@ -1048,6 +1072,18 @@ def panel_cuaderno():
                 color: #991b1b;
             }
 
+            .mini-seat-day.future {
+                border-color: #e2e8f0;
+                background: linear-gradient(135deg, #ffffff, #f8fafc);
+                color: #94a3b8;
+                cursor: default;
+            }
+
+            .mini-seat-day.future:hover {
+                transform: none;
+                box-shadow: none;
+            }
+
             .mini-seat-day.draft {
                 border-color: #fde68a;
                 background: linear-gradient(135deg, #fefce8, #fef3c7);
@@ -1099,6 +1135,18 @@ def panel_cuaderno():
 
             .fade-up {
                 animation: fadeUp .55s cubic-bezier(.16,.84,.24,1) both;
+            }
+
+            .flotar-adentro {
+                opacity: 0;
+                transform: translateY(22px);
+                transition: opacity .65s cubic-bezier(.16,.84,.24,1), transform .65s cubic-bezier(.16,.84,.24,1);
+                will-change: opacity, transform;
+            }
+
+            .flotar-adentro.visible {
+                opacity: 1;
+                transform: translateY(0);
             }
 
             @keyframes fadeUp {
@@ -1242,7 +1290,7 @@ def panel_cuaderno():
                             <div class="legend-dashboard">
                                 <div><span><span class="dot" style="background:#22c55e;"></span> Cerrados</span><b id="closedCount">0</b></div>
                                 <div><span><span class="dot" style="background:#facc15;"></span> Borradores</span><b id="draftCount">0</b></div>
-                                <div><span><span class="dot" style="background:#ef4444;"></span> Sin registro</span><b id="pendingCount">0</b></div>
+                                <div><span><span class="dot" style="background:#ef4444;"></span> Pendientes vencidos</span><b id="pendingCount">0</b></div>
                             </div>
                         </div>
 
@@ -1443,6 +1491,7 @@ def panel_cuaderno():
                     sinRegistro = Math.max(0, totalDias - cerrados - borradores - observados);
                     avance = Math.round((cerrados / totalDias) * 100);
                 }
+                sinRegistro = contarPendientesVencidos(year, month, totalDias, porDia);
 
                 renderChart(cerrados, borradores, sinRegistro, avance);
                 renderCalendar(year, month, totalDias, porDia);
@@ -1463,7 +1512,7 @@ def panel_cuaderno():
                 doughnutChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Días con asientos cerrados', 'Días en borrador', 'Días sin registro'],
+                        labels: ['Días con asientos cerrados', 'Días en borrador', 'Días pendientes vencidos'],
                         datasets: [{
                             data,
                             backgroundColor: ['#22c55e', '#facc15', '#ef4444'],
@@ -1506,7 +1555,8 @@ def panel_cuaderno():
 
                 for (let dia = 1; dia <= totalDias; dia += 1) {
                     const asiento = porDia.get(dia);
-                    const estado = asiento ? normalizarEstado(asiento.estado) : 'pendiente';
+                    const fechaISO = fechaISODesdePartes(year, month, dia);
+                    const estado = asiento ? normalizarEstado(asiento.estado) : (esFechaFutura(fechaISO) ? 'future' : 'pendiente');
                     const item = document.createElement('button');
                     item.type = 'button';
                     item.className = `calendar-day ${estado}`;
@@ -1522,15 +1572,14 @@ def panel_cuaderno():
                                 ${escapeHtml(asiento.observacion || 'Sin observaciones activas.')}
                             ` : `
                                 <b>Día ${dia}</b><br>
-                                Sin asiento registrado para este día.
+                                ${estado === 'future' ? 'Fecha futura. Aún no requiere registro.' : 'Sin asiento registrado para este día.'}
                             `}
                         </span>
                     `;
-                    const fechaISO = fechaISODesdePartes(year, month, dia);
                     item.dataset.fecha = fechaISO;
                     if (asiento && asiento.numero && estado === 'borrador') {
                         item.addEventListener('click', () => abrirModalAsientoResidencia(null, fechaISO));
-                    } else if (!asiento) {
+                    } else if (!asiento && estado === 'pendiente') {
                         item.addEventListener('click', () => abrirModalAsientoResidencia(null, fechaISO));
                     } else if (asiento && asiento.numero) {
                         item.addEventListener('click', () => irAAsiento(asiento.numero));
@@ -1541,6 +1590,24 @@ def panel_cuaderno():
 
             function fechaISODesdePartes(year, month, day) {
                 return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            }
+
+            function hoyISOLocal() {
+                const hoy = new Date();
+                return fechaISODesdePartes(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+            }
+
+            function esFechaFutura(fechaISO) {
+                return String(fechaISO || '') > hoyISOLocal();
+            }
+
+            function contarPendientesVencidos(year, month, totalDias, porDia) {
+                let pendientes = 0;
+                for (let dia = 1; dia <= totalDias; dia += 1) {
+                    const fechaISO = fechaISODesdePartes(year, month, dia);
+                    if (!porDia.has(dia) && !esFechaFutura(fechaISO)) pendientes += 1;
+                }
+                return pendientes;
             }
 
             function fechaPorDefectoModal() {
@@ -1606,13 +1673,15 @@ def panel_cuaderno():
                 for (let dia = 1; dia <= totalDias; dia += 1) {
                     const fechaISO = fechaISODesdePartes(year, month, dia);
                     const asiento = buscarAsientoPorFecha(fechaISO, modalAsientosMes, year, month);
-                    const estado = asiento ? normalizarEstado(asiento.estado) : 'pendiente';
+                    const estado = asiento ? normalizarEstado(asiento.estado) : (esFechaFutura(fechaISO) ? 'future' : 'pendiente');
                     const estadoVisual = estado === 'observado' ? 'draft' : estado;
                     const day = document.createElement('button');
                     day.type = 'button';
                     day.className = `mini-seat-day ${estadoVisual}`;
                     day.textContent = dia;
-                    day.addEventListener('click', () => gestionarClickDiaRedaccion(fechaISO, asiento));
+                    if (estado !== 'future') {
+                        day.addEventListener('click', () => gestionarClickDiaRedaccion(fechaISO, asiento));
+                    }
                     grid.appendChild(day);
                 }
             }
@@ -1654,6 +1723,7 @@ def panel_cuaderno():
             }
 
             function textoEstado(asiento, estado) {
+                if (estado === 'future') return 'Futuro';
                 if (!asiento) return 'Sin registro';
                 if (estado === 'cerrado') return 'Cerrado';
                 if (estado === 'borrador') return 'Borrador';
@@ -1737,6 +1807,27 @@ def panel_cuaderno():
                 return `${fecha.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })} ${hora}`;
             }
 
+            function prepararAnimacionFlotarAdentro() {
+                const elementos = document.querySelectorAll(
+                    '.hero-card, .mini-stat, .command-card, .export-card, .primary-action, .timeline-box, .alert-supervision'
+                );
+                const animables = Array.from(elementos).filter(el =>
+                    !el.closest('.chart-wrap') &&
+                    !el.classList.contains('chart-wrap') &&
+                    !el.querySelector('.chart-wrap')
+                );
+                animables.forEach(el => el.classList.add('flotar-adentro'));
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.12 });
+                animables.forEach(el => observer.observe(el));
+            }
+
             function exportarRangoPDF() {
                 const desde = document.getElementById('exportDesde').value;
                 const hasta = document.getElementById('exportHasta').value;
@@ -1752,6 +1843,7 @@ def panel_cuaderno():
             document.addEventListener('DOMContentLoaded', () => {
                 renderDashboardMes();
                 renderTimeline();
+                prepararAnimacionFlotarAdentro();
                 document.getElementById('seatEntryModal')?.addEventListener('click', event => {
                     if (event.target.id === 'seatEntryModal') cerrarModalAsiento();
                 });
