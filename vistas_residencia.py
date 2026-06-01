@@ -55,6 +55,7 @@ def api_obtener_asiento(numero):
 
 
 @residencia_bp.route('/residencia/api/asiento', methods=['POST'])
+@residencia_bp.route('/guardar_asiento', methods=['POST'])
 def api_guardar_asiento():
     if 'usuario_id' not in session:
         return jsonify({"ok": False, "error": "No autorizado"}), 401
@@ -66,24 +67,39 @@ def api_guardar_asiento():
     except (TypeError, ValueError):
         return jsonify({"ok": False, "error": "Número de asiento o avance inválido"}), 400
 
-    estado = data.get("estado") or "Borrador"
-    if estado not in ("Borrador", "Cerrado"):
-        estado = "Borrador"
+    estado_raw = str(data.get("estado") or "Borrador").strip().lower()
+    estado = "Cerrado" if estado_raw in ("cerrado", "firmado", "vista previa y firmar", "closed") else "Borrador"
+    tipo_raw = data.get("tipo") or data.get("autor_tipo") or session.get("rol") or "Residente"
+    tipo = "Supervisor" if "super" in str(tipo_raw).lower() else "Residente"
 
-    if estado == "Borrador":
-        existente = obtener_asiento(numero)
-        if existente and existente.get("estado") == "Cerrado" and session.get("rol") != "Admin":
-            return jsonify({"ok": False, "error": "El asiento está cerrado. Solo el dueño/Admin puede editarlo."}), 403
+    existente = obtener_asiento(numero)
+    if existente and (existente.get("estado") == "Cerrado" or existente.get("bloqueado")) and session.get("rol") != "Admin":
+        return jsonify({"ok": False, "error": "El asiento está cerrado. Solo el dueño/Admin puede editarlo."}), 403
+    contenido = data.get("contenido")
+    if not contenido:
+        contenido = {
+            "numero": numero,
+            "fecha": data.get("fecha") or datetime.now().strftime('%Y-%m-%d'),
+            "modulos": data.get("modulos") or [],
+            "observaciones": data.get("observaciones") or data.get("observacion") or "",
+        }
 
     resultado = guardar_asiento(
         numero=numero,
         fecha=data.get("fecha") or datetime.now().strftime('%Y-%m-%d'),
         estado=estado,
         avance=avance,
-        contenido=data.get("contenido") or {},
+        contenido=contenido,
         usuario=session.get("nombre", "Sistema"),
+        tipo=tipo,
+        puede_editar_cerrado=session.get("rol") == "Admin",
     )
-    status = 200 if resultado.get("ok") else 500
+    if resultado.get("ok"):
+        status = 200
+    elif "cerrado" in str(resultado.get("error", "")).lower() or "bloqueado" in str(resultado.get("error", "")).lower():
+        status = 403
+    else:
+        status = 500
     return jsonify(resultado), status
 
 @residencia_bp.route('/residencia')

@@ -5,11 +5,25 @@
 
 import json
 
-from flask import Blueprint, render_template_string, session, redirect, url_for
+from flask import Blueprint, render_template_string, session, redirect, url_for, request, jsonify
 from navbar import obtener_navbar
-from cuaderno_store import obtener_panel_cuaderno, obtener_asiento
+from cuaderno_store import obtener_panel_cuaderno, obtener_asiento, obtener_datos_mes_cuaderno
 
 cuaderno_bp = Blueprint('cuaderno', __name__)
+
+
+@cuaderno_bp.route('/cuaderno/api/dashboard')
+def api_dashboard_cuaderno():
+    if 'usuario_id' not in session:
+        return jsonify({"ok": False, "error": "No autorizado"}), 401
+    try:
+        year = int(request.args.get("year"))
+        month = int(request.args.get("month"))
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "Mes o año inválido"}), 400
+    if month < 1 or month > 12:
+        return jsonify({"ok": False, "error": "Mes fuera de rango"}), 400
+    return jsonify(obtener_datos_mes_cuaderno(year, month))
 
 
 @cuaderno_bp.route('/cuaderno/asiento/<int:numero>')
@@ -312,9 +326,14 @@ def panel_cuaderno():
     estadisticas = panel["estadisticas"]
     asientos = panel["asientos"]
     observaciones = panel["observaciones"]
+    ultima_observacion = panel.get("ultima_observacion")
+    historial = panel.get("historial", [])
+    mes_actual = panel.get("mes_actual", {})
     conectado = panel["conectado"]
     asientos_json = json.dumps(asientos, ensure_ascii=False, default=str)
     observaciones_json = json.dumps(observaciones, ensure_ascii=False, default=str)
+    historial_json = json.dumps(historial, ensure_ascii=False, default=str)
+    mes_actual_json = json.dumps(mes_actual, ensure_ascii=False, default=str)
 
     return render_template_string("""
     <!DOCTYPE html>
@@ -1048,8 +1067,8 @@ def panel_cuaderno():
                         <div class="d-flex gap-3 align-items-start">
                             <div class="alert-icon"><i class="bi bi-stickies-fill"></i></div>
                             <div>
-                                {% if observaciones|length > 0 %}
-                                    {% set obs = observaciones[0] %}
+                                {% if ultima_observacion %}
+                                    {% set obs = ultima_observacion %}
                                     <p class="alert-copy"><b>Asiento N° {{ obs.numero }}</b> · {{ obs.autor }}<br>{{ obs.texto }}</p>
                                 {% else %}
                                     <p class="alert-copy"><b>Sin observaciones críticas activas.</b><br>Cuando supervisión registre un post-it pendiente, aparecerá aquí para residencia.</p>
@@ -1079,7 +1098,9 @@ def panel_cuaderno():
                     observaciones: Number({{ estadisticas.observaciones | default(0) }})
                 },
                 asientos: {{ asientos_json | safe }},
-                observaciones: {{ observaciones_json | safe }}
+                observaciones: {{ observaciones_json | safe }},
+                historial: {{ historial_json | safe }},
+                mesActual: {{ mes_actual_json | safe }}
             };
 
             const estadoColor = {
@@ -1120,14 +1141,18 @@ def panel_cuaderno():
             }
 
             async function cargarDatosMes(year, month) {
-                // Endpoint sugerido para conectar luego:
-                // const resp = await fetch(`/cuaderno/api/dashboard?year=${year}&month=${month + 1}`);
-                // return await resp.json();
+                try {
+                    const resp = await fetch(`/cuaderno/api/dashboard?year=${year}&month=${month + 1}`);
+                    const data = await resp.json();
+                    if (resp.ok && data.ok) return data;
+                } catch (error) {
+                    console.warn('No se pudo consultar el dashboard mensual. Usando datos iniciales.', error);
+                }
                 const asientos = dashboardSeed.asientos.filter(asiento => {
                     const fecha = fechaAsiento(asiento, year, month);
                     return fecha.getFullYear() === year && fecha.getMonth() === month;
                 });
-                return { asientos, observaciones: dashboardSeed.observaciones };
+                return { asientos, observaciones: dashboardSeed.observaciones, estadisticas: null };
             }
 
             function diasEnMes(year, month) {
@@ -1155,18 +1180,22 @@ def panel_cuaderno():
 
                 document.getElementById('monthLabel').textContent = nombreMes(mesActivo);
 
-                const totalDias = diasEnMes(year, month);
-                let cerrados = 0;
-                let borradores = 0;
-                let observados = 0;
-                for (const asiento of porDia.values()) {
-                    const estado = normalizarEstado(asiento.estado);
-                    if (estado === 'cerrado') cerrados += 1;
-                    if (estado === 'borrador') borradores += 1;
-                    if (estado === 'observado') observados += 1;
+                const totalDias = datos.estadisticas?.dias_mes || diasEnMes(year, month);
+                let cerrados = Number(datos.estadisticas?.cerrados || 0);
+                let borradores = Number(datos.estadisticas?.borradores || 0);
+                let sinRegistro = Number(datos.estadisticas?.sin_registro || 0);
+                let avance = Number(datos.estadisticas?.avance || 0);
+                if (!datos.estadisticas) {
+                    let observados = 0;
+                    for (const asiento of porDia.values()) {
+                        const estado = normalizarEstado(asiento.estado);
+                        if (estado === 'cerrado') cerrados += 1;
+                        if (estado === 'borrador') borradores += 1;
+                        if (estado === 'observado') observados += 1;
+                    }
+                    sinRegistro = Math.max(0, totalDias - cerrados - borradores - observados);
+                    avance = Math.round((cerrados / totalDias) * 100);
                 }
-                const sinRegistro = Math.max(0, totalDias - cerrados - borradores - observados);
-                const avance = Math.round((cerrados / totalDias) * 100);
 
                 renderChart(cerrados, borradores, sinRegistro, avance);
                 renderCalendar(year, month, totalDias, porDia);
@@ -1272,6 +1301,26 @@ def panel_cuaderno():
             function renderTimeline() {
                 const timeline = document.getElementById('recentTimeline');
                 const acciones = [];
+                dashboardSeed.historial.slice(0, 5).forEach(log => {
+                    acciones.push({
+                        hora: log.created_at ? new Date(log.created_at) : new Date(),
+                        titulo: `${log.usuario || 'Sistema'} ${log.accion || 'registró actividad'}${log.numero ? ` el Asiento N° ${String(log.numero).padStart(3, '0')}` : ''}`,
+                        detalle: log.detalle || 'Movimiento registrado en el cuaderno de obra.'
+                    });
+                });
+                if (acciones.length > 0) {
+                    acciones.sort((a, b) => b.hora - a.hora);
+                    timeline.innerHTML = acciones.slice(0, 5).map((accion, idx) => `
+                        <div class="timeline-item">
+                            <span class="timeline-dot" style="background:${idx === 0 ? '#ef4444' : '#0263a0'};"></span>
+                            <div class="timeline-box">
+                                <strong>${escapeHtml(formatoRelativo(accion.hora))} - ${escapeHtml(accion.titulo)}</strong>
+                                <span>${escapeHtml(accion.detalle)}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                    return;
+                }
                 dashboardSeed.asientos.slice(0, 5).forEach(asiento => {
                     const actor = normalizarEstado(asiento.estado) === 'borrador' ? 'Supervisión guardó' : 'Residencia cerró';
                     acciones.push({
@@ -1335,4 +1384,4 @@ def panel_cuaderno():
         </script>
     </body>
     </html>
-    """, estadisticas=estadisticas, asientos=asientos, observaciones=observaciones, conectado=conectado, rol_usuario=rol_usuario, menu_superior=menu_superior, asientos_json=asientos_json, observaciones_json=observaciones_json)
+    """, estadisticas=estadisticas, asientos=asientos, observaciones=observaciones, ultima_observacion=ultima_observacion, conectado=conectado, rol_usuario=rol_usuario, menu_superior=menu_superior, asientos_json=asientos_json, observaciones_json=observaciones_json, historial_json=historial_json, mes_actual_json=mes_actual_json)
