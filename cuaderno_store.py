@@ -96,8 +96,9 @@ def obtener_panel_cuaderno():
         observaciones = cur.fetchone()[0]
         cur.execute(
             """
-            SELECT numero, EXTRACT(DAY FROM fecha)::INTEGER AS dia, estado, avance,
-                   COALESCE(firmado_por, '-') AS supervisor
+            SELECT numero, fecha::TEXT AS fecha, EXTRACT(DAY FROM fecha)::INTEGER AS dia,
+                   estado, avance, COALESCE(firmado_por, '-') AS supervisor,
+                   updated_at::TEXT AS updated_at
             FROM cuaderno_asientos
             ORDER BY fecha DESC, numero DESC
             LIMIT 31
@@ -137,10 +138,12 @@ def obtener_panel_cuaderno():
         datos["asientos"] = [
             {
                 "dia": a["dia"],
+                "fecha": a.get("fecha"),
                 "numero": a["numero"],
                 "estado": a["estado"],
                 "avance": a["avance"],
                 "supervisor": a["supervisor"],
+                "updated_at": a.get("updated_at"),
                 "observacion": "Con observaciones" if any(o["numero"] == a["numero"] for o in obs) else "Sin observaciones activas.",
             }
             for a in asientos

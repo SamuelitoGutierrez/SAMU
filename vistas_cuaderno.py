@@ -3,6 +3,8 @@
 # Módulo: Cuaderno de Obra Digital - Lobby Central (Responsivo)
 # =========================================================
 
+import json
+
 from flask import Blueprint, render_template_string, session, redirect, url_for
 from navbar import obtener_navbar
 from cuaderno_store import obtener_panel_cuaderno, obtener_asiento
@@ -298,14 +300,11 @@ def ver_asiento_cuaderno(numero):
 # Esto permite que vistas_residencia.py funcione correctamente sin interferencias.
 @cuaderno_bp.route('/cuaderno')
 def panel_cuaderno():
-    # Validación de sesión de usuario
     if 'usuario_id' not in session: 
         return redirect(url_for('login.mostrar_login'))
 
     es_admin = session.get('rol') == 'Admin'
     nombre_completo = session.get('nombre', 'Visitante')
-    
-    # Obtenemos la barra de navegación superior renderizada
     menu_superior = obtener_navbar(es_admin, nombre_completo)
 
     rol_usuario = session.get('rol', '')
@@ -314,713 +313,1026 @@ def panel_cuaderno():
     asientos = panel["asientos"]
     observaciones = panel["observaciones"]
     conectado = panel["conectado"]
+    asientos_json = json.dumps(asientos, ensure_ascii=False, default=str)
+    observaciones_json = json.dumps(observaciones, ensure_ascii=False, default=str)
 
     return render_template_string("""
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>SAMU — Lobby del Cuaderno de Obra</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <title>SAMU — Centro de Mando del Cuaderno de Obra</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
-            :root { 
-                --apple-text: #1d1d1f; 
-                --apple-gray: #86868b; 
-                --glass-bg: rgba(255, 255, 255, 0.6); 
-                --glass-border: rgba(255, 255, 255, 0.8); 
-            }
-            
-            body { 
-                margin: 0; 
-                font-family: 'Inter', sans-serif; 
-                background-color: #fbfbfd; 
-                color: var(--apple-text); 
-                overflow-x: hidden; 
-                min-height: 100vh; 
-            }
-            
-            /* --- FONDO ANIMADO AL 20% --- */
-            .dynamic-bg { 
-                position: fixed; 
-                inset: 0; 
-                z-index: -2; 
-                background: #fbfbfd; 
-                overflow: hidden;
-            }
-            
-            .bg-blob { 
-                position: absolute; 
-                border-radius: 50%; 
-                filter: blur(90px); 
-                pointer-events: none; 
-            }
-            
-            .blob-navy { 
-                width: 70vw; 
-                height: 70vw; 
-                max-width: 600px; 
-                max-height: 600px; 
-                background: #0f172a; 
-                opacity: 0.15; 
-                top: -10%; 
-                left: -10%; 
-                animation: movAzul 20s infinite alternate; 
-            }
-            
-            .blob-pink { 
-                width: 70vw; 
-                height: 70vw; 
-                max-width: 600px; 
-                max-height: 600px; 
-                background: #f9a8d4; 
-                opacity: 0.15; 
-                bottom: -10%; 
-                right: -10%; 
-                animation: movRosa 24s infinite alternate; 
-            }
-            
-            @keyframes movAzul { 100% { transform: translate(10vw,10vh) scale(1.1); } }
-            @keyframes movRosa { 100% { transform: translate(-10vw,-10vh) scale(1.1); } }
-
-            /* --- CONTENEDOR PRINCIPAL LOBBY --- */
-            .view-section { 
-                width: 100%; 
-                min-height: 100vh; 
-                padding: 96px 28px 44px; 
-            }
-            
-            .main-container { 
-                max-width: 1380px; 
-                margin: 0 auto; 
-            }
-            
-            .project-title { 
-                text-align: left; 
-                margin-bottom: 34px; 
-                animation: heroFloatIn 1.8s cubic-bezier(.16,.84,.24,1) both;
-            }
-            
-            .project-title h1 { 
-                font-size: clamp(34px, 5vw, 64px); 
-                font-weight: 800; 
-                letter-spacing: -2px; 
-                line-height: 1;
-                margin-bottom: 12px; 
-            }
-            
-            .project-title p { 
-                color: var(--apple-gray); 
-                font-size: 15px; 
-                margin: 0; 
-                max-width: 720px;
-                font-weight: 500;
+            :root {
+                --samu-blue: #0263a0;
+                --samu-navy: #0f172a;
+                --samu-green: #22c55e;
+                --samu-yellow: #facc15;
+                --samu-red: #ef4444;
+                --samu-muted: #64748b;
+                --card-bg: rgba(255,255,255,.86);
+                --card-border: rgba(226,232,240,.9);
             }
 
-            @keyframes heroFloatIn {
-                from { opacity: 0; transform: translateY(54px) scale(.97); filter: blur(10px); }
-                to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+            * { box-sizing: border-box; }
+            body {
+                margin: 0;
+                min-height: 100vh;
+                font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                color: var(--samu-navy);
+                background:
+                    radial-gradient(circle at 6% 8%, rgba(2,99,160,.18), transparent 30%),
+                    radial-gradient(circle at 92% 12%, rgba(34,197,94,.14), transparent 28%),
+                    linear-gradient(135deg, #f8fafc 0%, #eff6ff 48%, #f8fafc 100%);
+                overflow-x: hidden;
             }
 
-            .content-float-in {
-                animation: heroFloatIn 1.35s cubic-bezier(.16,.84,.24,1) both;
-            }
-            
-            /* --- DASHBOARD ESTADÍSTICO --- */
-            .stats-grid { 
-                display: grid; 
-                grid-template-columns: repeat(4, 1fr); 
-                gap: 16px; 
-                margin-bottom: 28px; 
-            }
-            
-            .stat-card { 
-                background: var(--glass-bg); 
-                border: 1px solid var(--glass-border); 
-                backdrop-filter: blur(20px); 
-                -webkit-backdrop-filter: blur(20px); 
-                padding: 18px; 
-                border-radius: 18px; 
-                text-align: center; 
-                box-shadow: 0 4px 15px rgba(0,0,0,0.02); 
-                transition: transform 0.3s;
-            }
-            
-            .stat-card:hover { 
-                transform: translateY(-2px); 
-            }
-            
-            .stat-card label { 
-                font-size: 11px; 
-                color: var(--apple-gray); 
-                text-transform: uppercase; 
-                font-weight: 600; 
-                letter-spacing: 0.5px;
-            }
-            
-            .stat-card .value { 
-                font-size: 26px; 
-                font-weight: 700; 
-                color: #000; 
-                margin-top: 5px; 
-                letter-spacing: -0.5px;
+            .command-shell {
+                width: min(1480px, calc(100% - 40px));
+                margin: 0 auto;
+                padding: 96px 0 42px;
             }
 
-            .dashboard-grid {
+            .hero-card,
+            .command-card {
+                border: 1px solid var(--card-border);
+                background: var(--card-bg);
+                border-radius: 30px;
+                box-shadow: 0 24px 70px rgba(15,23,42,.08);
+                backdrop-filter: blur(22px);
+                -webkit-backdrop-filter: blur(22px);
+            }
+
+            .hero-card {
+                padding: 24px;
+                margin-bottom: 22px;
+            }
+
+            .dashboard-title {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 18px;
+                margin-bottom: 22px;
+            }
+
+            .dashboard-title h1 {
+                margin: 0;
+                font-size: clamp(32px, 4vw, 58px);
+                line-height: .96;
+                font-weight: 900;
+                letter-spacing: -2.2px;
+            }
+
+            .dashboard-title p {
+                margin: 12px 0 0;
+                max-width: 760px;
+                color: var(--samu-muted);
+                font-weight: 600;
+                font-size: 14px;
+                line-height: 1.55;
+            }
+
+            .connection-pill {
+                flex: 0 0 auto;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 999px;
+                padding: 10px 13px;
+                background: #dcfce7;
+                color: #166534;
+                font-size: 12px;
+                font-weight: 900;
+                white-space: nowrap;
+            }
+
+            .connection-pill.offline {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            .action-topbar {
                 display: grid;
-                grid-template-columns: 1.15fr 0.85fr;
+                grid-template-columns: repeat(2, minmax(230px, 1fr)) minmax(320px, .9fr);
+                gap: 14px;
+                align-items: stretch;
+            }
+
+            .primary-action {
+                position: relative;
+                min-height: 112px;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                overflow: hidden;
+                border-radius: 26px;
+                padding: 20px;
+                color: #fff;
+                text-decoration: none;
+                box-shadow: 0 18px 42px rgba(15,23,42,.16);
+                transition: transform .22s ease, box-shadow .22s ease;
+            }
+
+            .primary-action:hover {
+                color: #fff;
+                transform: translateY(-4px);
+                box-shadow: 0 26px 54px rgba(15,23,42,.22);
+            }
+
+            .primary-action.residencia {
+                background: linear-gradient(135deg, #0263a0, #0f172a);
+            }
+
+            .primary-action.supervision {
+                background: linear-gradient(135deg, #7c3aed, #312e81);
+            }
+
+            .primary-action::after {
+                content: "";
+                position: absolute;
+                width: 190px;
+                height: 190px;
+                right: -70px;
+                top: -70px;
+                border-radius: 50%;
+                background: rgba(255,255,255,.16);
+            }
+
+            .action-icon {
+                width: 64px;
+                height: 64px;
+                flex: 0 0 auto;
+                display: grid;
+                place-items: center;
+                border-radius: 22px;
+                background: rgba(255,255,255,.16);
+                font-size: 30px;
+            }
+
+            .primary-action small {
+                display: block;
+                margin-bottom: 5px;
+                font-size: 11px;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: .8px;
+                opacity: .78;
+            }
+
+            .primary-action strong {
+                display: block;
+                font-size: 17px;
+                line-height: 1.15;
+                font-weight: 900;
+            }
+
+            .export-card {
+                display: grid;
+                gap: 11px;
+                align-content: center;
+                border: 1px solid #e2e8f0;
+                border-radius: 26px;
+                padding: 17px;
+                background: rgba(248,250,252,.9);
+            }
+
+            .export-title {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                font-size: 13px;
+                font-weight: 900;
+            }
+
+            .range-row {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .range-row input {
+                min-width: 0;
+                width: 100%;
+                border: 1px solid #cbd5e1;
+                border-radius: 13px;
+                padding: 10px;
+                background: #fff;
+                font-size: 12px;
+                font-weight: 800;
+                outline: none;
+            }
+
+            .export-btn {
+                border: 0;
+                border-radius: 15px;
+                padding: 11px 13px;
+                background: linear-gradient(135deg, #dc2626, #991b1b);
+                color: #fff;
+                font-size: 12px;
+                font-weight: 900;
+                white-space: nowrap;
+                box-shadow: 0 14px 28px rgba(220,38,38,.18);
+            }
+
+            .stats-strip {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 14px;
+                margin: 22px 0;
+            }
+
+            .mini-stat {
+                border: 1px solid #e2e8f0;
+                border-radius: 22px;
+                padding: 17px;
+                background: rgba(255,255,255,.82);
+                box-shadow: 0 14px 34px rgba(15,23,42,.05);
+            }
+
+            .mini-stat span {
+                display: block;
+                color: var(--samu-muted);
+                font-size: 11px;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: .6px;
+            }
+
+            .mini-stat strong {
+                display: block;
+                margin-top: 8px;
+                font-size: 26px;
+                font-weight: 900;
+                letter-spacing: -1px;
+            }
+
+            .main-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 1.4fr) minmax(360px, .75fr);
                 gap: 22px;
-                margin-bottom: 24px;
             }
 
-            .dashboard-grid.wide {
-                grid-template-columns: 1fr 1fr;
+            .analytics-grid {
+                display: grid;
+                grid-template-columns: minmax(280px, .75fr) minmax(0, 1.25fr);
+                gap: 18px;
             }
 
-            .glass-panel {
-                background: rgba(255,255,255,0.72);
-                border: 1px solid rgba(255,255,255,0.92);
-                backdrop-filter: blur(24px);
-                border-radius: 28px;
+            .command-card {
                 padding: 22px;
-                box-shadow: 0 18px 45px rgba(15,23,42,0.06);
             }
 
-            .panel-head {
+            .card-head {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 14px;
+                gap: 12px;
                 margin-bottom: 18px;
             }
 
-            .panel-head h3 {
+            .card-head h2 {
                 margin: 0;
                 font-size: 17px;
-                font-weight: 800;
-                letter-spacing: -0.3px;
+                font-weight: 900;
+                letter-spacing: -.4px;
             }
 
-            .status-pill {
-                border-radius: 999px;
-                padding: 7px 11px;
-                font-size: 11px;
-                font-weight: 800;
-                background: #eff6ff;
-                color: #075985;
-            }
-
-            .last-seat {
-                display: grid;
-                grid-template-columns: auto 1fr;
-                gap: 18px;
+            .month-controls {
+                display: inline-flex;
                 align-items: center;
+                gap: 8px;
+                border: 1px solid #e2e8f0;
+                border-radius: 999px;
+                padding: 6px;
+                background: #fff;
             }
 
-            .seat-number {
-                width: 94px;
-                height: 94px;
-                border-radius: 28px;
+            .month-controls button {
+                width: 30px;
+                height: 30px;
+                border: 0;
+                border-radius: 999px;
+                background: #f1f5f9;
+                color: #0f172a;
+                font-weight: 900;
+            }
+
+            #monthLabel {
+                min-width: 132px;
+                text-align: center;
+                font-size: 12px;
+                font-weight: 900;
+                text-transform: uppercase;
+                color: #334155;
+            }
+
+            .chart-card {
+                min-height: 430px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .chart-wrap {
+                position: relative;
+                flex: 1;
+                min-height: 280px;
                 display: grid;
                 place-items: center;
-                background: linear-gradient(135deg, #0f172a, #0263a0);
-                color: #fff;
-                box-shadow: 0 18px 36px rgba(2,99,160,0.22);
             }
 
-            .seat-number strong { font-size: 30px; line-height: 1; }
-            .seat-number span { font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.75; }
+            .chart-wrap canvas {
+                width: min(290px, 100%) !important;
+                height: min(290px, 100%) !important;
+            }
 
-            .progress-soft {
+            .chart-center {
+                position: absolute;
+                inset: 0;
+                display: grid;
+                place-items: center;
+                pointer-events: none;
+                text-align: center;
+            }
+
+            .chart-center strong {
+                display: block;
+                font-size: 42px;
+                font-weight: 900;
+                letter-spacing: -1.8px;
+            }
+
+            .chart-center span {
+                color: var(--samu-muted);
+                font-size: 11px;
+                font-weight: 900;
+                text-transform: uppercase;
+            }
+
+            .legend-dashboard {
+                display: grid;
+                gap: 9px;
+                margin-top: 16px;
+            }
+
+            .legend-dashboard div {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                border-radius: 999px;
+                padding: 9px 12px;
+                background: #f8fafc;
+                color: #475569;
+                font-size: 12px;
+                font-weight: 800;
+            }
+
+            .dot {
+                width: 12px;
                 height: 12px;
                 border-radius: 999px;
-                background: #e2e8f0;
-                overflow: hidden;
-                margin: 10px 0 8px;
+                display: inline-block;
             }
 
-            .progress-soft > div {
-                height: 100%;
-                border-radius: 999px;
-                background: linear-gradient(90deg, #0263a0, #38bdf8);
-            }
-
+            .calendar-weekdays,
             .calendar-grid {
                 display: grid;
-                grid-template-columns: repeat(7, minmax(0, 1fr));
+                grid-template-columns: repeat(7, 1fr);
                 gap: 8px;
             }
 
-            .cal-day {
+            .calendar-weekdays {
+                margin-bottom: 8px;
+                color: #94a3b8;
+                font-size: 11px;
+                font-weight: 900;
+                text-align: center;
+                text-transform: uppercase;
+            }
+
+            .calendar-day {
                 position: relative;
+                min-height: 78px;
                 border: 1px solid #e2e8f0;
-                border-radius: 15px;
-                min-height: 52px;
-                background: rgba(255,255,255,0.86);
-                display: grid;
-                place-items: center;
-                font-size: 12px;
-                font-weight: 800;
-                color: #64748b;
-                cursor: default;
-                transition: all 0.22s ease;
-            }
-
-            .cal-day.has-seat {
-                color: #0f172a;
-                background: #f8fafc;
-                border-color: #dbeafe;
+                border-radius: 20px;
+                padding: 10px;
+                background: #fff;
+                color: #334155;
                 cursor: pointer;
+                transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
             }
 
-            .cal-day.signed { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
-            .cal-day.observed { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
-            .cal-day.pending { background: #eff6ff; border-color: #bfdbfe; color: #075985; }
-            .cal-day.draft { background: #fef9c3; border-color: #fde68a; color: #854d0e; box-shadow: inset 0 0 0 1px rgba(245,158,11,.18); }
-            .cal-day.closed { background: #f8fafc; border-color: #94a3b8; color: #334155; }
-
-            .cal-day:hover {
-                transform: translateY(-3px) scale(1.06);
-                box-shadow: 0 16px 30px rgba(15,23,42,0.14);
-                z-index: 5;
+            .calendar-day:hover {
+                transform: translateY(-4px) scale(1.02);
+                box-shadow: 0 18px 38px rgba(15,23,42,.13);
+                z-index: 6;
             }
 
-            .cal-tooltip {
+            .calendar-day.empty {
+                opacity: .35;
+                cursor: default;
+                background: transparent;
+                box-shadow: none;
+            }
+
+            .calendar-day .day-number {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 28px;
+                height: 28px;
+                border-radius: 999px;
+                font-size: 12px;
+                font-weight: 900;
+            }
+
+            .calendar-day .day-caption {
+                display: block;
+                margin-top: 10px;
+                color: #64748b;
+                font-size: 10px;
+                font-weight: 900;
+                line-height: 1.25;
+            }
+
+            .calendar-day.closed {
+                border-color: #bbf7d0;
+                background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            }
+
+            .calendar-day.closed .day-number { background: var(--samu-green); color: #fff; }
+            .calendar-day.draft {
+                border-color: #fde68a;
+                background: linear-gradient(135deg, #fefce8, #fef3c7);
+            }
+            .calendar-day.draft .day-number { background: var(--samu-yellow); color: #713f12; }
+            .calendar-day.pending {
+                border-color: #fecaca;
+                background: linear-gradient(135deg, #fff1f2, #fee2e2);
+            }
+            .calendar-day.pending .day-number { background: var(--samu-red); color: #fff; }
+            .calendar-day.observed {
+                border-color: #fdba74;
+                background: linear-gradient(135deg, #fff7ed, #ffedd5);
+            }
+            .calendar-day.observed .day-number { background: #f97316; color: #fff; }
+
+            .calendar-tooltip {
                 position: absolute;
                 left: 50%;
                 bottom: calc(100% + 10px);
+                width: 240px;
                 transform: translateX(-50%) translateY(8px);
-                width: 230px;
-                padding: 12px;
                 border-radius: 18px;
-                background: rgba(15,23,42,0.94);
-                color: #fff;
-                box-shadow: 0 18px 38px rgba(15,23,42,0.26);
+                padding: 12px;
                 opacity: 0;
                 pointer-events: none;
-                transition: .2s ease;
-                text-align: left;
+                background: rgba(15,23,42,.96);
+                color: #fff;
+                box-shadow: 0 22px 45px rgba(15,23,42,.22);
+                transition: .18s ease;
                 font-size: 11px;
-                font-weight: 600;
+                font-weight: 700;
             }
 
-            .cal-day:hover .cal-tooltip {
+            .calendar-day:hover .calendar-tooltip {
                 opacity: 1;
                 transform: translateX(-50%) translateY(0);
             }
 
-            .calendar-legend {
-                display: flex;
-                gap: 10px;
-                flex-wrap: wrap;
-                margin-top: 14px;
-                font-size: 11px;
-                font-weight: 800;
-                color: #64748b;
-            }
-
-            .legend-item {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                border: 1px solid #e2e8f0;
-                border-radius: 999px;
-                padding: 7px 10px;
-                background: rgba(255,255,255,.74);
-            }
-
-            .legend-dot {
-                width: 11px;
-                height: 11px;
-                border-radius: 999px;
-                display: inline-block;
-                border: 1px solid rgba(15,23,42,.08);
-            }
-
-            .observation-list {
+            .side-stack {
                 display: grid;
-                gap: 10px;
+                gap: 18px;
+                align-content: start;
             }
 
-            .postit {
-                border: 1px solid #fde68a;
-                border-radius: 18px;
-                background: linear-gradient(135deg, #fef9c3, #fff7ed);
-                padding: 13px;
-                cursor: pointer;
-                transition: .22s ease;
-                box-shadow: 0 10px 22px rgba(202,138,4,.10);
+            .alert-supervision {
+                border: 1px solid #fca5a5;
+                background: linear-gradient(135deg, #fff7ed, #fee2e2);
+                box-shadow: 0 24px 50px rgba(220,38,38,.10);
             }
 
-            .postit:hover {
-                transform: translateY(-2px) rotate(-.5deg);
-                box-shadow: 0 18px 32px rgba(202,138,4,.16);
-            }
-
-            .postit strong { display: block; font-size: 12px; margin-bottom: 4px; color: #78350f; }
-            .postit p { margin: 0; font-size: 12px; color: #92400e; line-height: 1.45; }
-
-            .supervisor-tools {
+            .alert-supervision .alert-icon {
+                width: 52px;
+                height: 52px;
                 display: grid;
-                gap: 10px;
-            }
-
-            .supervisor-note {
-                border: 1px solid #dbeafe;
+                place-items: center;
                 border-radius: 18px;
-                background: #f8fafc;
-                padding: 12px;
-                min-height: 96px;
-                resize: vertical;
-                outline: none;
-                font-size: 13px;
-            }
-
-            .tool-row {
-                display: flex;
-                gap: 10px;
-                flex-wrap: wrap;
-            }
-
-            .tool-btn {
-                border: none;
-                border-radius: 999px;
-                padding: 10px 14px;
-                font-size: 12px;
-                font-weight: 800;
                 color: #fff;
-                background: linear-gradient(135deg, #0f172a, #0263a0);
-                box-shadow: 0 12px 26px rgba(2,99,160,.16);
+                background: linear-gradient(135deg, #f97316, #dc2626);
+                font-size: 24px;
+                box-shadow: 0 14px 28px rgba(220,38,38,.18);
             }
 
-            .tool-btn.warn { background: linear-gradient(135deg, #b45309, #f59e0b); }
-            .tool-btn.ok { background: linear-gradient(135deg, #166534, #22c55e); }
-
-            .empty-state {
-                border: 1px dashed #cbd5e1;
-                border-radius: 24px;
-                padding: 26px;
-                background: rgba(248,250,252,.72);
-                text-align: center;
-                color: #64748b;
+            .alert-copy {
+                margin: 0;
+                color: #7f1d1d;
+                font-size: 13px;
+                font-weight: 700;
+                line-height: 1.55;
             }
 
-            .empty-state i {
-                font-size: 34px;
-                color: #94a3b8;
-                display: block;
-                margin-bottom: 10px;
+            .timeline {
+                position: relative;
+                display: grid;
+                gap: 0;
             }
 
-            .connection-pill {
-                display: inline-flex;
-                align-items: center;
-                gap: 7px;
+            .timeline::before {
+                content: "";
+                position: absolute;
+                left: 14px;
+                top: 9px;
+                bottom: 12px;
+                width: 2px;
+                background: #e2e8f0;
+            }
+
+            .timeline-item {
+                position: relative;
+                display: grid;
+                grid-template-columns: 34px 1fr;
+                gap: 10px;
+                padding: 0 0 18px;
+            }
+
+            .timeline-item:last-child { padding-bottom: 0; }
+
+            .timeline-dot {
+                position: relative;
+                z-index: 2;
+                width: 30px;
+                height: 30px;
+                border: 4px solid #fff;
                 border-radius: 999px;
-                padding: 8px 12px;
-                font-size: 12px;
-                font-weight: 800;
-                background: #f0fdf4;
-                color: #166534;
-                margin-top: 14px;
+                background: var(--samu-blue);
+                box-shadow: 0 8px 18px rgba(2,99,160,.18);
             }
 
-            .connection-pill.offline {
-                background: #fff7ed;
-                color: #9a3412;
+            .timeline-box {
+                border: 1px solid #e2e8f0;
+                border-radius: 18px;
+                padding: 12px;
+                background: #f8fafc;
             }
 
-            /* --- PORTALES DE ACCESO DIRECTO --- */
-            .portals-grid { 
-                display: grid; 
-                grid-template-columns: 1fr 1fr; 
-                gap: 30px; 
-            }
-            
-            /* Convertido a diseño de botón/enlace real */
-            .portal-card { 
-                background: rgba(255,255,255,0.7); 
-                border: 1px solid rgba(255,255,255,0.9); 
-                backdrop-filter: blur(25px); 
-                -webkit-backdrop-filter: blur(25px); 
-                border-radius: 30px; 
-                padding: 50px 30px; 
-                text-align: center; 
-                cursor: pointer; 
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-                box-shadow: 0 10px 30px rgba(0,0,0,0.03); 
-                text-decoration: none;
-                color: inherit;
+            .timeline-box strong {
                 display: block;
-            }
-            
-            .portal-card:hover { 
-                transform: translateY(-5px) scale(1.02); 
-                background: #ffffff; 
-                border-color: #0066cc; 
-                box-shadow: 0 20px 40px rgba(0,102,204,0.1); 
-            }
-            
-            .portal-card:active { 
-                transform: scale(0.98); 
-                background: #f8fafc; 
-            } 
-            
-            .portal-icon { 
-                font-size: 45px; 
-                color: #0066cc; 
-                margin-bottom: 20px; 
-            }
-            
-            .portal-title { 
-                font-size: 24px; 
-                font-weight: 700; 
-                margin-bottom: 10px; 
-                letter-spacing: -0.5px;
-            }
-            
-            .portal-desc { 
-                font-size: 14px; 
-                color: var(--apple-gray); 
-                line-height: 1.4;
+                margin-bottom: 3px;
+                font-size: 12px;
+                font-weight: 900;
             }
 
-            /* --- MEDIA QUERIES (RESPONSIVO MÓVIL Y TABLET) --- */
-            @media (max-width: 991px) { 
-                .stats-grid { 
-                    grid-template-columns: repeat(2, 1fr); 
-                }
-                .dashboard-grid {
-                    grid-template-columns: 1fr;
-                }
+            .timeline-box span {
+                display: block;
+                color: #64748b;
+                font-size: 12px;
+                font-weight: 700;
             }
-            
-            @media (max-width: 576px) { 
-                .view-section { 
-                    padding: 90px 15px 30px; 
-                }
-                .portals-grid { 
-                    grid-template-columns: 1fr; 
-                    gap: 20px;
-                } 
-                .stats-grid { 
-                    grid-template-columns: 1fr 1fr; 
-                    gap: 12px;
-                }
-                .project-title h1 { 
-                    font-size: 26px; 
-                }
-                .portal-card { 
-                    padding: 35px 20px; 
-                    border-radius: 24px;
-                }
-                .stat-card .value {
-                    font-size: 22px;
-                }
-                .stat-card {
-                    padding: 12px;
-                }
+
+            .empty-box {
+                border: 1px dashed #cbd5e1;
+                border-radius: 22px;
+                padding: 20px;
+                background: #f8fafc;
+                color: #64748b;
+                font-size: 13px;
+                font-weight: 700;
+                text-align: center;
+            }
+
+            .fade-up {
+                animation: fadeUp .55s cubic-bezier(.16,.84,.24,1) both;
+            }
+
+            @keyframes fadeUp {
+                from { opacity: 0; transform: translateY(18px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            @media (max-width: 1180px) {
+                .action-topbar { grid-template-columns: 1fr 1fr; }
+                .export-card { grid-column: 1 / -1; }
+                .main-grid { grid-template-columns: 1fr; }
+            }
+
+            @media (max-width: 860px) {
+                .command-shell { width: min(100% - 24px, 1480px); padding-top: 86px; }
+                .dashboard-title { flex-direction: column; }
+                .action-topbar,
+                .analytics-grid,
+                .stats-strip { grid-template-columns: 1fr; }
+                .primary-action { min-height: 96px; }
+                .calendar-day { min-height: 62px; border-radius: 16px; padding: 7px; }
+                .calendar-day .day-caption { display: none; }
+                .card-head { align-items: flex-start; flex-direction: column; }
+            }
+
+            @media (max-width: 560px) {
+                .hero-card,
+                .command-card { border-radius: 22px; padding: 16px; }
+                .range-row { flex-direction: column; align-items: stretch; }
+                .export-btn { width: 100%; }
+                .calendar-weekdays,
+                .calendar-grid { gap: 5px; }
+                .calendar-day { min-height: 48px; border-radius: 13px; }
+                .calendar-tooltip { display: none; }
+                .dashboard-title h1 { letter-spacing: -1.2px; }
+                .action-icon { width: 54px; height: 54px; }
+                .primary-action strong { font-size: 15px; }
+                .chart-center strong { font-size: 34px; }
             }
         </style>
     </head>
     <body>
-
         {{ menu_superior | safe }}
-        
-        <div class="dynamic-bg">
-            <div class="bg-blob blob-navy"></div>
-            <div class="bg-blob blob-pink"></div>
-        </div>
 
-        <div class="view-section">
-            <div class="main-container">
-                
-                <div class="project-title">
-                    <h1>Cuaderno de Obra</h1>
-                    <p>Tramo: Asiruni — Rosaspata — Huayrapata &bull; Panel digital para residencia, supervisión, firmas, observaciones y seguimiento de asientos.</p>
+        <main class="command-shell">
+            <section class="hero-card fade-up">
+                <div class="dashboard-title">
+                    <div>
+                        <h1>Centro de Mando<br>Cuaderno de Obra</h1>
+                        <p>Panel principal para redactar asientos, revisar estados del mes, atender observaciones de supervisión y exportar rangos del cuaderno.</p>
+                    </div>
                     <span class="connection-pill {% if not conectado %}offline{% endif %}">
                         <i class="bi {% if conectado %}bi-database-check{% else %}bi-database-exclamation{% endif %}"></i>
-                        {% if conectado %}Persistencia activa{% else %}Base de datos no conectada{% endif %}
+                        {% if conectado %}PostgreSQL conectado{% else %}PostgreSQL pendiente{% endif %}
                     </span>
                 </div>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <label>Asientos Totales</label>
-                        <div class="value">{{ estadisticas.total_asientos }}</div>
-                    </div>
-                    <div class="stat-card">
-                        <label>Días de Lluvia</label>
-                        <div class="value">{{ estadisticas.dias_lluvia }}</div>
-                    </div>
-                    <div class="stat-card">
-                        <label>Consultas Pendientes</label>
-                        <div class="value" style="color: #dc2626;">{{ estadisticas.consultas_pendientes }}</div>
-                    </div>
-                    <div class="stat-card">
-                        <label>Avance Físico</label>
-                        <div class="value">{{ estadisticas.avance_porcentaje }}%</div>
-                    </div>
-                </div>
 
-                <div class="dashboard-grid">
-                    <div class="glass-panel">
-                        <div class="panel-head">
-                            <h3><i class="bi bi-journal-check me-2"></i>Estado del último asiento</h3>
-                            <span class="status-pill">Asiento N° {{ estadisticas.ultimo_asiento }}</span>
-                        </div>
-                        <div class="last-seat">
-                            <div class="seat-number">
-                                <div class="text-center"><span>N°</span><br><strong>{{ estadisticas.ultimo_asiento }}</strong></div>
-                            </div>
-                            <div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <strong>Porcentaje de llenado</strong>
-                                    <span class="fw-bold text-primary">{{ estadisticas.llenado_ultimo }}%</span>
-                                </div>
-                                <div class="progress-soft"><div style="width: {{ estadisticas.llenado_ultimo }}%;"></div></div>
-                                <p class="text-muted small mb-0">Último asiento registrado por residencia. Supervisión puede revisar, observar o firmar sin modificar el contenido principal.</p>
-                            </div>
-                        </div>
-                        {% if estadisticas.total_asientos == 0 %}
-                            <div class="empty-state mt-3">
-                                <i class="bi bi-journal-plus"></i>
-                                <strong>Aún no hay asientos registrados.</strong>
-                                <div>Cuando empecemos a guardar asientos reales desde residencia, aparecerán aquí sin perderse en redeploy.</div>
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="glass-panel">
-                        <div class="panel-head">
-                            <h3><i class="bi bi-shield-check me-2"></i>Supervisión</h3>
-                            <span class="status-pill">{{ estadisticas.firmados }} firmados</span>
-                        </div>
-                        <div class="supervisor-tools">
-                            <textarea class="supervisor-note" id="notaSupervisor" placeholder="Escribir post-it u observación de supervisión..."></textarea>
-                            <div class="tool-row">
-                                <button type="button" class="tool-btn warn" onclick="agregarPostItSupervisor()"><i class="bi bi-sticky me-1"></i>Agregar post-it</button>
-                                <button type="button" class="tool-btn" onclick="resaltarAsientoDemo()"><i class="bi bi-highlighter me-1"></i>Resaltar</button>
-                                <button type="button" class="tool-btn ok" onclick="firmarAsientoDemo()"><i class="bi bi-pen me-1"></i>Firmar asiento</button>
-                            </div>
+                <div class="action-topbar">
+                    <a class="primary-action residencia" href="/residencia">
+                        <span class="action-icon"><i class="bi bi-journal-richtext"></i></span>
+                        <span>
+                            <small>Permiso residencia</small>
+                            <strong>REDACTAR ASIENTO DE RESIDENCIA</strong>
+                        </span>
+                    </a>
+                    <a class="primary-action supervision" href="/supervision">
+                        <span class="action-icon"><i class="bi bi-shield-check"></i></span>
+                        <span>
+                            <small>Permiso supervisión</small>
+                            <strong>REDACTAR ASIENTO DE SUPERVISIÓN</strong>
+                        </span>
+                    </a>
+                    <div class="export-card">
+                        <div class="export-title"><i class="bi bi-cloud-arrow-down-fill text-danger"></i> Exportar Rango a PDF</div>
+                        <div class="range-row">
+                            <input type="date" id="exportDesde" aria-label="Desde">
+                            <input type="date" id="exportHasta" aria-label="Hasta">
+                            <button class="export-btn" type="button" onclick="exportarRangoPDF()">
+                                <i class="bi bi-download me-1"></i>PDF
+                            </button>
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <div class="dashboard-grid wide">
-                    <div class="glass-panel">
-                        <div class="panel-head">
-                            <h3><i class="bi bi-calendar3 me-2"></i>Calendario de asientos</h3>
-                            <span class="status-pill">Mayo 2026</span>
+            <section class="stats-strip fade-up">
+                <div class="mini-stat"><span>Total asientos</span><strong>{{ estadisticas.total_asientos }}</strong></div>
+                <div class="mini-stat"><span>Último asiento</span><strong>{{ estadisticas.ultimo_asiento }}</strong></div>
+                <div class="mini-stat"><span>Firmados</span><strong>{{ estadisticas.firmados }}</strong></div>
+                <div class="mini-stat"><span>Observaciones</span><strong style="color:#dc2626;">{{ estadisticas.observaciones }}</strong></div>
+            </section>
+
+            <section class="main-grid">
+                <div class="command-card fade-up">
+                    <div class="card-head">
+                        <h2><i class="bi bi-bar-chart-steps me-2"></i>Estadísticas y calendario mensual</h2>
+                        <div class="month-controls">
+                            <button type="button" onclick="cambiarMes(-1)" aria-label="Mes anterior"><i class="bi bi-chevron-left"></i></button>
+                            <span id="monthLabel">Mes actual</span>
+                            <button type="button" onclick="cambiarMes(1)" aria-label="Mes siguiente"><i class="bi bi-chevron-right"></i></button>
                         </div>
-                        <div class="calendar-grid">
-                            {% for d in range(1, 32) %}
-                                {% set asiento = (asientos | selectattr('dia', 'equalto', d) | list | first) %}
-                                {% if asiento %}
-                                    <div class="cal-day has-seat {% if asiento.estado == 'Firmado' %}signed{% elif asiento.estado == 'Observado' %}observed{% elif asiento.estado == 'Borrador' %}draft{% elif asiento.estado == 'Cerrado' %}closed{% else %}pending{% endif %}" onclick="irAAsiento({{ asiento.numero }})">
-                                        {{ d }}
-                                        <div class="cal-tooltip">
-                                            <b>Asiento N° {{ asiento.numero }}</b><br>
-                                            Estado: {{ asiento.estado }}<br>
-                                            Avance: {{ asiento.avance }}%<br>
-                                            Supervisor: {{ asiento.supervisor }}<br>
-                                            <span>{{ asiento.observacion }}</span>
-                                        </div>
+                    </div>
+
+                    <div class="analytics-grid">
+                        <div class="chart-card">
+                            <div class="chart-wrap">
+                                <canvas id="monthlyDoughnut"></canvas>
+                                <div class="chart-center">
+                                    <div>
+                                        <strong id="monthPercent">0%</strong>
+                                        <span>avance del mes</span>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="legend-dashboard">
+                                <div><span><span class="dot" style="background:#22c55e;"></span> Cerrados</span><b id="closedCount">0</b></div>
+                                <div><span><span class="dot" style="background:#facc15;"></span> Borradores</span><b id="draftCount">0</b></div>
+                                <div><span><span class="dot" style="background:#ef4444;"></span> Sin registro</span><b id="pendingCount">0</b></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="calendar-weekdays">
+                                <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+                            </div>
+                            <div class="calendar-grid" id="calendarGrid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="side-stack">
+                    <div class="command-card alert-supervision fade-up">
+                        <div class="card-head">
+                            <h2><i class="bi bi-exclamation-triangle-fill me-2"></i>Observación crítica</h2>
+                            <span class="connection-pill offline">Atención</span>
+                        </div>
+                        <div class="d-flex gap-3 align-items-start">
+                            <div class="alert-icon"><i class="bi bi-stickies-fill"></i></div>
+                            <div>
+                                {% if observaciones|length > 0 %}
+                                    {% set obs = observaciones[0] %}
+                                    <p class="alert-copy"><b>Asiento N° {{ obs.numero }}</b> · {{ obs.autor }}<br>{{ obs.texto }}</p>
                                 {% else %}
-                                    <div class="cal-day">{{ d }}</div>
+                                    <p class="alert-copy"><b>Sin observaciones críticas activas.</b><br>Cuando supervisión registre un post-it pendiente, aparecerá aquí para residencia.</p>
                                 {% endif %}
-                            {% endfor %}
-                        </div>
-                        <div class="calendar-legend">
-                            <span class="legend-item"><span class="legend-dot" style="background:#fef9c3;"></span>Amarillo: borrador / en proceso</span>
-                            <span class="legend-item"><span class="legend-dot" style="background:#f8fafc;"></span>Gris: asiento cerrado</span>
-                            <span class="legend-item"><span class="legend-dot" style="background:#f0fdf4;"></span>Verde: firmado por supervisión</span>
-                            <span class="legend-item"><span class="legend-dot" style="background:#fff7ed;"></span>Naranja: observado</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="glass-panel">
-                        <div class="panel-head">
-                            <h3><i class="bi bi-stickies me-2"></i>Observaciones activas</h3>
-                            <span class="status-pill">{{ estadisticas.observaciones }} observaciones</span>
+                    <div class="command-card fade-up">
+                        <div class="card-head">
+                            <h2><i class="bi bi-clock-history me-2"></i>Historial reciente</h2>
+                            <span class="connection-pill">Últimas acciones</span>
                         </div>
-                        <div class="observation-list" id="listaObservaciones">
-                            {% for asiento in asientos if asiento.estado != 'Firmado' %}
-                                <div class="postit" onclick="irAAsiento({{ asiento.numero }})">
-                                    <strong>Asiento N° {{ asiento.numero }} · {{ asiento.estado }}</strong>
-                                    <p>{{ asiento.observacion }}</p>
-                                </div>
-                            {% endfor %}
-                            {% if observaciones|length == 0 and (asientos|selectattr('estado', 'ne', 'Firmado')|list|length) == 0 %}
-                                <div class="empty-state">
-                                    <i class="bi bi-sticky"></i>
-                                    <strong>Sin observaciones activas.</strong>
-                                    <div>Los post-it de supervisión aparecerán aquí cuando se registren.</div>
-                                </div>
-                            {% endif %}
-                        </div>
+                        <div class="timeline" id="recentTimeline"></div>
                     </div>
-                </div>
-                
-                <div class="portals-grid">
-                    <a href="/residencia" class="portal-card">
-                        <div class="portal-icon"><i class="bi bi-journal-richtext"></i></div>
-                        <div class="portal-title">Residencia de Obra</div>
-                        <div class="portal-desc">Aperturar asientos legales, registrar avances diarios, control de metrados y ocurrencias.</div>
-                    </a>
-                    
-                    <a href="/supervision" class="portal-card">
-                        <div class="portal-icon"><i class="bi bi-shield-check"></i></div>
-                        <div class="portal-title">Supervisión de Obra</div>
-                        <div class="portal-desc">Control técnico, absolución de consultas, emisión de órdenes y verificaciones de terreno.</div>
-                    </a>
-                </div>
-
-            </div>
-        </div>
+                </aside>
+            </section>
+        </main>
 
         <script>
-            const nombreSupervisor = "{{ nombre_completo }}";
+            // Datos iniciales Jinja2. Luego se pueden reemplazar por Fetch/AJAX desde PostgreSQL.
+            const dashboardSeed = {
+                estadisticas: {
+                    totalAsientos: Number({{ estadisticas.total_asientos | default(0) }}),
+                    ultimoAsiento: {{ estadisticas.ultimo_asiento | tojson }},
+                    firmados: Number({{ estadisticas.firmados | default(0) }}),
+                    observaciones: Number({{ estadisticas.observaciones | default(0) }})
+                },
+                asientos: {{ asientos_json | safe }},
+                observaciones: {{ observaciones_json | safe }}
+            };
 
-            function prepararAnimacionCuaderno() {
-                const elementos = document.querySelectorAll(
-                    '.stat-card, .panel-head, .last-seat, .supervisor-tools, .calendar-grid, .calendar-legend, .postit, .empty-state, .portal-card'
-                );
-                elementos.forEach(el => el.classList.add('content-float-in'));
+            const estadoColor = {
+                cerrado: '#22c55e',
+                firmado: '#22c55e',
+                borrador: '#facc15',
+                pendiente: '#ef4444',
+                observado: '#f97316'
+            };
+
+            let mesActivo = new Date();
+            mesActivo.setDate(1);
+            let doughnutChart = null;
+
+            function escapeHtml(valor) {
+                return String(valor ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
             }
 
-            document.addEventListener('DOMContentLoaded', prepararAnimacionCuaderno);
+            function normalizarEstado(valor) {
+                const estado = String(valor || '').trim().toLowerCase();
+                if (estado.includes('borrador') || estado.includes('redacción') || estado.includes('redaccion')) return 'borrador';
+                if (estado.includes('observ')) return 'observado';
+                if (estado.includes('cerrado') || estado.includes('firmado')) return 'cerrado';
+                return 'pendiente';
+            }
+
+            function fechaAsiento(asiento, year, month) {
+                if (asiento.fecha) {
+                    const fecha = new Date(`${asiento.fecha}T00:00:00`);
+                    if (!Number.isNaN(fecha.getTime())) return fecha;
+                }
+                return new Date(year, month, Number(asiento.dia || 1));
+            }
+
+            async function cargarDatosMes(year, month) {
+                // Endpoint sugerido para conectar luego:
+                // const resp = await fetch(`/cuaderno/api/dashboard?year=${year}&month=${month + 1}`);
+                // return await resp.json();
+                const asientos = dashboardSeed.asientos.filter(asiento => {
+                    const fecha = fechaAsiento(asiento, year, month);
+                    return fecha.getFullYear() === year && fecha.getMonth() === month;
+                });
+                return { asientos, observaciones: dashboardSeed.observaciones };
+            }
+
+            function diasEnMes(year, month) {
+                return new Date(year, month + 1, 0).getDate();
+            }
+
+            function primerDiaLunes(year, month) {
+                const day = new Date(year, month, 1).getDay();
+                return day === 0 ? 6 : day - 1;
+            }
+
+            function nombreMes(fecha) {
+                return fecha.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+            }
+
+            async function renderDashboardMes() {
+                const year = mesActivo.getFullYear();
+                const month = mesActivo.getMonth();
+                const datos = await cargarDatosMes(year, month);
+                const porDia = new Map();
+                datos.asientos.forEach(asiento => {
+                    const fecha = fechaAsiento(asiento, year, month);
+                    porDia.set(fecha.getDate(), asiento);
+                });
+
+                document.getElementById('monthLabel').textContent = nombreMes(mesActivo);
+
+                const totalDias = diasEnMes(year, month);
+                let cerrados = 0;
+                let borradores = 0;
+                let observados = 0;
+                for (const asiento of porDia.values()) {
+                    const estado = normalizarEstado(asiento.estado);
+                    if (estado === 'cerrado') cerrados += 1;
+                    if (estado === 'borrador') borradores += 1;
+                    if (estado === 'observado') observados += 1;
+                }
+                const sinRegistro = Math.max(0, totalDias - cerrados - borradores - observados);
+                const avance = Math.round((cerrados / totalDias) * 100);
+
+                renderChart(cerrados, borradores, sinRegistro, avance);
+                renderCalendar(year, month, totalDias, porDia);
+            }
+
+            function renderChart(cerrados, borradores, sinRegistro, avance) {
+                document.getElementById('monthPercent').textContent = `${avance}%`;
+                document.getElementById('closedCount').textContent = cerrados;
+                document.getElementById('draftCount').textContent = borradores;
+                document.getElementById('pendingCount').textContent = sinRegistro;
+
+                const ctx = document.getElementById('monthlyDoughnut');
+                const data = [cerrados, borradores, sinRegistro];
+                if (!doughnutChart) {
+                    doughnutChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Días con asientos cerrados', 'Días en borrador', 'Días sin registro'],
+                            datasets: [{
+                                data,
+                                backgroundColor: ['#22c55e', '#facc15', '#ef4444'],
+                                borderColor: '#ffffff',
+                                borderWidth: 6,
+                                hoverOffset: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '72%',
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => `${ctx.label}: ${ctx.raw} día(s)`
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    return;
+                }
+                doughnutChart.data.datasets[0].data = data;
+                doughnutChart.update();
+            }
+
+            function renderCalendar(year, month, totalDias, porDia) {
+                const grid = document.getElementById('calendarGrid');
+                grid.innerHTML = '';
+                const espacios = primerDiaLunes(year, month);
+                for (let i = 0; i < espacios; i += 1) {
+                    const empty = document.createElement('div');
+                    empty.className = 'calendar-day empty';
+                    grid.appendChild(empty);
+                }
+
+                for (let dia = 1; dia <= totalDias; dia += 1) {
+                    const asiento = porDia.get(dia);
+                    const estado = asiento ? normalizarEstado(asiento.estado) : 'pendiente';
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = `calendar-day ${estado}`;
+                    item.innerHTML = `
+                        <span class="day-number">${dia}</span>
+                        <span class="day-caption">${textoEstado(asiento, estado)}</span>
+                        <span class="calendar-tooltip">
+                            ${asiento ? `
+                                <b>Asiento N° ${escapeHtml(String(asiento.numero).padStart(3, '0'))}</b><br>
+                                Estado: ${escapeHtml(asiento.estado || '-')}<br>
+                                Avance: ${escapeHtml(asiento.avance || 0)}%<br>
+                                Supervisor: ${escapeHtml(asiento.supervisor || '-')}<br>
+                                ${escapeHtml(asiento.observacion || 'Sin observaciones activas.')}
+                            ` : `
+                                <b>Día ${dia}</b><br>
+                                Sin asiento registrado para este día.
+                            `}
+                        </span>
+                    `;
+                    if (asiento && asiento.numero) {
+                        item.addEventListener('click', () => irAAsiento(asiento.numero));
+                    }
+                    grid.appendChild(item);
+                }
+            }
+
+            function textoEstado(asiento, estado) {
+                if (!asiento) return 'Sin registro';
+                if (estado === 'cerrado') return 'Cerrado';
+                if (estado === 'borrador') return 'Borrador';
+                if (estado === 'observado') return 'Observado';
+                return 'Pendiente';
+            }
+
+            function cambiarMes(delta) {
+                mesActivo.setMonth(mesActivo.getMonth() + delta);
+                renderDashboardMes();
+            }
 
             function irAAsiento(numero) {
-                const destino = `/cuaderno/asiento/${numero}`;
-                window.location.href = destino;
+                window.location.href = `/cuaderno/asiento/${numero}`;
             }
 
-            function agregarPostItSupervisor() {
-                const nota = document.getElementById('notaSupervisor');
-                const texto = (nota.value || '').trim();
-                if (!texto) return;
-                const lista = document.getElementById('listaObservaciones');
-                const item = document.createElement('div');
-                item.className = 'postit';
-                item.innerHTML = `<strong>Post-it · ${nombreSupervisor}</strong><p>${texto}</p>`;
-                lista.prepend(item);
-                nota.value = '';
+            function renderTimeline() {
+                const timeline = document.getElementById('recentTimeline');
+                const acciones = [];
+                dashboardSeed.asientos.slice(0, 5).forEach(asiento => {
+                    const actor = normalizarEstado(asiento.estado) === 'borrador' ? 'Supervisión guardó' : 'Residencia cerró';
+                    acciones.push({
+                        hora: asiento.updated_at ? new Date(asiento.updated_at) : (asiento.fecha ? new Date(`${asiento.fecha}T18:30:00`) : new Date()),
+                        titulo: `${actor} el Asiento N° ${String(asiento.numero || '').padStart(3, '0')}`,
+                        detalle: `Estado actual: ${asiento.estado || '-'} · Avance ${asiento.avance || 0}%`
+                    });
+                });
+                dashboardSeed.observaciones.slice(0, 2).forEach(obs => {
+                    acciones.push({
+                        hora: obs.created_at ? new Date(obs.created_at) : new Date(),
+                        titulo: `Supervisión observó el Asiento N° ${String(obs.numero || '').padStart(3, '0')}`,
+                        detalle: obs.texto || 'Observación pendiente de atención.'
+                    });
+                });
+                acciones.sort((a, b) => b.hora - a.hora);
+
+                if (acciones.length === 0) {
+                    timeline.innerHTML = '<div class="empty-box">Aún no hay acciones registradas. El historial se llenará al guardar borradores, cerrar asientos o registrar observaciones.</div>';
+                    return;
+                }
+
+                timeline.innerHTML = acciones.slice(0, 5).map((accion, idx) => `
+                    <div class="timeline-item">
+                        <span class="timeline-dot" style="background:${idx === 0 ? '#ef4444' : '#0263a0'};"></span>
+                        <div class="timeline-box">
+                            <strong>${escapeHtml(formatoRelativo(accion.hora))} - ${escapeHtml(accion.titulo)}</strong>
+                            <span>${escapeHtml(accion.detalle)}</span>
+                        </div>
+                    </div>
+                `).join('');
             }
 
-            function resaltarAsientoDemo() {
-                alert('Modo resaltado preparado para supervisión. Al conectar persistencia, se guardará por asiento y usuario.');
+            function formatoRelativo(fecha) {
+                if (!(fecha instanceof Date) || Number.isNaN(fecha.getTime())) return 'Reciente';
+                const hoy = new Date();
+                const ayer = new Date();
+                ayer.setDate(hoy.getDate() - 1);
+                const hora = fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+                if (fecha.toDateString() === hoy.toDateString()) return `Hoy ${hora}`;
+                if (fecha.toDateString() === ayer.toDateString()) return `Ayer ${hora}`;
+                return `${fecha.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })} ${hora}`;
             }
 
-            function firmarAsientoDemo() {
-                alert('Asiento marcado como firmado por supervisión. Esta acción quedará persistida al conectar base de datos.');
+            function exportarRangoPDF() {
+                const desde = document.getElementById('exportDesde').value;
+                const hasta = document.getElementById('exportHasta').value;
+                if (!desde || !hasta) {
+                    alert('Seleccione fecha Desde y Hasta para exportar el rango.');
+                    return;
+                }
+                // Endpoint sugerido para conectar luego:
+                // window.location.href = `/cuaderno/export/pdf?desde=${desde}&hasta=${hasta}`;
+                alert(`Exportación preparada: ${desde} al ${hasta}. Falta conectar el endpoint PDF real.`);
             }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                renderDashboardMes();
+                renderTimeline();
+            });
         </script>
-
     </body>
     </html>
-    """, estadisticas=estadisticas, asientos=asientos, observaciones=observaciones, conectado=conectado, rol_usuario=rol_usuario, menu_superior=menu_superior)
+    """, estadisticas=estadisticas, asientos=asientos, observaciones=observaciones, conectado=conectado, rol_usuario=rol_usuario, menu_superior=menu_superior, asientos_json=asientos_json, observaciones_json=observaciones_json)
