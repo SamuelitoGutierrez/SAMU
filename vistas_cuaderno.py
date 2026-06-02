@@ -7,7 +7,7 @@ import json
 
 from flask import Blueprint, render_template_string, session, redirect, url_for, request, jsonify
 from navbar import obtener_navbar
-from cuaderno_store import obtener_panel_cuaderno, obtener_asiento, obtener_asiento_por_fecha, obtener_datos_mes_cuaderno
+from cuaderno_store import anular_firma_asiento, obtener_panel_cuaderno, obtener_asiento, obtener_asiento_por_fecha, obtener_datos_mes_cuaderno
 
 cuaderno_bp = Blueprint('cuaderno', __name__)
 
@@ -24,6 +24,16 @@ def api_dashboard_cuaderno():
     if month < 1 or month > 12:
         return jsonify({"ok": False, "error": "Mes fuera de rango"}), 400
     return jsonify(obtener_datos_mes_cuaderno(year, month))
+
+
+@cuaderno_bp.route('/cuaderno/asiento/<int:numero>/anular_firma', methods=['POST'])
+def api_anular_firma_asiento(numero):
+    if 'usuario_id' not in session:
+        return jsonify({"ok": False, "error": "No autorizado"}), 401
+    if not (session.get('es_admin') or session.get('rol') == 'Admin'):
+        return jsonify({"ok": False, "error": "Solo Dueño/Admin puede anular firma."}), 403
+    resultado = anular_firma_asiento(numero, session.get('nombre_usuario') or session.get('nombre') or 'Admin')
+    return jsonify(resultado), 200 if resultado.get("ok") else 500
 
 
 @cuaderno_bp.route('/cuaderno/asiento/<int:numero>')
@@ -46,7 +56,9 @@ def ver_asiento_cuaderno(numero):
     modulos_json = json.dumps((contenido or {}).get("modulos") or [], ensure_ascii=False)
     fecha_texto = (contenido or {}).get("fecha_texto") or asiento.get("fecha") or ""
     menu_superior = obtener_navbar(session.get('rol') == 'Admin', session.get('nombre', 'Visitante'))
-    editable_resumen = (request.args.get("editar") == "1" or request.path.startswith("/resumen_asiento/")) and str(asiento.get("estado") or "").lower() == "borrador"
+    estado_actual = str(asiento.get("estado") or "").lower()
+    editable_resumen = (request.args.get("editar") == "1" or request.path.startswith("/resumen_asiento/")) and estado_actual in ("borrador", "enviado inspector")
+    puede_anular_firma = bool(session.get("es_admin") or session.get("rol") == "Admin") and (estado_actual in ("cerrado", "firmado") or asiento.get("bloqueado"))
 
     return render_template_string("""
     <!DOCTYPE html>
@@ -57,6 +69,11 @@ def ver_asiento_cuaderno(numero):
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <script>
+            window.tailwind = window.tailwind || {};
+            window.tailwind.config = { corePlugins: { preflight: false } };
+        </script>
+        <script src="https://cdn.tailwindcss.com"></script>
         <style>
             body { margin: 0; min-height: 100vh; font-family: Inter, Arial, sans-serif; background: linear-gradient(135deg,#f8fafc,#eff6ff); color: #0f172a; }
             .asiento-view { max-width: 980px; margin: 0 auto; padding: 96px 18px 42px; }
@@ -116,6 +133,23 @@ def ver_asiento_cuaderno(numero):
                 </div>
                 <div class="asiento-actions">
                     <a class="asiento-btn" href="/cuaderno"><i class="bi bi-arrow-left"></i> Volver al calendario</a>
+                    {% if editable_resumen %}
+                    <div class="relative inline-block text-left">
+                        <button type="button" class="asiento-btn bg-blue-600" onclick="toggleMenuEditarModulos()">
+                            <i class="bi bi-pencil-square"></i> Editar Módulos
+                        </button>
+                        <div id="menuEditarModulos" class="hidden absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-slate-200">
+                            {% for i in range(1, 11) %}
+                            <button type="button" class="w-full rounded-xl px-3 py-2 text-left text-sm font-black text-slate-700 transition hover:bg-blue-50 hover:text-blue-700" onclick="editarModuloResumen({{ i }})">
+                                Módulo {{ i }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if puede_anular_firma %}
+                    <button class="asiento-btn bg-red-700" onclick="anularFirmaAsiento()"><i class="bi bi-unlock-fill"></i> Anular Firma / Desbloquear</button>
+                    {% endif %}
                     <button class="asiento-btn pdf" onclick="exportarAsientoPDF()"><i class="bi bi-filetype-pdf"></i> Exportar PDF</button>
                 </div>
             </div>
@@ -128,6 +162,7 @@ def ver_asiento_cuaderno(numero):
             const asientoNumero = "{{ asiento.numero }}".padStart(4, "0");
             const asientoFechaTexto = {{ fecha_texto | tojson }};
             const resumenEditable = {{ editable_resumen | tojson }};
+            const puedeAnularFirma = {{ puede_anular_firma | tojson }};
             const asientoFechaRaw = {{ asiento.fecha | tojson }};
             const asientoHtmlNormal = document.getElementById('asientoPaper')?.innerHTML || '';
 
@@ -159,9 +194,41 @@ def ver_asiento_cuaderno(numero):
                     asiento: String(Number(asientoNumero)),
                     modo: 'continuar',
                     modulo: String(step),
+                    paso: String(step),
                     volver: `/resumen_asiento/${encodeURIComponent(asientoFechaRaw)}`
                 });
                 window.location.href = `/residencia?${params.toString()}`;
+            }
+
+            function toggleMenuEditarModulos() {
+                document.getElementById('menuEditarModulos')?.classList.toggle('hidden');
+            }
+
+            function mostrarMensajeResumen(mensaje, error=false) {
+                let box = document.getElementById('resumenMensajeFlotante');
+                if (!box) {
+                    box = document.createElement('div');
+                    box.id = 'resumenMensajeFlotante';
+                    box.className = 'fixed right-5 top-24 z-[3000] rounded-2xl px-4 py-3 text-sm font-black text-white shadow-2xl transition';
+                    document.body.appendChild(box);
+                }
+                box.classList.toggle('bg-red-600', error);
+                box.classList.toggle('bg-green-600', !error);
+                box.textContent = mensaje;
+                box.style.opacity = '1';
+                setTimeout(() => { box.style.opacity = '0'; }, 2600);
+            }
+
+            async function anularFirmaAsiento() {
+                if (!puedeAnularFirma) return;
+                const resp = await fetch(`/cuaderno/asiento/${Number(asientoNumero)}/anular_firma`, { method: 'POST' });
+                const data = await resp.json().catch(() => ({ ok: false, error: 'Respuesta inválida' }));
+                if (!resp.ok || !data.ok) {
+                    mostrarMensajeResumen(data.error || 'No se pudo anular la firma.', true);
+                    return;
+                }
+                mostrarMensajeResumen('Firma anulada. El asiento vuelve a estar editable.');
+                window.location.href = `/resumen_asiento/${encodeURIComponent(asientoFechaRaw)}`;
             }
 
             function activarEdicionModularResumen() {
@@ -390,7 +457,7 @@ def ver_asiento_cuaderno(numero):
         </script>
     </body>
     </html>
-    """, asiento=asiento, html_cuaderno=html_cuaderno, modulos_json=modulos_json, fecha_texto=fecha_texto, menu_superior=menu_superior, editable_resumen=editable_resumen)
+    """, asiento=asiento, html_cuaderno=html_cuaderno, modulos_json=modulos_json, fecha_texto=fecha_texto, menu_superior=menu_superior, editable_resumen=editable_resumen, puede_anular_firma=puede_anular_firma)
 
 
 @cuaderno_bp.route('/resumen_asiento/<fecha>')

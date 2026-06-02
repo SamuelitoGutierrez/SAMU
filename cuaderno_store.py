@@ -364,7 +364,7 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
         tipo_normalizado = normalizar_tipo(tipo)
         contenido_texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
         observaciones = _extraer_observaciones(contenido)
-        bloqueado = estado_normalizado in ("Cerrado", "Enviado Inspector")
+        bloqueado = estado_normalizado == "Cerrado"
         firmado_por = usuario if estado_normalizado == "Cerrado" else None
         cur.execute(
             """
@@ -375,10 +375,10 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
             (numero,),
         )
         existente = cur.fetchone()
-        if existente and (existente[0] in ("Cerrado", "Firmado", "Enviado Inspector") or existente[1]) and not puede_editar_cerrado:
+        if existente and (existente[0] in ("Cerrado", "Firmado") or existente[1]) and not puede_editar_cerrado:
             cur.close()
             conn.rollback()
-            return {"ok": False, "error": "El asiento está cerrado y bloqueado. Solo Admin puede editarlo."}
+            return {"ok": False, "error": "El asiento está firmado y bloqueado. Solo Admin puede editarlo."}
 
         cur.execute(
             """
@@ -573,7 +573,8 @@ def obtener_asiento(numero):
         cur.execute(
             """
             SELECT numero, fecha::TEXT AS fecha, tipo, estado, avance, bloqueado,
-                   contenido, COALESCE(observaciones, '') AS observaciones
+                   contenido, COALESCE(observaciones, '') AS observaciones,
+                   COALESCE(firmado_por, '') AS firmado_por, firmado_en::TEXT AS firmado_en
             FROM cuaderno_asientos
             WHERE numero = %s
             """,
@@ -592,6 +593,8 @@ def obtener_asiento(numero):
             "bloqueado": row[5],
             "contenido": row[6],
             "observaciones": row[7],
+            "firmado_por": row[8],
+            "firmado_en": row[9],
         }
     except Exception:
         return None
@@ -610,7 +613,8 @@ def obtener_asiento_por_fecha(fecha):
         cur.execute(
             """
             SELECT numero, fecha::TEXT AS fecha, tipo, estado, avance, bloqueado,
-                   contenido, COALESCE(observaciones, '') AS observaciones
+                   contenido, COALESCE(observaciones, '') AS observaciones,
+                   COALESCE(firmado_por, '') AS firmado_por, firmado_en::TEXT AS firmado_en
             FROM cuaderno_asientos
             WHERE fecha = %s
             ORDER BY numero DESC
@@ -631,6 +635,8 @@ def obtener_asiento_por_fecha(fecha):
             "bloqueado": row[5],
             "contenido": row[6],
             "observaciones": row[7],
+            "firmado_por": row[8],
+            "firmado_en": row[9],
         }
     except Exception:
         return None
@@ -778,6 +784,69 @@ def guardar_asiento_inspector(numero=None, fecha=None, estado="Borrador", conten
         conn.commit()
         cur.close()
         return {"ok": True, "status": "success", "numero": row[0], "residencia_numero": row[1], "fecha": row[2], "estado": row[3]}
+    except Exception as exc:
+        if conn:
+            with suppress(Exception):
+                conn.rollback()
+        return {"ok": False, "error": str(exc)}
+    finally:
+        if conn:
+            release_connection(conn)
+
+
+def anular_firma_asiento(numero, usuario=None):
+    if not asegurar_tablas_cuaderno():
+        return {"ok": False, "error": "Base de datos no conectada"}
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT numero, estado
+            FROM cuaderno_asientos
+            WHERE numero = %s
+            """,
+            (numero,),
+        )
+        row = cur.fetchone()
+        if not row:
+            cur.close()
+            return {"ok": False, "error": "Asiento no encontrado"}
+        nuevo_estado = "Enviado Inspector" if row[1] in ("Cerrado", "Firmado") else "Borrador"
+        cur.execute(
+            """
+            UPDATE cuaderno_asientos
+            SET estado = %s,
+                bloqueado = FALSE,
+                firmado_por = NULL,
+                firmado_en = NULL,
+                updated_at = NOW()
+            WHERE numero = %s
+            """,
+            (nuevo_estado, numero),
+        )
+        cur.execute(
+            """
+            UPDATE cuaderno_inspector_asientos
+            SET estado = 'Borrador',
+                firmado_por = NULL,
+                firmado_en = NULL,
+                updated_at = NOW()
+            WHERE residencia_numero = %s OR numero = %s
+            """,
+            (numero, numero + 1),
+        )
+        _registrar_log(
+            cur,
+            numero,
+            usuario or "Admin",
+            "anuló firma",
+            f"Se anuló la firma y se desbloqueó el asiento N° {str(numero).zfill(3)}.",
+        )
+        conn.commit()
+        cur.close()
+        return {"ok": True, "status": "success", "numero": numero, "estado": nuevo_estado}
     except Exception as exc:
         if conn:
             with suppress(Exception):

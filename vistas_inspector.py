@@ -213,7 +213,10 @@ def redactar_asiento_inspector():
 </body>
 </html>
         """,
-        menu_superior=obtener_navbar(),
+        menu_superior=obtener_navbar(
+            es_admin=session.get('es_admin', False),
+            nombre_usuario=session.get('nombre_usuario', session.get('nombre', 'Usuario')),
+        ),
         numero=f"{int(numero_inspector or (numero_int + 1 if numero_int else 0)):04d}" if (numero_inspector or numero_int) else "PENDIENTE",
         residencia_numero=residencia_numero,
         fecha_iso=fecha_iso,

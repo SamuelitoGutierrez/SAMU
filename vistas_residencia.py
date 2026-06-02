@@ -73,8 +73,8 @@ def api_guardar_asiento():
     tipo = "Inspector" if ("inspector" in str(tipo_raw).lower() or "super" in str(tipo_raw).lower()) else "Residente"
 
     existente = obtener_asiento(numero)
-    if existente and (existente.get("estado") in ("Cerrado", "Firmado", "Enviado Inspector") or existente.get("bloqueado")) and session.get("rol") != "Admin":
-        return jsonify({"ok": False, "error": "El asiento ya fue enviado o cerrado. Solo el dueño/Admin puede editarlo."}), 403
+    if existente and (existente.get("estado") in ("Cerrado", "Firmado") or (existente.get("bloqueado") and existente.get("estado") != "Enviado Inspector")) and session.get("rol") != "Admin":
+        return jsonify({"ok": False, "error": "El asiento ya fue firmado o cerrado. Solo el dueño/Admin puede editarlo."}), 403
     contenido = data.get("contenido")
     if not contenido:
         contenido = {
@@ -382,7 +382,7 @@ def redaccion_asiento_residente():
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4" onclick="window.siguienteModulo()">Guardar y Continuar <i class="bi bi-arrow-right"></i></button>
             </div>
         </div>
-        <div class="asiento-lock-banner" id="asientoLockBanner"><i class="bi bi-lock-fill"></i> Asiento enviado a Inspector. La edición de Residencia está bloqueada.</div>
+        <div class="asiento-lock-banner" id="asientoLockBanner"><i class="bi bi-lock-fill"></i> Asiento firmado. La edición de Residencia está bloqueada.</div>
 
         <div class="confirm-seat-overlay" id="confirmAccionAsiento">
             <div class="confirm-seat-card">
@@ -394,11 +394,11 @@ def redaccion_asiento_residente():
                 <div class="confirm-seat-body">
                     <div class="confirm-seat-warning" id="confirmAccionMensaje">
                         <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        Al enviar el asiento ya no podrá modificarse desde Residencia. Quedará a la espera de revisión del Inspector.
+                        Al enviar el asiento quedará listo para firma del Inspector. Podrá corregirse desde el resumen hasta que la firma sea estampada.
                     </div>
                     <div class="confirm-seat-actions">
                         <button type="button" class="confirm-seat-btn cancel" onclick="window.ocultarConfirmarAccionAsiento()">Seguir editando</button>
-                        <button type="button" class="confirm-seat-btn primary" id="confirmAccionBoton" onclick="window.confirmarAccionAsiento()">Enviar a Inspector</button>
+                        <button type="button" class="confirm-seat-btn primary" id="confirmAccionBoton" onclick="window.confirmarAccionAsiento()">Sí, enviar a firma</button>
                     </div>
                 </div>
             </div>
@@ -819,7 +819,7 @@ def redaccion_asiento_residente():
                 const data = await resp.json().catch(() => null);
                 const asiento = data && data.ok ? data.asiento : null;
                 if (!asiento) return;
-                if (['Cerrado', 'Firmado', 'Enviado Inspector'].includes(asiento.estado)) {{
+                if (['Cerrado', 'Firmado'].includes(asiento.estado) || (asiento.bloqueado && asiento.estado !== 'Enviado Inspector')) {{
                     asientoCerrado = true;
                     bloquearEdicionAsiento();
                     mostrarAlerta("Este asiento ya fue enviado o cerrado. Se abrió en modo solo lectura.", "success");
@@ -1552,9 +1552,9 @@ def redaccion_asiento_residente():
                         ? 'Confirme el envío para que el Inspector pueda revisar y firmar.'
                         : 'Se guardará el avance y podrá continuar editando después.';
                     if (mensaje) mensaje.innerHTML = esCierre
-                        ? '<i class="bi bi-exclamation-triangle-fill me-1"></i> Al enviar el asiento ya no podrá modificarse desde Residencia. Quedará a la espera de revisión del Inspector.'
+                        ? '<i class="bi bi-exclamation-triangle-fill me-1"></i> Al enviar el asiento quedará listo para firma del Inspector. Podrá corregirse desde el resumen mientras no esté firmado.'
                         : '<i class="bi bi-info-circle-fill me-1"></i> El asiento quedará como borrador y aparecerá en el calendario como en proceso de llenado.';
-                    if (boton) boton.innerText = esCierre ? 'Enviar a Inspector' : 'Guardar borrador';
+                    if (boton) boton.innerText = esCierre ? 'Sí, enviar a firma' : 'Guardar borrador';
                 }}
                 window.mostrarConfirmarGuardarBorrador = function() {{
                     configurarConfirmacionAsiento('Borrador');
@@ -1634,7 +1634,7 @@ def redaccion_asiento_residente():
                     const fecha = params.get('fecha');
                     const numero = params.get('asiento');
                     const modo = params.get('modo') || 'nuevo';
-                    const moduloDestino = Math.max(1, Math.min(10, parseInt(params.get('modulo') || '1', 10) || 1));
+                    const moduloDestino = Math.max(1, Math.min(10, parseInt(params.get('paso') || params.get('modulo') || '1', 10) || 1));
                     if (!fecha || !numero) return false;
 
                     try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
@@ -1650,7 +1650,7 @@ def redaccion_asiento_residente():
                             const data = await resp.json().catch(() => null);
                             const asiento = data && data.ok ? data.asiento : null;
                             if (!asiento) return true;
-                            if (['Cerrado', 'Firmado', 'Enviado Inspector'].includes(asiento.estado) || asiento.bloqueado) {{
+                            if (['Cerrado', 'Firmado'].includes(asiento.estado) || (asiento.bloqueado && asiento.estado !== 'Enviado Inspector')) {{
                                 window.location.href = `/cuaderno/asiento/${{encodeURIComponent(numero)}}`;
                                 return true;
                             }}
