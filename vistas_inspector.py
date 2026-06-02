@@ -7,6 +7,7 @@ from cuaderno_store import (
     extraer_ocurrencias_residencia,
     guardar_asiento_inspector,
     obtener_asiento,
+    obtener_asiento_por_fecha,
     obtener_inspector_asiento,
 )
 from navbar import obtener_navbar
@@ -38,24 +39,28 @@ def redactar_asiento_inspector():
     if "usuario_id" not in session:
         return redirect(url_for("login.mostrar_login"))
 
+    fecha_iso = request.args.get("fecha") or datetime.now().strftime("%Y-%m-%d")
     numero = request.args.get("asiento") or request.args.get("numero")
-    if not numero:
-        return redirect("/cuaderno")
-    try:
-        numero_int = int(numero)
-    except (TypeError, ValueError):
-        return redirect("/cuaderno")
-
-    asiento_residencia = obtener_asiento(numero_int)
+    numero_int = None
+    asiento_residencia = None
+    if numero:
+        try:
+            numero_int = int(numero)
+            asiento_residencia = obtener_asiento(numero_int)
+        except (TypeError, ValueError):
+            numero_int = None
     if not asiento_residencia:
-        return redirect("/cuaderno")
+        asiento_residencia = obtener_asiento_por_fecha(fecha_iso)
+        numero_int = asiento_residencia.get("numero") if asiento_residencia else None
 
-    asiento_inspector = obtener_inspector_asiento(numero_int)
+    asiento_inspector = obtener_inspector_asiento(numero=numero_int, fecha=fecha_iso)
     contenido_inspector = _contenido_inspector_dict(asiento_inspector)
     texto_guardado = contenido_inspector.get("texto") or ""
     estado_inspector = asiento_inspector.get("estado") if asiento_inspector else "Borrador"
-    fecha_iso = request.args.get("fecha") or asiento_residencia.get("fecha") or datetime.now().strftime("%Y-%m-%d")
-    ocurrencias = extraer_ocurrencias_residencia(asiento_residencia) or "Sin ocurrencias registradas por Residencia para este día."
+    numero_inspector = asiento_inspector.get("numero") if asiento_inspector else None
+    residencia_numero = numero_int or (asiento_inspector.get("residencia_numero") if asiento_inspector else None)
+    ocurrencias = extraer_ocurrencias_residencia(asiento_residencia) if asiento_residencia else ""
+    ocurrencias = ocurrencias or "Residencia aún no registró ocurrencias para esta fecha."
 
     return render_template_string(
         """
@@ -111,9 +116,15 @@ def redactar_asiento_inspector():
             <aside class="card float-in">
                 <h2><i class="bi bi-journal-text me-2"></i>Ocurrencias de Residencia del día</h2>
                 <div class="ocurrencias">{{ ocurrencias }}</div>
-                <a class="btn-view" href="/cuaderno/asiento/{{ numero }}" target="_blank" rel="noopener">
+                {% if residencia_numero %}
+                <a class="btn-view" href="/cuaderno/asiento/{{ residencia_numero }}" target="_blank" rel="noopener">
                     <i class="bi bi-box-arrow-up-right"></i> Ver asiento completo de Residencia
                 </a>
+                {% else %}
+                <div class="mt-3 rounded-2xl bg-amber-50 p-3 text-sm font-black text-amber-700">
+                    Residencia aún no registró asiento para esta fecha. El sistema correlacionará el número automáticamente cuando exista.
+                </div>
+                {% endif %}
             </aside>
 
             <section class="card float-in">
@@ -143,7 +154,7 @@ def redactar_asiento_inspector():
     </div>
 
     <script>
-        const numeroAsiento = {{ numero | tojson }};
+        const numeroResidencia = {{ residencia_numero | tojson }};
         const fechaAsiento = {{ fecha_iso | tojson }};
 
         function abrirModal(titulo, texto, tipo='success') {
@@ -177,7 +188,7 @@ def redactar_asiento_inspector():
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    numero: numeroAsiento,
+                    numero: numeroResidencia,
                     fecha: fechaAsiento,
                     estado,
                     contenido: { texto }
@@ -190,7 +201,7 @@ def redactar_asiento_inspector():
             }
             document.getElementById('estadoInspector').textContent = data.estado;
             localStorage.setItem('samu_dashboard_refresh', JSON.stringify({
-                numero: numeroAsiento,
+                numero: data.numero || numeroResidencia,
                 fecha: fechaAsiento,
                 estado: data.estado === 'Firmado' ? 'Cerrado' : 'Enviado Inspector',
                 updated_at: new Date().toISOString()
@@ -203,7 +214,8 @@ def redactar_asiento_inspector():
 </html>
         """,
         menu_superior=obtener_navbar(),
-        numero=f"{numero_int:04d}",
+        numero=f"{int(numero_inspector or (numero_int + 1 if numero_int else 0)):04d}" if (numero_inspector or numero_int) else "PENDIENTE",
+        residencia_numero=residencia_numero,
         fecha_iso=fecha_iso,
         fecha_texto=_fecha_texto(fecha_iso),
         ocurrencias=ocurrencias,
@@ -217,10 +229,13 @@ def api_guardar_inspector():
     if "usuario_id" not in session:
         return jsonify({"ok": False, "error": "No autorizado"}), 401
     data = request.get_json(silent=True) or {}
-    try:
-        numero = int(data.get("numero"))
-    except (TypeError, ValueError):
-        return jsonify({"ok": False, "error": "Número de asiento inválido"}), 400
+    numero_raw = data.get("numero")
+    numero = None
+    if numero_raw not in (None, ""):
+        try:
+            numero = int(numero_raw)
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "Número de asiento inválido"}), 400
     fecha = data.get("fecha") or datetime.now().strftime("%Y-%m-%d")
     contenido = data.get("contenido") or {}
     estado = data.get("estado") or "Borrador"

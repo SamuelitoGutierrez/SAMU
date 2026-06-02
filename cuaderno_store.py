@@ -92,7 +92,8 @@ def asegurar_tablas_cuaderno():
             """
             CREATE TABLE IF NOT EXISTS cuaderno_inspector_asientos (
                 id SERIAL PRIMARY KEY,
-                residencia_numero INTEGER NOT NULL REFERENCES cuaderno_asientos(numero) ON DELETE CASCADE,
+                numero INTEGER,
+                residencia_numero INTEGER,
                 fecha DATE NOT NULL,
                 estado VARCHAR(40) NOT NULL DEFAULT 'Borrador',
                 contenido TEXT,
@@ -100,8 +101,34 @@ def asegurar_tablas_cuaderno():
                 firmado_en TIMESTAMP,
                 created_at TIMESTAMP NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-                UNIQUE (residencia_numero)
+                UNIQUE (fecha)
             )
+            """
+        )
+        cur.execute("ALTER TABLE cuaderno_inspector_asientos ADD COLUMN IF NOT EXISTS numero INTEGER")
+        cur.execute("ALTER TABLE cuaderno_inspector_asientos ADD COLUMN IF NOT EXISTS residencia_numero INTEGER")
+        cur.execute("ALTER TABLE cuaderno_inspector_asientos ALTER COLUMN residencia_numero DROP NOT NULL")
+        cur.execute(
+            """
+            DO $$
+            DECLARE r RECORD;
+            BEGIN
+                FOR r IN
+                    SELECT conname
+                    FROM pg_constraint
+                    WHERE conrelid = 'cuaderno_inspector_asientos'::regclass
+                      AND contype IN ('f', 'u')
+                      AND pg_get_constraintdef(oid) ILIKE '%residencia_numero%'
+                LOOP
+                    EXECUTE 'ALTER TABLE cuaderno_inspector_asientos DROP CONSTRAINT IF EXISTS ' || quote_ident(r.conname);
+                END LOOP;
+            END $$;
+            """
+        )
+        cur.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_cuaderno_inspector_fecha
+            ON cuaderno_inspector_asientos (fecha)
             """
         )
         conn.commit()
@@ -140,6 +167,25 @@ def _registrar_log(cur, numero, usuario, accion, detalle=""):
         VALUES (%s, %s, %s, %s)
         """,
         (numero, usuario or "Sistema", accion, detalle or ""),
+    )
+
+
+def _correlacionar_inspector_por_fecha(cur, fecha, numero_residencia):
+    """Asigna al Inspector pendiente de la misma fecha el correlativo siguiente."""
+    try:
+        numero_inspector = int(numero_residencia) + 1
+    except (TypeError, ValueError):
+        return
+    cur.execute(
+        """
+        UPDATE cuaderno_inspector_asientos
+        SET residencia_numero = %s,
+            numero = COALESCE(numero, %s),
+            updated_at = NOW()
+        WHERE fecha = %s
+          AND (residencia_numero IS NULL OR residencia_numero = %s)
+        """,
+        (numero_residencia, numero_inspector, fecha, numero_residencia),
     )
 
 
@@ -384,9 +430,21 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
                 """,
                 (numero, usuario or "Inspector", observaciones),
             )
+        if tipo_normalizado == "Residente":
+            _correlacionar_inspector_por_fecha(cur, fecha, numero)
         conn.commit()
         cur.close()
-        return {"ok": True, "numero": row[0], "estado": row[1], "avance": row[2], "tipo": row[3], "bloqueado": row[4]}
+        return {
+            "ok": True,
+            "status": "success",
+            "numero": row[0],
+            "fecha": str(fecha),
+            "estado": row[1],
+            "estado_slug": str(row[1] or "").lower().replace(" ", "_"),
+            "avance": row[2],
+            "tipo": row[3],
+            "bloqueado": row[4],
+        }
     except Exception as exc:
         if conn:
             with suppress(Exception):
@@ -423,17 +481,49 @@ def obtener_datos_mes_cuaderno(year=None, month=None):
             (year, month),
         )
         asientos = _fetchall_dict(cur)
+        fechas_residencia = {a.get("fecha") for a in asientos}
+        cur.execute(
+            """
+            SELECT COALESCE(numero, residencia_numero) AS numero,
+                   fecha::TEXT AS fecha,
+                   EXTRACT(DAY FROM fecha)::INTEGER AS dia,
+                   estado,
+                   CASE WHEN estado = 'Firmado' THEN 100 ELSE 50 END AS avance,
+                   COALESCE(firmado_por, 'Inspector') AS supervisor,
+                   updated_at::TEXT AS updated_at,
+                   'Inspector' AS tipo,
+                   estado = 'Firmado' AS bloqueado,
+                   '' AS observaciones
+            FROM cuaderno_inspector_asientos
+            WHERE EXTRACT(YEAR FROM fecha)::INTEGER = %s
+              AND EXTRACT(MONTH FROM fecha)::INTEGER = %s
+            ORDER BY fecha ASC
+            """,
+            (year, month),
+        )
+        inspector_asientos = [
+            item for item in _fetchall_dict(cur)
+            if item.get("fecha") not in fechas_residencia
+        ]
+        asientos.extend(inspector_asientos)
         cur.execute(
             """
             SELECT
                 COUNT(*) FILTER (WHERE estado IN ('Cerrado', 'Firmado', 'Enviado Inspector')) AS cerrados,
                 COUNT(*) FILTER (WHERE estado = 'Borrador') AS borradores,
                 EXTRACT(DAY FROM ((DATE_TRUNC('month', MAKE_DATE(%s, %s, 1)) + INTERVAL '1 month - 1 day')))::INTEGER AS dias_mes
-            FROM cuaderno_asientos
-            WHERE EXTRACT(YEAR FROM fecha)::INTEGER = %s
-              AND EXTRACT(MONTH FROM fecha)::INTEGER = %s
+            FROM (
+                SELECT fecha, estado FROM cuaderno_asientos
+                WHERE EXTRACT(YEAR FROM fecha)::INTEGER = %s
+                  AND EXTRACT(MONTH FROM fecha)::INTEGER = %s
+                UNION ALL
+                SELECT fecha, estado FROM cuaderno_inspector_asientos i
+                WHERE EXTRACT(YEAR FROM fecha)::INTEGER = %s
+                  AND EXTRACT(MONTH FROM fecha)::INTEGER = %s
+                  AND NOT EXISTS (SELECT 1 FROM cuaderno_asientos a WHERE a.fecha = i.fecha)
+            ) estados_mes
             """,
-            (year, month, year, month),
+            (year, month, year, month, year, month),
         )
         row = cur.fetchone()
         cur.close()
@@ -510,6 +600,45 @@ def obtener_asiento(numero):
             release_connection(conn)
 
 
+def obtener_asiento_por_fecha(fecha):
+    if not asegurar_tablas_cuaderno():
+        return None
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT numero, fecha::TEXT AS fecha, tipo, estado, avance, bloqueado,
+                   contenido, COALESCE(observaciones, '') AS observaciones
+            FROM cuaderno_asientos
+            WHERE fecha = %s
+            ORDER BY numero DESC
+            LIMIT 1
+            """,
+            (fecha,),
+        )
+        row = cur.fetchone()
+        cur.close()
+        if not row:
+            return None
+        return {
+            "numero": row[0],
+            "fecha": row[1],
+            "tipo": row[2],
+            "estado": row[3],
+            "avance": row[4],
+            "bloqueado": row[5],
+            "contenido": row[6],
+            "observaciones": row[7],
+        }
+    except Exception:
+        return None
+    finally:
+        if conn:
+            release_connection(conn)
+
+
 def contenido_asiento_dict(asiento):
     if not asiento:
         return {}
@@ -533,35 +662,50 @@ def extraer_ocurrencias_residencia(asiento):
     return str(contenido.get("observaciones") or asiento.get("observaciones") or "").strip()
 
 
-def obtener_inspector_asiento(numero):
+def obtener_inspector_asiento(numero=None, fecha=None):
     if not asegurar_tablas_cuaderno():
         return None
     conn = None
     try:
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute(
-            """
-            SELECT residencia_numero, fecha::TEXT AS fecha, estado, contenido,
-                   COALESCE(firmado_por, '') AS firmado_por, firmado_en::TEXT AS firmado_en,
-                   updated_at::TEXT AS updated_at
-            FROM cuaderno_inspector_asientos
-            WHERE residencia_numero = %s
-            """,
-            (numero,),
-        )
+        if fecha:
+            cur.execute(
+                """
+                SELECT numero, residencia_numero, fecha::TEXT AS fecha, estado, contenido,
+                       COALESCE(firmado_por, '') AS firmado_por, firmado_en::TEXT AS firmado_en,
+                       updated_at::TEXT AS updated_at
+                FROM cuaderno_inspector_asientos
+                WHERE fecha = %s
+                """,
+                (fecha,),
+            )
+        else:
+            cur.execute(
+                """
+                SELECT numero, residencia_numero, fecha::TEXT AS fecha, estado, contenido,
+                       COALESCE(firmado_por, '') AS firmado_por, firmado_en::TEXT AS firmado_en,
+                       updated_at::TEXT AS updated_at
+                FROM cuaderno_inspector_asientos
+                WHERE numero = %s OR residencia_numero = %s
+                ORDER BY CASE WHEN numero = %s THEN 0 ELSE 1 END
+                LIMIT 1
+                """,
+                (numero, numero, numero),
+            )
         row = cur.fetchone()
         cur.close()
         if not row:
             return None
         return {
             "numero": row[0],
-            "fecha": row[1],
-            "estado": row[2],
-            "contenido": row[3],
-            "firmado_por": row[4],
-            "firmado_en": row[5],
-            "updated_at": row[6],
+            "residencia_numero": row[1],
+            "fecha": row[2],
+            "estado": row[3],
+            "contenido": row[4],
+            "firmado_por": row[5],
+            "firmado_en": row[6],
+            "updated_at": row[7],
         }
     except Exception:
         return None
@@ -570,22 +714,34 @@ def obtener_inspector_asiento(numero):
             release_connection(conn)
 
 
-def guardar_asiento_inspector(numero, fecha, estado, contenido, usuario=None):
+def guardar_asiento_inspector(numero=None, fecha=None, estado="Borrador", contenido=None, usuario=None):
     conectado = asegurar_tablas_cuaderno()
     if not conectado:
         return {"ok": False, "error": "Base de datos no conectada"}
     estado_normalizado = "Firmado" if str(estado or "").strip().lower() in ("firmado", "firmar", "definitivo") else "Borrador"
+    contenido = contenido or {}
     contenido_texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
     conn = None
     try:
         conn = get_connection()
         cur = conn.cursor()
+        residencia_numero = None
+        numero_inspector = None
+        if numero:
+            try:
+                residencia_numero = int(numero)
+                numero_inspector = residencia_numero + 1
+            except (TypeError, ValueError):
+                residencia_numero = None
+                numero_inspector = None
         cur.execute(
             """
             INSERT INTO cuaderno_inspector_asientos
-                (residencia_numero, fecha, estado, contenido, firmado_por, firmado_en, updated_at)
-            VALUES (%s, %s, %s, %s, %s, CASE WHEN %s = 'Firmado' THEN NOW() ELSE NULL END, NOW())
-            ON CONFLICT (residencia_numero) DO UPDATE SET
+                (numero, residencia_numero, fecha, estado, contenido, firmado_por, firmado_en, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, CASE WHEN %s = 'Firmado' THEN NOW() ELSE NULL END, NOW())
+            ON CONFLICT (fecha) DO UPDATE SET
+                numero = COALESCE(EXCLUDED.numero, cuaderno_inspector_asientos.numero),
+                residencia_numero = COALESCE(EXCLUDED.residencia_numero, cuaderno_inspector_asientos.residencia_numero),
                 fecha = EXCLUDED.fecha,
                 estado = EXCLUDED.estado,
                 contenido = EXCLUDED.contenido,
@@ -598,30 +754,30 @@ def guardar_asiento_inspector(numero, fecha, estado, contenido, usuario=None):
                     ELSE cuaderno_inspector_asientos.firmado_en
                 END,
                 updated_at = NOW()
-            RETURNING residencia_numero, estado
+            RETURNING numero, residencia_numero, fecha::TEXT, estado
             """,
-            (numero, fecha, estado_normalizado, contenido_texto, usuario if estado_normalizado == "Firmado" else None, estado_normalizado),
+            (numero_inspector, residencia_numero, fecha, estado_normalizado, contenido_texto, usuario if estado_normalizado == "Firmado" else None, estado_normalizado),
         )
         row = cur.fetchone()
-        if estado_normalizado == "Firmado":
+        if estado_normalizado == "Firmado" and row[1]:
             cur.execute(
                 """
                 UPDATE cuaderno_asientos
                 SET estado = 'Cerrado', bloqueado = TRUE, firmado_por = %s, firmado_en = NOW(), updated_at = NOW()
                 WHERE numero = %s
                 """,
-                (usuario or "Inspector", numero),
+                (usuario or "Inspector", row[1]),
             )
         _registrar_log(
             cur,
-            numero,
+            row[0] or row[1],
             usuario or "Inspector",
             "firmó asiento" if estado_normalizado == "Firmado" else "guardó borrador de Inspector",
-            f"Inspector de Obra {('firmó definitivamente' if estado_normalizado == 'Firmado' else 'guardó borrador del')} asiento N° {str(numero).zfill(3)}.",
+            f"Inspector de Obra {('firmó definitivamente' if estado_normalizado == 'Firmado' else 'guardó borrador del')} asiento de fecha {row[2]}.",
         )
         conn.commit()
         cur.close()
-        return {"ok": True, "numero": row[0], "estado": row[1]}
+        return {"ok": True, "status": "success", "numero": row[0], "residencia_numero": row[1], "fecha": row[2], "estado": row[3]}
     except Exception as exc:
         if conn:
             with suppress(Exception):

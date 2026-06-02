@@ -100,6 +100,15 @@ def api_guardar_asiento():
         status = 403
     else:
         status = 500
+    if resultado.get("ok"):
+        estado_api = str(resultado.get("estado") or estado).strip().lower().replace(" ", "_")
+        resultado = {
+            **resultado,
+            "status": "success",
+            "fecha": data.get("fecha") or datetime.now().strftime('%Y-%m-%d'),
+            "estado": estado_api,
+            "estado_label": resultado.get("estado"),
+        }
     return jsonify(resultado), status
 
 @residencia_bp.route('/residencia')
@@ -1050,7 +1059,8 @@ def redaccion_asiento_residente():
                 function guardarEstadoLocal() {{
                     if (!window.g_numAsiento) return;
                     try {{
-                        localStorage.setItem(estadoKey, JSON.stringify(estadoActualAsiento()));
+                        window.borradorAsiento = estadoActualAsiento();
+                        localStorage.setItem(estadoKey, JSON.stringify(window.borradorAsiento));
                     }} catch (e) {{
                         console.warn('No se pudo guardar el estado local del asiento.', e);
                     }}
@@ -1088,6 +1098,7 @@ def redaccion_asiento_residente():
                     }}
                     if (!estado || !estado.numero || !estado.fechaRaw) return false;
 
+                    window.borradorAsiento = estado;
                     window.g_numAsiento = estado.numero;
                     window.g_fechaRaw = estado.fechaRaw;
                     window.g_fechaAsiento = estado.fechaTexto || estado.fechaRaw;
@@ -1377,6 +1388,7 @@ def redaccion_asiento_residente():
                 }}
 
                 window.irModulo = function(stepIndex) {{
+                    guardarEstadoLocal();
                     const step = Math.max(1, Math.min(totalModulos, parseInt(stepIndex, 10) || 1));
                     window.samuCurrentStep = step;
                     if (typeof currentStep !== 'undefined') currentStep = step;
@@ -1387,6 +1399,8 @@ def redaccion_asiento_residente():
                     document.getElementById('btnAtras')?.classList.toggle('d-none', step <= 1 || step === 10);
                     document.getElementById('asientoActions')?.classList.toggle('visible', step === 10);
                     document.getElementById('moduloNavActions')?.classList.toggle('d-none', step === 10);
+                    if (window.borradorAsiento?.campos) aplicarCamposFormulario(window.borradorAsiento.campos);
+                    restaurarRenderModulos();
                     setTimeout(window.samuActualizarCuaderno, 30);
                 }};
 
@@ -1514,7 +1528,8 @@ def redaccion_asiento_residente():
                     const tipo = guardadoServidor ? 'success' : 'warning';
                     mostrarModalResidencia(titulo, texto, tipo, 1100).then(() => {{
                         setTimeout(() => {{
-                            window.location.href = '/cuaderno';
+                            const fechaResumen = encodeURIComponent(window.g_fechaRaw || '');
+                            window.location.href = fechaResumen ? `/resumen_asiento/${{fechaResumen}}` : '/cuaderno';
                         }}, 1500);
                     }});
                 }}
@@ -1619,6 +1634,7 @@ def redaccion_asiento_residente():
                     const fecha = params.get('fecha');
                     const numero = params.get('asiento');
                     const modo = params.get('modo') || 'nuevo';
+                    const moduloDestino = Math.max(1, Math.min(10, parseInt(params.get('modulo') || '1', 10) || 1));
                     if (!fecha || !numero) return false;
 
                     try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
@@ -1652,11 +1668,13 @@ def redaccion_asiento_residente():
                             if (lblFecha) lblFecha.innerText = window.g_fechaAsiento;
                             aplicarContenidoGuardado(contenido);
                             guardarEstadoLocal();
+                            window.irModulo(moduloDestino);
                             if (typeof mostrarAlerta === 'function') mostrarAlerta(`Borrador N° ${{numero}} cargado sin modificar la base de datos.`, 'success');
                         }} catch (error) {{
                             console.error('No se pudo cargar el borrador guardado.', error);
                         }}
                     }}
+                    if (modo !== 'continuar') window.irModulo(moduloDestino);
                     return true;
                 }}
 

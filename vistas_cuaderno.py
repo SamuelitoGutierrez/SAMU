@@ -7,7 +7,7 @@ import json
 
 from flask import Blueprint, render_template_string, session, redirect, url_for, request, jsonify
 from navbar import obtener_navbar
-from cuaderno_store import obtener_panel_cuaderno, obtener_asiento, obtener_datos_mes_cuaderno
+from cuaderno_store import obtener_panel_cuaderno, obtener_asiento, obtener_asiento_por_fecha, obtener_datos_mes_cuaderno
 
 cuaderno_bp = Blueprint('cuaderno', __name__)
 
@@ -46,6 +46,7 @@ def ver_asiento_cuaderno(numero):
     modulos_json = json.dumps((contenido or {}).get("modulos") or [], ensure_ascii=False)
     fecha_texto = (contenido or {}).get("fecha_texto") or asiento.get("fecha") or ""
     menu_superior = obtener_navbar(session.get('rol') == 'Admin', session.get('nombre', 'Visitante'))
+    editable_resumen = (request.args.get("editar") == "1" or request.path.startswith("/resumen_asiento/")) and str(asiento.get("estado") or "").lower() == "borrador"
 
     return render_template_string("""
     <!DOCTYPE html>
@@ -84,6 +85,9 @@ def ver_asiento_cuaderno(numero):
             .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; font-weight: 500; white-space: nowrap; }
             .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000; }
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
+            .modulo-editable { position: relative; border-radius: 14px; padding-right: 42px; }
+            .edit-module-btn { position: absolute; top: 0; right: 4px; width: 30px; height: 30px; border: 0; border-radius: 999px; background: #2563eb; color: #fff; display: grid; place-items: center; box-shadow: 0 10px 22px rgba(37,99,235,.22); }
+            .edit-module-btn:hover { transform: scale(1.06); }
             @media print {
                 body { background: #fff; }
                 body * { visibility: hidden !important; }
@@ -123,6 +127,8 @@ def ver_asiento_cuaderno(numero):
             const asientoModulos = {{ modulos_json | safe }};
             const asientoNumero = "{{ asiento.numero }}".padStart(4, "0");
             const asientoFechaTexto = {{ fecha_texto | tojson }};
+            const resumenEditable = {{ editable_resumen | tojson }};
+            const asientoFechaRaw = {{ asiento.fecha | tojson }};
             const asientoHtmlNormal = document.getElementById('asientoPaper')?.innerHTML || '';
 
             function esc(v) {
@@ -131,6 +137,38 @@ def ver_asiento_cuaderno(numero):
 
             function htmlModuloVista(modulo) {
                 return `<div class="modulo-redaccion"><span class="modulo-titulo">${esc(modulo.titulo)}</span><span class="modulo-contenido">${esc(modulo.contenido || '-').replace(/\\n/g, '<br>')}</span></div>`;
+            }
+
+            function numeroModuloDesdeTitulo(titulo) {
+                const match = String(titulo || '').match(/^(\\d+)/);
+                return match ? Number(match[1]) : 1;
+            }
+
+            function htmlModuloEditable(modulo) {
+                const step = numeroModuloDesdeTitulo(modulo.titulo);
+                return `<div class="modulo-redaccion modulo-editable">
+                    <button type="button" class="edit-module-btn" title="Editar módulo ${step}" onclick="editarModuloResumen(${step})"><i class="bi bi-pencil-fill"></i></button>
+                    <span class="modulo-titulo">${esc(modulo.titulo)}</span>
+                    <span class="modulo-contenido">${esc(modulo.contenido || '-').replace(/\\n/g, '<br>')}</span>
+                </div>`;
+            }
+
+            function editarModuloResumen(step) {
+                const params = new URLSearchParams({
+                    fecha: asientoFechaRaw,
+                    asiento: String(Number(asientoNumero)),
+                    modo: 'continuar',
+                    modulo: String(step),
+                    volver: `/resumen_asiento/${encodeURIComponent(asientoFechaRaw)}`
+                });
+                window.location.href = `/residencia?${params.toString()}`;
+            }
+
+            function activarEdicionModularResumen() {
+                if (!resumenEditable || !Array.isArray(asientoModulos) || asientoModulos.length === 0) return;
+                const paper = document.getElementById('asientoPaper');
+                if (!paper) return;
+                paper.innerHTML = `<div class="pagina-cuaderno"><div class="lapicero">${asientoModulos.map(htmlModuloEditable).join('')}</div></div>`;
             }
 
             const PDF_LINE_HEIGHT_PX = 26;
@@ -348,10 +386,21 @@ def ver_asiento_cuaderno(numero):
                 ventana.focus();
                 setTimeout(() => ventana.print(), 350);
             }
+            document.addEventListener('DOMContentLoaded', activarEdicionModularResumen);
         </script>
     </body>
     </html>
-    """, asiento=asiento, html_cuaderno=html_cuaderno, modulos_json=modulos_json, fecha_texto=fecha_texto, menu_superior=menu_superior)
+    """, asiento=asiento, html_cuaderno=html_cuaderno, modulos_json=modulos_json, fecha_texto=fecha_texto, menu_superior=menu_superior, editable_resumen=editable_resumen)
+
+
+@cuaderno_bp.route('/resumen_asiento/<fecha>')
+def resumen_asiento_fecha(fecha):
+    if 'usuario_id' not in session:
+        return redirect(url_for('login.mostrar_login'))
+    asiento = obtener_asiento_por_fecha(fecha)
+    if not asiento:
+        return redirect(url_for('cuaderno.panel_cuaderno'))
+    return ver_asiento_cuaderno(asiento["numero"])
 
 # NOTA IMPORTANTE: Ahora SOLO maneja la ruta /cuaderno. 
 # Esto permite que vistas_residencia.py funcione correctamente sin interferencias.
@@ -1799,11 +1848,8 @@ def panel_cuaderno():
 
             function gestionarClickDiaRedaccion(fechaISO, asiento) {
                 if (modoModalAsiento === 'inspector') {
-                    if (!asiento || !asiento.numero) {
-                        mostrarModalElegante('Sin asiento de Residencia', 'Primero la Residencia debe guardar o enviar un asiento para esta fecha.', 'warning');
-                        return;
-                    }
-                    const params = new URLSearchParams({ fecha: fechaISO, asiento: asiento.numero });
+                    const params = new URLSearchParams({ fecha: fechaISO });
+                    if (asiento?.numero) params.set('asiento', asiento.numero);
                     window.location.href = `/inspector?${params.toString()}`;
                     return;
                 }
