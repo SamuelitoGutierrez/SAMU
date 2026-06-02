@@ -20,7 +20,16 @@ PERSONAL_HTML = """
     #step2 .qty-controls { position: relative; z-index: 3; display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
     #step2 .qty-btn { width: 28px; height: 28px; border: 0; border-radius: 999px; display: grid; place-items: center; font-weight: 900; color: #075985; background: #e0f2fe; transition: .18s ease; }
     #step2 .qty-btn:hover { transform: translateY(-1px) scale(1.05); background: #bae6fd; }
+    #step2 .gg-card { margin-top: 18px; border: 1px solid #dbeafe; border-radius: 24px; background: linear-gradient(135deg, #f8fafc, #eef6ff); padding: 16px; box-shadow: 0 14px 30px rgba(15,23,42,.06); }
+    #step2 .gg-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+    #step2 .gg-item { display: flex; align-items: center; gap: 9px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; padding: 10px 11px; font-size: 12px; font-weight: 850; color: #334155; cursor: pointer; transition: .18s ease; }
+    #step2 .gg-item:has(input:checked) { border-color: #2563eb; color: #1d4ed8; background: #eff6ff; box-shadow: 0 10px 22px rgba(37,99,235,.10); }
+    #step2 .gg-add-row { display: flex; gap: 8px; margin-top: 12px; }
+    #step2 .gg-add-row input { flex: 1; border: 1px solid #cbd5e1; border-radius: 999px; padding: 10px 14px; font-weight: 800; outline: none; }
+    #step2 .gg-add-row input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,.12); }
+    #step2 .gg-plus { width: 42px; height: 42px; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #2563eb, #0f766e); display: grid; place-items: center; font-size: 20px; box-shadow: 0 12px 24px rgba(37,99,235,.2); }
     @media (max-width: 768px) { #step2 .personal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 768px) { #step2 .gg-grid { grid-template-columns: 1fr; } }
 </style>
 
 <div class="step-view" id="step2">
@@ -39,6 +48,20 @@ PERSONAL_HTML = """
         <div class="elegant-card" id="c_meca"><div class="p-icon"><i class="bi bi-tools"></i></div><span class="form-label d-block text-muted" style="font-size:10px; font-weight:800;">Mecánicos</span><input type="number" min="0" class="req-step2" id="v_meca" placeholder="0" oninput="m2_actualizar_personal('meca')"><div class="qty-controls"><button type="button" class="qty-btn" onclick="m2_sumar('meca', -1)">−</button><button type="button" class="qty-btn" onclick="m2_sumar('meca', 1)">+</button></div></div>
         <div class="elegant-card" id="c_ctrl"><div class="p-icon"><i class="bi bi-clipboard-check-fill"></i></div><span class="form-label d-block text-muted" style="font-size:10px; font-weight:800;">Controladores</span><input type="number" min="0" class="req-step2" id="v_ctrl" placeholder="0" oninput="m2_actualizar_personal('ctrl')"><div class="qty-controls"><button type="button" class="qty-btn" onclick="m2_sumar('ctrl', -1)">−</button><button type="button" class="qty-btn" onclick="m2_sumar('ctrl', 1)">+</button></div></div>
         <div class="elegant-card" id="c_ope_maq"><div class="p-icon"><i class="bi bi-truck"></i></div><span class="form-label d-block text-muted" style="font-size:10px; font-weight:800;">Operadores</span><input type="number" min="0" class="req-step2" id="v_ope_maq" placeholder="0" oninput="m2_actualizar_personal('ope_maq')"><div class="qty-controls"><button type="button" class="qty-btn" onclick="m2_sumar('ope_maq', -1)">−</button><button type="button" class="qty-btn" onclick="m2_sumar('ope_maq', 1)">+</button></div></div>
+    </div>
+    <div class="gg-card">
+        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2">
+            <div>
+                <div class="fw-black text-primary" style="font-weight:950;">Personal de Gastos Generales</div>
+                <div class="text-muted small fw-bold">Se arrastra automáticamente desde el asiento anterior y puede ajustarse para hoy.</div>
+            </div>
+            <span class="personal-total">Seleccionados: <span id="m2_total_gg">0</span></span>
+        </div>
+        <div class="gg-grid" id="m2_gastos_grid"></div>
+        <div class="gg-add-row">
+            <input type="text" id="m2_nuevo_gasto" placeholder="Agregar nuevo personal de gastos generales" onkeydown="if(event.key==='Enter'){event.preventDefault();m2_agregar_gasto();}">
+            <button type="button" class="gg-plus" onclick="m2_agregar_gasto()" title="Agregar"><i class="bi bi-plus-lg"></i></button>
+        </div>
     </div>
 </div>
 <script>
@@ -72,6 +95,60 @@ PERSONAL_HTML = """
         if (typeof sincronizarDatos === 'function') sincronizarDatos();
     }
 
+    window.m2_gastos_base = window.m2_gastos_base || [
+        "Residente de obra",
+        "Ing Asistente",
+        "Especialista III Suelos y Pavimentos",
+        "Especialista Topografía y Explanaciones",
+        "Especialista Impacto Ambiental y Seguridad",
+        "Almacenero",
+        "Administrador de Obra",
+        "Técnico Administrativo",
+        "Maestro de Obra",
+        "Guardián",
+        "Cocinero",
+        "Chofer",
+        "Asistente del Comunicador Social"
+    ];
+    window.m2_gastos_generales = window.m2_gastos_generales || [];
+
+    function m2_render_gastos() {
+        const grid = document.getElementById('m2_gastos_grid');
+        if (!grid) return;
+        const unicos = Array.from(new Set([...(window.m2_gastos_base || []), ...(window.m2_gastos_generales || [])]));
+        window.m2_gastos_base = unicos;
+        grid.innerHTML = unicos.map((nombre, idx) => {
+            const checked = (window.m2_gastos_generales || []).includes(nombre) ? 'checked' : '';
+            return `<label class="gg-item"><input type="checkbox" class="m2-gg-check" value="${nombre.replace(/"/g, '&quot;')}" ${checked} onchange="m2_toggle_gasto(this)"> <span>${nombre}</span></label>`;
+        }).join('');
+        m2_totalizar_gastos();
+    }
+
+    function m2_toggle_gasto(check) {
+        const nombre = check.value;
+        const set = new Set(window.m2_gastos_generales || []);
+        if (check.checked) set.add(nombre); else set.delete(nombre);
+        window.m2_gastos_generales = Array.from(set);
+        m2_totalizar_gastos();
+    }
+
+    function m2_agregar_gasto() {
+        const input = document.getElementById('m2_nuevo_gasto');
+        const nombre = String(input?.value || '').trim();
+        if (!nombre) return;
+        if (!(window.m2_gastos_base || []).includes(nombre)) window.m2_gastos_base.push(nombre);
+        if (!(window.m2_gastos_generales || []).includes(nombre)) window.m2_gastos_generales.push(nombre);
+        if (input) input.value = '';
+        m2_render_gastos();
+    }
+
+    function m2_totalizar_gastos() {
+        const lbl = document.getElementById('m2_total_gg');
+        if (lbl) lbl.innerText = (window.m2_gastos_generales || []).length;
+        if (typeof sincronizarDatos === 'function') sincronizarDatos();
+        if (typeof guardarEstadoLocal === 'function') guardarEstadoLocal();
+    }
+
     function m2_limpiar_personal() {
         m2_ids_personal().forEach(id => {
             const input = document.getElementById('v_' + id);
@@ -80,6 +157,7 @@ PERSONAL_HTML = """
         m2_totalizar_personal();
     }
 
-    setTimeout(m2_totalizar_personal, 250);
+    window.m2_render = function() { m2_totalizar_personal(); m2_render_gastos(); };
+    setTimeout(window.m2_render, 250);
 </script>
 """

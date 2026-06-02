@@ -1,5 +1,5 @@
 from contextlib import suppress
-from datetime import date
+from datetime import date, datetime, timedelta
 import json
 
 from database import get_connection, release_connection
@@ -63,6 +63,7 @@ def asegurar_tablas_cuaderno():
         cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS tipo VARCHAR(40) NOT NULL DEFAULT 'Residente'")
         cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS bloqueado BOOLEAN NOT NULL DEFAULT FALSE")
         cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS observaciones TEXT")
+        cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS personal_gastos_generales JSONB NOT NULL DEFAULT '[]'::jsonb")
         cur.execute(
             """
             CREATE TABLE IF NOT EXISTS cuaderno_observaciones (
@@ -95,7 +96,7 @@ def asegurar_tablas_cuaderno():
                 numero INTEGER,
                 residencia_numero INTEGER,
                 fecha DATE NOT NULL,
-                estado VARCHAR(40) NOT NULL DEFAULT 'Borrador',
+                estado VARCHAR(40) NOT NULL DEFAULT 'borrador_inspector',
                 contenido TEXT,
                 firmado_por VARCHAR(160),
                 firmado_en TIMESTAMP,
@@ -108,6 +109,13 @@ def asegurar_tablas_cuaderno():
         cur.execute("ALTER TABLE cuaderno_inspector_asientos ADD COLUMN IF NOT EXISTS numero INTEGER")
         cur.execute("ALTER TABLE cuaderno_inspector_asientos ADD COLUMN IF NOT EXISTS residencia_numero INTEGER")
         cur.execute("ALTER TABLE cuaderno_inspector_asientos ALTER COLUMN residencia_numero DROP NOT NULL")
+        cur.execute("ALTER TABLE cuaderno_inspector_asientos ADD COLUMN IF NOT EXISTS personal_supervision JSONB NOT NULL DEFAULT '[]'::jsonb")
+        cur.execute("ALTER TABLE cuaderno_inspector_asientos ADD COLUMN IF NOT EXISTS partidas_ejecutadas TEXT")
+        cur.execute("ALTER TABLE cuaderno_inspector_asientos ADD COLUMN IF NOT EXISTS almacen_ingreso TEXT")
+        cur.execute("ALTER TABLE cuaderno_inspector_asientos ADD COLUMN IF NOT EXISTS almacen_salida TEXT")
+        cur.execute("ALTER TABLE cuaderno_inspector_asientos ADD COLUMN IF NOT EXISTS maquinaria TEXT")
+        cur.execute("ALTER TABLE cuaderno_inspector_asientos ADD COLUMN IF NOT EXISTS ocurrencias TEXT")
+        cur.execute("ALTER TABLE cuaderno_inspector_asientos ALTER COLUMN estado SET DEFAULT 'borrador_inspector'")
         cur.execute(
             """
             DO $$
@@ -158,6 +166,41 @@ def _extraer_observaciones(contenido):
         if "ocurrencia" in titulo or "observ" in titulo or "supervisi" in titulo:
             candidatos.append(texto)
     return "\n".join(str(item).strip() for item in candidatos if str(item or "").strip())
+
+
+def _normalizar_lista_texto(valor):
+    if isinstance(valor, list):
+        return [str(item).strip() for item in valor if str(item or "").strip()]
+    if isinstance(valor, str):
+        try:
+            parsed = json.loads(valor)
+            if isinstance(parsed, list):
+                return [str(item).strip() for item in parsed if str(item or "").strip()]
+        except Exception:
+            return [item.strip() for item in valor.split(",") if item.strip()]
+    return []
+
+
+def _extraer_personal_gastos_generales(contenido):
+    if not isinstance(contenido, dict):
+        return []
+    candidatos = [
+        contenido.get("personal_gastos_generales"),
+        contenido.get("datos", {}).get("personal_gastos_generales") if isinstance(contenido.get("datos"), dict) else None,
+        contenido.get("estado_local", {}).get("listas", {}).get("m2_gastos_generales") if isinstance(contenido.get("estado_local"), dict) else None,
+    ]
+    for candidato in candidatos:
+        lista = _normalizar_lista_texto(candidato)
+        if lista:
+            return lista
+    return []
+
+
+def _fecha_anterior_iso(fecha):
+    try:
+        return (datetime.strptime(str(fecha), "%Y-%m-%d").date() - timedelta(days=1)).isoformat()
+    except Exception:
+        return (date.today() - timedelta(days=1)).isoformat()
 
 
 def _registrar_log(cur, numero, usuario, accion, detalle=""):
@@ -237,8 +280,8 @@ def obtener_panel_cuaderno():
         cur.execute(
             """
             SELECT
-                COUNT(*) FILTER (WHERE estado IN ('Cerrado', 'Firmado', 'Enviado Inspector')) AS cerrados,
-                COUNT(*) FILTER (WHERE estado = 'Borrador') AS borradores,
+                COUNT(*) FILTER (WHERE estado IN ('Cerrado', 'Firmado', 'Enviado Inspector', 'firmado_inspector')) AS cerrados,
+                COUNT(*) FILTER (WHERE estado IN ('Borrador', 'borrador_inspector')) AS borradores,
                 EXTRACT(DAY FROM (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month - 1 day'))::INTEGER AS dias_mes
             FROM cuaderno_asientos
             WHERE fecha >= DATE_TRUNC('month', CURRENT_DATE)::DATE
@@ -364,6 +407,7 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
         tipo_normalizado = normalizar_tipo(tipo)
         contenido_texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
         observaciones = _extraer_observaciones(contenido)
+        personal_gastos = _extraer_personal_gastos_generales(contenido)
         bloqueado = estado_normalizado == "Cerrado"
         firmado_por = usuario if estado_normalizado == "Cerrado" else None
         cur.execute(
@@ -382,8 +426,8 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
 
         cur.execute(
             """
-            INSERT INTO cuaderno_asientos (numero, fecha, tipo, estado, avance, bloqueado, firmado_por, firmado_en, contenido, observaciones, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, CASE WHEN %s = 'Cerrado' THEN NOW() ELSE NULL END, %s, %s, NOW())
+            INSERT INTO cuaderno_asientos (numero, fecha, tipo, estado, avance, bloqueado, firmado_por, firmado_en, contenido, observaciones, personal_gastos_generales, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, CASE WHEN %s = 'Cerrado' THEN NOW() ELSE NULL END, %s, %s, %s::jsonb, NOW())
             ON CONFLICT (numero) DO UPDATE SET
                 fecha = EXCLUDED.fecha,
                 tipo = EXCLUDED.tipo,
@@ -397,6 +441,7 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
                 END,
                 contenido = EXCLUDED.contenido,
                 observaciones = EXCLUDED.observaciones,
+                personal_gastos_generales = EXCLUDED.personal_gastos_generales,
                 updated_at = NOW()
             RETURNING numero, estado, avance, tipo, bloqueado
             """,
@@ -411,6 +456,7 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
                 estado_normalizado,
                 contenido_texto,
                 observaciones,
+                json.dumps(personal_gastos, ensure_ascii=False),
             ),
         )
         row = cur.fetchone()
@@ -488,11 +534,11 @@ def obtener_datos_mes_cuaderno(year=None, month=None):
                    fecha::TEXT AS fecha,
                    EXTRACT(DAY FROM fecha)::INTEGER AS dia,
                    estado,
-                   CASE WHEN estado = 'Firmado' THEN 100 ELSE 50 END AS avance,
+                   CASE WHEN estado = 'firmado_inspector' THEN 100 ELSE 50 END AS avance,
                    COALESCE(firmado_por, 'Inspector') AS supervisor,
                    updated_at::TEXT AS updated_at,
                    'Inspector' AS tipo,
-                   estado = 'Firmado' AS bloqueado,
+                   estado = 'firmado_inspector' AS bloqueado,
                    '' AS observaciones
             FROM cuaderno_inspector_asientos
             WHERE EXTRACT(YEAR FROM fecha)::INTEGER = %s
@@ -509,8 +555,8 @@ def obtener_datos_mes_cuaderno(year=None, month=None):
         cur.execute(
             """
             SELECT
-                COUNT(*) FILTER (WHERE estado IN ('Cerrado', 'Firmado', 'Enviado Inspector')) AS cerrados,
-                COUNT(*) FILTER (WHERE estado = 'Borrador') AS borradores,
+                COUNT(*) FILTER (WHERE estado IN ('Cerrado', 'Firmado', 'Enviado Inspector', 'firmado_inspector')) AS cerrados,
+                COUNT(*) FILTER (WHERE estado IN ('Borrador', 'borrador_inspector')) AS borradores,
                 EXTRACT(DAY FROM ((DATE_TRUNC('month', MAKE_DATE(%s, %s, 1)) + INTERVAL '1 month - 1 day')))::INTEGER AS dias_mes
             FROM (
                 SELECT fecha, estado FROM cuaderno_asientos
@@ -645,6 +691,59 @@ def obtener_asiento_por_fecha(fecha):
             release_connection(conn)
 
 
+def obtener_personal_gastos_anterior(fecha):
+    if not asegurar_tablas_cuaderno():
+        return []
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT COALESCE(personal_gastos_generales, '[]'::jsonb)::TEXT
+            FROM cuaderno_asientos
+            WHERE fecha = %s
+            ORDER BY numero DESC
+            LIMIT 1
+            """,
+            (_fecha_anterior_iso(fecha),),
+        )
+        row = cur.fetchone()
+        cur.close()
+        return _normalizar_lista_texto(row[0] if row else [])
+    except Exception:
+        return []
+    finally:
+        if conn:
+            release_connection(conn)
+
+
+def obtener_personal_supervision_anterior(fecha):
+    if not asegurar_tablas_cuaderno():
+        return []
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT COALESCE(personal_supervision, '[]'::jsonb)::TEXT
+            FROM cuaderno_inspector_asientos
+            WHERE fecha = %s
+            LIMIT 1
+            """,
+            (_fecha_anterior_iso(fecha),),
+        )
+        row = cur.fetchone()
+        cur.close()
+        return _normalizar_lista_texto(row[0] if row else [])
+    except Exception:
+        return []
+    finally:
+        if conn:
+            release_connection(conn)
+
+
 def contenido_asiento_dict(asiento):
     if not asiento:
         return {}
@@ -679,6 +778,12 @@ def obtener_inspector_asiento(numero=None, fecha=None):
             cur.execute(
                 """
                 SELECT numero, residencia_numero, fecha::TEXT AS fecha, estado, contenido,
+                       COALESCE(personal_supervision, '[]'::jsonb)::TEXT AS personal_supervision,
+                       COALESCE(partidas_ejecutadas, '') AS partidas_ejecutadas,
+                       COALESCE(almacen_ingreso, '') AS almacen_ingreso,
+                       COALESCE(almacen_salida, '') AS almacen_salida,
+                       COALESCE(maquinaria, '') AS maquinaria,
+                       COALESCE(ocurrencias, '') AS ocurrencias,
                        COALESCE(firmado_por, '') AS firmado_por, firmado_en::TEXT AS firmado_en,
                        updated_at::TEXT AS updated_at
                 FROM cuaderno_inspector_asientos
@@ -690,6 +795,12 @@ def obtener_inspector_asiento(numero=None, fecha=None):
             cur.execute(
                 """
                 SELECT numero, residencia_numero, fecha::TEXT AS fecha, estado, contenido,
+                       COALESCE(personal_supervision, '[]'::jsonb)::TEXT AS personal_supervision,
+                       COALESCE(partidas_ejecutadas, '') AS partidas_ejecutadas,
+                       COALESCE(almacen_ingreso, '') AS almacen_ingreso,
+                       COALESCE(almacen_salida, '') AS almacen_salida,
+                       COALESCE(maquinaria, '') AS maquinaria,
+                       COALESCE(ocurrencias, '') AS ocurrencias,
                        COALESCE(firmado_por, '') AS firmado_por, firmado_en::TEXT AS firmado_en,
                        updated_at::TEXT AS updated_at
                 FROM cuaderno_inspector_asientos
@@ -709,9 +820,15 @@ def obtener_inspector_asiento(numero=None, fecha=None):
             "fecha": row[2],
             "estado": row[3],
             "contenido": row[4],
-            "firmado_por": row[5],
-            "firmado_en": row[6],
-            "updated_at": row[7],
+            "personal_supervision": _normalizar_lista_texto(row[5]),
+            "partidas_ejecutadas": row[6],
+            "almacen_ingreso": row[7],
+            "almacen_salida": row[8],
+            "maquinaria": row[9],
+            "ocurrencias": row[10],
+            "firmado_por": row[11],
+            "firmado_en": row[12],
+            "updated_at": row[13],
         }
     except Exception:
         return None
@@ -724,9 +841,16 @@ def guardar_asiento_inspector(numero=None, fecha=None, estado="Borrador", conten
     conectado = asegurar_tablas_cuaderno()
     if not conectado:
         return {"ok": False, "error": "Base de datos no conectada"}
-    estado_normalizado = "Firmado" if str(estado or "").strip().lower() in ("firmado", "firmar", "definitivo") else "Borrador"
+    estado_normalizado = "firmado_inspector" if str(estado or "").strip().lower() in ("firmado", "firmar", "definitivo", "firmado_inspector") else "borrador_inspector"
     contenido = contenido or {}
     contenido_texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
+    contenido_dict = contenido if isinstance(contenido, dict) else {}
+    personal_supervision = _normalizar_lista_texto(contenido_dict.get("personal_supervision"))
+    partidas_ejecutadas = str(contenido_dict.get("partidas_ejecutadas") or contenido_dict.get("partidas") or "")
+    almacen_ingreso = str(contenido_dict.get("almacen_ingreso") or "")
+    almacen_salida = str(contenido_dict.get("almacen_salida") or "")
+    maquinaria = str(contenido_dict.get("maquinaria") or "")
+    ocurrencias = str(contenido_dict.get("ocurrencias") or contenido_dict.get("texto") or "")
     conn = None
     try:
         conn = get_connection()
@@ -743,29 +867,49 @@ def guardar_asiento_inspector(numero=None, fecha=None, estado="Borrador", conten
         cur.execute(
             """
             INSERT INTO cuaderno_inspector_asientos
-                (numero, residencia_numero, fecha, estado, contenido, firmado_por, firmado_en, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, CASE WHEN %s = 'Firmado' THEN NOW() ELSE NULL END, NOW())
+                (numero, residencia_numero, fecha, estado, contenido, personal_supervision, partidas_ejecutadas, almacen_ingreso, almacen_salida, maquinaria, ocurrencias, firmado_por, firmado_en, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s, %s, %s, CASE WHEN %s = 'firmado_inspector' THEN NOW() ELSE NULL END, NOW())
             ON CONFLICT (fecha) DO UPDATE SET
                 numero = COALESCE(EXCLUDED.numero, cuaderno_inspector_asientos.numero),
                 residencia_numero = COALESCE(EXCLUDED.residencia_numero, cuaderno_inspector_asientos.residencia_numero),
                 fecha = EXCLUDED.fecha,
                 estado = EXCLUDED.estado,
                 contenido = EXCLUDED.contenido,
+                personal_supervision = EXCLUDED.personal_supervision,
+                partidas_ejecutadas = EXCLUDED.partidas_ejecutadas,
+                almacen_ingreso = EXCLUDED.almacen_ingreso,
+                almacen_salida = EXCLUDED.almacen_salida,
+                maquinaria = EXCLUDED.maquinaria,
+                ocurrencias = EXCLUDED.ocurrencias,
                 firmado_por = CASE
-                    WHEN EXCLUDED.estado = 'Firmado' THEN EXCLUDED.firmado_por
+                    WHEN EXCLUDED.estado = 'firmado_inspector' THEN EXCLUDED.firmado_por
                     ELSE cuaderno_inspector_asientos.firmado_por
                 END,
                 firmado_en = CASE
-                    WHEN EXCLUDED.estado = 'Firmado' THEN NOW()
+                    WHEN EXCLUDED.estado = 'firmado_inspector' THEN NOW()
                     ELSE cuaderno_inspector_asientos.firmado_en
                 END,
                 updated_at = NOW()
             RETURNING numero, residencia_numero, fecha::TEXT, estado
             """,
-            (numero_inspector, residencia_numero, fecha, estado_normalizado, contenido_texto, usuario if estado_normalizado == "Firmado" else None, estado_normalizado),
+            (
+                numero_inspector,
+                residencia_numero,
+                fecha,
+                estado_normalizado,
+                contenido_texto,
+                json.dumps(personal_supervision, ensure_ascii=False),
+                partidas_ejecutadas,
+                almacen_ingreso,
+                almacen_salida,
+                maquinaria,
+                ocurrencias,
+                usuario if estado_normalizado == "firmado_inspector" else None,
+                estado_normalizado,
+            ),
         )
         row = cur.fetchone()
-        if estado_normalizado == "Firmado" and row[1]:
+        if estado_normalizado == "firmado_inspector" and row[1]:
             cur.execute(
                 """
                 UPDATE cuaderno_asientos
@@ -778,8 +922,8 @@ def guardar_asiento_inspector(numero=None, fecha=None, estado="Borrador", conten
             cur,
             row[0] or row[1],
             usuario or "Inspector",
-            "firmó asiento" if estado_normalizado == "Firmado" else "guardó borrador de Inspector",
-            f"Inspector de Obra {('firmó definitivamente' if estado_normalizado == 'Firmado' else 'guardó borrador del')} asiento de fecha {row[2]}.",
+            "firmó asiento" if estado_normalizado == "firmado_inspector" else "guardó borrador de Inspector",
+            f"Inspector de Obra {('firmó definitivamente' if estado_normalizado == 'firmado_inspector' else 'guardó borrador del')} asiento de fecha {row[2]}.",
         )
         conn.commit()
         cur.close()
@@ -829,7 +973,7 @@ def anular_firma_asiento(numero, usuario=None):
         cur.execute(
             """
             UPDATE cuaderno_inspector_asientos
-            SET estado = 'Borrador',
+            SET estado = 'borrador_inspector',
                 firmado_por = NULL,
                 firmado_en = NULL,
                 updated_at = NOW()

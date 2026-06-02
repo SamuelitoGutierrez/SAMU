@@ -8,7 +8,7 @@ from navbar import obtener_navbar
 from datetime import datetime
 from cuaderno_obra import CUADERNO_OBRA_CSS, CUADERNO_OBRA_JS, obtener_cuaderno_obra_html
 from resumen_asiento import RESUMEN_ASIENTO_HTML
-from cuaderno_store import guardar_asiento, obtener_asiento
+from cuaderno_store import guardar_asiento, obtener_asiento, obtener_personal_gastos_anterior
 
 # ==============================================================================
 # IMPORTACIÓN DINÁMICA
@@ -52,6 +52,18 @@ def api_obtener_asiento(numero):
         return jsonify({"ok": False, "error": "No autorizado"}), 401
     asiento = obtener_asiento(numero)
     return jsonify({"ok": True, "asiento": asiento})
+
+
+@residencia_bp.route('/residencia/api/carryover')
+def api_carryover_residencia():
+    if 'usuario_id' not in session:
+        return jsonify({"ok": False, "error": "No autorizado"}), 401
+    fecha = request.args.get("fecha") or datetime.now().strftime('%Y-%m-%d')
+    return jsonify({
+        "ok": True,
+        "fecha": fecha,
+        "personal_gastos_generales": obtener_personal_gastos_anterior(fecha),
+    })
 
 
 @residencia_bp.route('/residencia/api/asiento', methods=['POST'])
@@ -736,6 +748,7 @@ def redaccion_asiento_residente():
                             controladores: document.getElementById('v_ctrl')?.value || '',
                             operadores: document.getElementById('v_ope_maq')?.value || ''
                         }},
+                        personal_gastos_generales: window.m2_gastos_generales || [],
                         m3: window.m3_lista || [],
                         m4: window.m4_lista || [],
                         m5: window.m5_lista || [],
@@ -881,7 +894,8 @@ def redaccion_asiento_residente():
                     ['Operadores de maquinaria', samuValor('v_ope_maq')]
                 ].filter(([_, cantidad]) => parseInt(cantidad || 0) > 0)
                  .map(([nombre, cantidad]) => `(${{String(parseInt(cantidad || 0)).padStart(2, '0')}}) ${{nombre}}`);
-                samuAgregarModulo(modulos, '2. Personal de obra', personal.join('    '));
+                const gastosGenerales = (window.m2_gastos_generales || []).map(nombre => `(1) ${{nombre}}`).join(', ');
+                samuAgregarModulo(modulos, '2. Personal de obra', [personal.join('    '), gastosGenerales ? `Personal de gastos generales: ${{gastosGenerales}}` : ''].filter(Boolean).join('\\n'));
 
                 samuAgregarModulo(modulos, '3. Partidas ejecutadas', samuListaModulo('m3_lista').map(samuFormatoItem).join('\\n'));
                 samuAgregarModulo(modulos, '4. Partidas de mayor metrado', samuListaModulo('m4_lista').map(samuFormatoItem).join('\\n'));
@@ -988,7 +1002,8 @@ def redaccion_asiento_residente():
                         ['Operadores de maquinaria', texto('v_ope_maq')]
                     ].filter(([_, cantidad]) => parseInt(cantidad || 0) > 0)
                      .map(([nombre, cantidad]) => `(${{String(parseInt(cantidad || 0)).padStart(2, '0')}}) ${{nombre}}`);
-                    agregar(modulos, '2. Personal de obra', personal.join('    '));
+                    const gastosGenerales = (window.m2_gastos_generales || []).map(nombre => `(1) ${{nombre}}`).join(', ');
+                    agregar(modulos, '2. Personal de obra', [personal.join('    '), gastosGenerales ? `Personal de gastos generales: ${{gastosGenerales}}` : ''].filter(Boolean).join('\\n'));
 
                     agregar(modulos, '3. Partidas ejecutadas', lista('m3_lista').map(itemPartida).join('\\n'));
                     agregar(modulos, '4. Partidas de mayor metrado', lista('m4_lista').map(itemPartida).join('\\n'));
@@ -1040,6 +1055,8 @@ def redaccion_asiento_residente():
                         campos: camposFormulario(),
                         listas: {{
                             catalogoMaestro: window.catalogoMaestro || [],
+                            m2_gastos_base: window.m2_gastos_base || [],
+                            m2_gastos_generales: window.m2_gastos_generales || [],
                             m3_lista: window.m3_lista || [],
                             m4_lista: window.m4_lista || [],
                             m5_lista: window.m5_lista || [],
@@ -1065,9 +1082,10 @@ def redaccion_asiento_residente():
                         console.warn('No se pudo guardar el estado local del asiento.', e);
                     }}
                 }}
+                window.guardarEstadoLocal = guardarEstadoLocal;
 
                 function restaurarRenderModulos() {{
-                    ['m3_render', 'm4_render', 'm5_render', 'm6_render', 'm8_render', 'm8_render_base', 'm8_refrescar_select', 'm8_actualizar_cuaderno', 'm9_render', 'm9_sincronizar', 'm10_sincronizar'].forEach(nombre => {{
+                    ['m2_render', 'm3_render', 'm4_render', 'm5_render', 'm6_render', 'm8_render', 'm8_render_base', 'm8_refrescar_select', 'm8_actualizar_cuaderno', 'm9_render', 'm9_sincronizar', 'm10_sincronizar'].forEach(nombre => {{
                         if (typeof window[nombre] === 'function') {{
                             try {{ window[nombre](); }} catch (e) {{ console.warn(`No se pudo ejecutar ${{nombre}}`, e); }}
                         }}
@@ -1115,6 +1133,8 @@ def redaccion_asiento_residente():
 
                     const listas = estado.listas || {{}};
                     if (Array.isArray(listas.catalogoMaestro)) window.catalogoMaestro = listas.catalogoMaestro;
+                    if (Array.isArray(listas.m2_gastos_base)) window.m2_gastos_base = listas.m2_gastos_base;
+                    if (Array.isArray(listas.m2_gastos_generales)) window.m2_gastos_generales = listas.m2_gastos_generales;
                     if (Array.isArray(listas.m3_lista)) window.m3_lista = listas.m3_lista;
                     if (Array.isArray(listas.m4_lista)) window.m4_lista = listas.m4_lista;
                     if (Array.isArray(listas.m5_lista)) window.m5_lista = listas.m5_lista;
@@ -1587,11 +1607,29 @@ def redaccion_asiento_residente():
                     return `${{dias[dayIndex]}}, ${{String(d).padStart(2, '0')}}/${{String(m).padStart(2, '0')}}/${{y}}`;
                 }}
 
+                async function cargarCarryoverGastosGenerales(fecha) {{
+                    if ((window.m2_gastos_generales || []).length > 0 || !fecha) return;
+                    try {{
+                        const resp = await fetch(`/residencia/api/carryover?fecha=${{encodeURIComponent(fecha)}}`);
+                        const data = await resp.json().catch(() => null);
+                        if (resp.ok && data?.ok && Array.isArray(data.personal_gastos_generales) && data.personal_gastos_generales.length) {{
+                            window.m2_gastos_generales = data.personal_gastos_generales;
+                            if (typeof window.m2_render === 'function') window.m2_render();
+                            guardarEstadoLocal();
+                        }}
+                    }} catch (error) {{
+                        console.warn('No se pudo aplicar carry-over de gastos generales.', error);
+                    }}
+                }}
+
                 function aplicarContenidoGuardado(contenido) {{
                     if (!contenido || typeof contenido !== 'object') return;
                     if (contenido.estado_local?.campos) aplicarCamposFormulario(contenido.estado_local.campos);
                     const listasGuardadas = contenido.estado_local?.listas || {{}};
                     if (Array.isArray(listasGuardadas.catalogoMaestro)) window.catalogoMaestro = listasGuardadas.catalogoMaestro;
+                    if (Array.isArray(listasGuardadas.m2_gastos_base)) window.m2_gastos_base = listasGuardadas.m2_gastos_base;
+                    if (Array.isArray(listasGuardadas.m2_gastos_generales)) window.m2_gastos_generales = listasGuardadas.m2_gastos_generales;
+                    if (Array.isArray(contenido.personal_gastos_generales) && !(window.m2_gastos_generales || []).length) window.m2_gastos_generales = contenido.personal_gastos_generales;
                     if (Array.isArray(listasGuardadas.m3_lista)) window.m3_lista = listasGuardadas.m3_lista;
                     if (Array.isArray(listasGuardadas.m4_lista)) window.m4_lista = listasGuardadas.m4_lista;
                     if (Array.isArray(listasGuardadas.m5_lista)) window.m5_lista = listasGuardadas.m5_lista;
@@ -1617,6 +1655,7 @@ def redaccion_asiento_residente():
                     asignar('v_meca', datos.personal?.mecanicos);
                     asignar('v_ctrl', datos.personal?.controladores);
                     asignar('v_ope_maq', datos.personal?.operadores);
+                    if (Array.isArray(datos.personal_gastos_generales)) window.m2_gastos_generales = datos.personal_gastos_generales;
                     asignar('v_almacen', datos.almacen);
                     asignar('v_maquina', datos.maquinaria);
                     asignar('v_herram', datos.herramientas);
@@ -1643,6 +1682,7 @@ def redaccion_asiento_residente():
                     if (inputNumero) inputNumero.value = String(numero).replace(/\\D/g, '');
                     if (inputFecha) inputFecha.value = fecha;
                     window.iniciarAsientoSeguro();
+                    if (modo !== 'continuar') await cargarCarryoverGastosGenerales(fecha);
 
                     if (modo === 'continuar') {{
                         try {{
