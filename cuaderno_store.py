@@ -607,7 +607,7 @@ def guardar_asiento_inspector(numero, fecha, estado, contenido, usuario=None):
             cur.execute(
                 """
                 UPDATE cuaderno_asientos
-                SET estado = 'Cerrado', firmado_por = %s, firmado_en = NOW(), updated_at = NOW()
+                SET estado = 'Cerrado', bloqueado = TRUE, firmado_por = %s, firmado_en = NOW(), updated_at = NOW()
                 WHERE numero = %s
                 """,
                 (usuario or "Inspector", numero),

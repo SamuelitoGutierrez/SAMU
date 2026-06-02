@@ -1252,7 +1252,7 @@ def panel_cuaderno():
                 <div class="dashboard-title">
                     <div>
                         <h1>Cuaderno de Obra</h1>
-                        <p>Panel principal para redactar asientos, revisar estados del mes, atender observaciones de supervisión y exportar rangos del cuaderno.</p>
+                        <p>Panel principal para redactar asientos, revisar estados del mes, atender observaciones del Inspector y exportar rangos del cuaderno.</p>
                     </div>
                     <span class="connection-pill {% if not conectado %}offline{% endif %}">
                         <i class="bi {% if conectado %}bi-database-check{% else %}bi-database-exclamation{% endif %}"></i>
@@ -1268,11 +1268,11 @@ def panel_cuaderno():
                             <strong>REDACTAR ASIENTO DE RESIDENCIA</strong>
                         </span>
                     </a>
-                    <a class="primary-action supervision" href="/supervision">
+                    <a class="primary-action supervision" href="/inspector" onclick="abrirModalAsientoInspector(event)">
                         <span class="action-icon"><i class="bi bi-shield-check"></i></span>
                         <span>
-                            <small>Permiso supervisión</small>
-                            <strong>REDACTAR ASIENTO DE SUPERVISIÓN</strong>
+                            <small>Permiso Inspector</small>
+                            <strong>REDACTAR ASIENTO DE INSPECTOR DE OBRA</strong>
                         </span>
                     </a>
                     <div class="export-card">
@@ -1291,7 +1291,7 @@ def panel_cuaderno():
             <section class="stats-strip fade-up">
                 <div class="mini-stat"><span>Total asientos</span><strong>{{ estadisticas.total_asientos }}</strong></div>
                 <div class="mini-stat"><span>Último asiento</span><strong>{{ estadisticas.ultimo_asiento }}</strong></div>
-                <div class="mini-stat"><span>Firmados</span><strong>{{ estadisticas.firmados }}</strong></div>
+                <div class="mini-stat"><span>Firmados Inspector</span><strong>{{ estadisticas.firmados }}</strong></div>
                 <div class="mini-stat"><span>Observaciones</span><strong style="color:#dc2626;">{{ estadisticas.observaciones }}</strong></div>
             </section>
 
@@ -1318,7 +1318,7 @@ def panel_cuaderno():
                                 </div>
                             </div>
                             <div class="legend-dashboard">
-                                <div><span><span class="dot" style="background:#22c55e;"></span> Cerrados</span><b id="closedCount">0</b></div>
+                                <div><span><span class="dot" style="background:#22c55e;"></span> Enviados/Firmados</span><b id="closedCount">0</b></div>
                                 <div><span><span class="dot" style="background:#facc15;"></span> Borradores</span><b id="draftCount">0</b></div>
                                 <div><span><span class="dot" style="background:#ef4444;"></span> Pendientes vencidos</span><b id="pendingCount">0</b></div>
                             </div>
@@ -1346,7 +1346,7 @@ def panel_cuaderno():
                                     {% set obs = ultima_observacion %}
                                     <p class="alert-copy"><b>Asiento N° {{ obs.numero }}</b> · {{ obs.autor }}<br>{{ obs.texto }}</p>
                                 {% else %}
-                                    <p class="alert-copy"><b>Sin observaciones críticas activas.</b><br>Cuando supervisión registre un post-it pendiente, aparecerá aquí para residencia.</p>
+                                    <p class="alert-copy"><b>Sin observaciones críticas activas.</b><br>Cuando el Inspector registre un post-it pendiente, aparecerá aquí para Residencia.</p>
                                 {% endif %}
                             </div>
                         </div>
@@ -1368,7 +1368,7 @@ def panel_cuaderno():
                 <div class="seat-modal-head">
                     <div>
                         <h3 id="seatEntryTitle">Redactar Asiento</h3>
-                        <p>Seleccione una fecha. Rojo crea un asiento nuevo, amarillo continúa borrador y verde abre solo lectura.</p>
+                        <p id="seatEntrySubtitle">Seleccione una fecha. Rojo crea un asiento nuevo, amarillo continúa borrador y verde abre solo lectura.</p>
                     </div>
                     <button type="button" class="seat-modal-close" onclick="cerrarModalAsiento()" aria-label="Cerrar">&times;</button>
                 </div>
@@ -1386,7 +1386,7 @@ def panel_cuaderno():
                         <span class="inline-flex items-center gap-2 text-[11px] font-black text-slate-500">
                             <span class="inline-block h-2.5 w-2.5 rounded-full bg-red-500"></span>Nuevo
                             <span class="inline-block h-2.5 w-2.5 rounded-full bg-yellow-400"></span>Borrador
-                            <span class="inline-block h-2.5 w-2.5 rounded-full bg-green-500"></span>Cerrado
+                            <span class="inline-block h-2.5 w-2.5 rounded-full bg-green-500"></span>Enviado/Firmado
                         </span>
                     </div>
                     <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black uppercase text-slate-400">
@@ -1448,6 +1448,7 @@ def panel_cuaderno():
             let modalAsientosMes = new Map();
             let asientoModalActual = null;
             let fechaModalSeleccionada = null;
+            let modoModalAsiento = 'residencia';
 
             function escapeHtml(valor) {
                 return String(valor ?? '')
@@ -1462,6 +1463,7 @@ def panel_cuaderno():
                 const estado = String(valor || '').trim().toLowerCase();
                 if (estado.includes('borrador') || estado.includes('redacción') || estado.includes('redaccion')) return 'borrador';
                 if (estado.includes('observ')) return 'observado';
+                if (estado.includes('enviado') && estado.includes('inspector')) return 'enviado_inspector';
                 if (estado.includes('cerrado') || estado.includes('firmado')) return 'cerrado';
                 return 'pendiente';
             }
@@ -1534,7 +1536,7 @@ def panel_cuaderno():
                     let observados = 0;
                     for (const asiento of porDia.values()) {
                         const estado = normalizarEstado(asiento.estado);
-                        if (estado === 'cerrado') cerrados += 1;
+                        if (estado === 'cerrado' || estado === 'enviado_inspector') cerrados += 1;
                         if (estado === 'borrador') borradores += 1;
                         if (estado === 'observado') observados += 1;
                     }
@@ -1562,7 +1564,7 @@ def panel_cuaderno():
                 doughnutChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Días con asientos cerrados', 'Días en borrador', 'Días pendientes vencidos'],
+                        labels: ['Días enviados o firmados', 'Días en borrador', 'Días pendientes vencidos'],
                         datasets: [{
                             data,
                             backgroundColor: ['#22c55e', '#facc15', '#ef4444'],
@@ -1607,9 +1609,10 @@ def panel_cuaderno():
                     const asiento = porDia.get(dia);
                     const fechaISO = fechaISODesdePartes(year, month, dia);
                     const estado = asiento ? normalizarEstado(asiento.estado) : (esFechaFutura(fechaISO) ? 'future' : 'pendiente');
+                    const estadoVisual = estado === 'enviado_inspector' ? 'cerrado' : estado;
                     const item = document.createElement('button');
                     item.type = 'button';
-                    item.className = `calendar-day ${estado}`;
+                    item.className = `calendar-day ${estadoVisual}`;
                     item.innerHTML = `
                         <span class="day-number">${dia}</span>
                         <span class="day-caption">${textoEstado(asiento, estado)}</span>
@@ -1618,7 +1621,7 @@ def panel_cuaderno():
                                 <b>Asiento N° ${escapeHtml(String(asiento.numero).padStart(3, '0'))}</b><br>
                                 Estado: ${escapeHtml(asiento.estado || '-')}<br>
                                 Avance: ${escapeHtml(asiento.avance || 0)}%<br>
-                                Supervisor: ${escapeHtml(asiento.supervisor || '-')}<br>
+                                Inspector: ${escapeHtml(asiento.supervisor || '-')}<br>
                                 ${escapeHtml(asiento.observacion || 'Sin observaciones activas.')}
                             ` : `
                                 <b>Día ${dia}</b><br>
@@ -1666,7 +1669,7 @@ def panel_cuaderno():
                 let borradores = 0;
                 for (const asiento of porDia.values()) {
                     const estado = normalizarEstado(asiento.estado);
-                    if (estado === 'cerrado') cerrados += 1;
+                    if (estado === 'cerrado' || estado === 'enviado_inspector') cerrados += 1;
                     if (estado === 'borrador' || estado === 'observado') borradores += 1;
                 }
                 const pendientes = contarPendientesVencidos(year, month, totalDias, porDia);
@@ -1691,7 +1694,7 @@ def panel_cuaderno():
                     numero: cambio.numero,
                     fecha: cambio.fecha,
                     estado: cambio.estado || 'Borrador',
-                    avance: String(cambio.estado || '').toLowerCase().includes('cerrado') ? 100 : 60,
+                    avance: /cerrado|firmado|inspector/i.test(String(cambio.estado || '')) ? 100 : 60,
                     supervisor: '-',
                     observacion: 'Sin observaciones activas.',
                     updated_at: cambio.updated_at || new Date().toISOString()
@@ -1723,7 +1726,22 @@ def panel_cuaderno():
 
             function abrirModalAsientoResidencia(event, fechaISO=null) {
                 if (event) event.preventDefault();
+                modoModalAsiento = 'residencia';
                 const modal = document.getElementById('seatEntryModal');
+                document.getElementById('seatEntryTitle').textContent = 'Redactar Asiento de Residencia';
+                document.getElementById('seatEntrySubtitle').textContent = 'Seleccione una fecha. Rojo crea un asiento nuevo, amarillo continúa borrador y verde abre solo lectura.';
+                const fecha = parseFechaLocal(fechaISO || fechaPorDefectoModal());
+                if (fecha) modalMesActivo = new Date(fecha.year, fecha.monthIndex, 1);
+                modal.classList.remove('hidden');
+                renderCalendarioModalAsiento();
+            }
+
+            function abrirModalAsientoInspector(event, fechaISO=null) {
+                if (event) event.preventDefault();
+                modoModalAsiento = 'inspector';
+                const modal = document.getElementById('seatEntryModal');
+                document.getElementById('seatEntryTitle').textContent = 'Redactar Asiento de Inspector de Obra';
+                document.getElementById('seatEntrySubtitle').textContent = 'Seleccione el día con asiento de Residencia enviado para redactar o firmar como Inspector.';
                 const fecha = parseFechaLocal(fechaISO || fechaPorDefectoModal());
                 if (fecha) modalMesActivo = new Date(fecha.year, fecha.monthIndex, 1);
                 modal.classList.remove('hidden');
@@ -1767,7 +1785,7 @@ def panel_cuaderno():
                     const fechaISO = fechaISODesdePartes(year, month, dia);
                     const asiento = buscarAsientoPorFecha(fechaISO, modalAsientosMes, year, month);
                     const estado = asiento ? normalizarEstado(asiento.estado) : (esFechaFutura(fechaISO) ? 'future' : 'pendiente');
-                    const estadoVisual = estado === 'observado' ? 'draft' : estado;
+                    const estadoVisual = estado === 'observado' ? 'draft' : (estado === 'enviado_inspector' ? 'cerrado' : estado);
                     const day = document.createElement('button');
                     day.type = 'button';
                     day.className = `mini-seat-day ${estadoVisual}`;
@@ -1780,6 +1798,15 @@ def panel_cuaderno():
             }
 
             function gestionarClickDiaRedaccion(fechaISO, asiento) {
+                if (modoModalAsiento === 'inspector') {
+                    if (!asiento || !asiento.numero) {
+                        mostrarModalElegante('Sin asiento de Residencia', 'Primero la Residencia debe guardar o enviar un asiento para esta fecha.', 'warning');
+                        return;
+                    }
+                    const params = new URLSearchParams({ fecha: fechaISO, asiento: asiento.numero });
+                    window.location.href = `/inspector?${params.toString()}`;
+                    return;
+                }
                 if (asiento && normalizarEstado(asiento.estado) === 'borrador') {
                     continuarBorradorSeguro(fechaISO, asiento.numero);
                     return;
@@ -1891,7 +1918,8 @@ def panel_cuaderno():
             function textoEstado(asiento, estado) {
                 if (estado === 'future') return 'Futuro';
                 if (!asiento) return 'Sin registro';
-                if (estado === 'cerrado') return 'Cerrado';
+                if (estado === 'enviado_inspector') return 'Enviado Inspector';
+                if (estado === 'cerrado') return 'Firmado';
                 if (estado === 'borrador') return 'Borrador';
                 if (estado === 'observado') return 'Observado';
                 return 'Pendiente';
@@ -1930,7 +1958,10 @@ def panel_cuaderno():
                     return;
                 }
                 dashboardSeed.asientos.slice(0, 5).forEach(asiento => {
-                    const actor = normalizarEstado(asiento.estado) === 'borrador' ? 'Supervisión guardó' : 'Residencia cerró';
+                const estadoAsiento = normalizarEstado(asiento.estado);
+                const actor = estadoAsiento === 'borrador'
+                    ? 'Residencia guardó'
+                    : (estadoAsiento === 'enviado_inspector' ? 'Residencia envió al Inspector' : 'Inspector firmó');
                     acciones.push({
                         hora: asiento.updated_at ? new Date(asiento.updated_at) : (asiento.fecha ? fechaHoraLocal(asiento.fecha, 18, 30) : new Date()),
                         titulo: `${actor} el Asiento N° ${String(asiento.numero || '').padStart(3, '0')}`,
@@ -1940,7 +1971,7 @@ def panel_cuaderno():
                 dashboardSeed.observaciones.slice(0, 2).forEach(obs => {
                     acciones.push({
                         hora: obs.created_at ? new Date(obs.created_at) : new Date(),
-                        titulo: `Supervisión observó el Asiento N° ${String(obs.numero || '').padStart(3, '0')}`,
+                        titulo: `Inspector observó el Asiento N° ${String(obs.numero || '').padStart(3, '0')}`,
                         detalle: obs.texto || 'Observación pendiente de atención.'
                     });
                 });
@@ -2027,7 +2058,8 @@ def panel_cuaderno():
                     aplicarCambioDashboardLocal(cambio);
                 }
                 try { localStorage.removeItem('samu_dashboard_refresh'); } catch (e) {}
-                const estado = String(cambio.estado || '').toLowerCase().includes('cerrado') ? 'Asiento cerrado exitosamente' : 'Borrador guardado exitosamente';
+                const estadoCambio = String(cambio.estado || '').toLowerCase();
+                const estado = estadoCambio.includes('inspector') ? 'Asiento enviado al Inspector' : (estadoCambio.includes('cerrado') ? 'Asiento firmado exitosamente' : 'Borrador guardado exitosamente');
                 mostrarModalElegante(estado, `El Asiento N° ${String(cambio.numero || '').padStart(3, '0')} ya fue sincronizado en el calendario.`, 'success');
             }
 

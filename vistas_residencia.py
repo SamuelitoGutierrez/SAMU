@@ -385,7 +385,7 @@ def redaccion_asiento_residente():
                 <div class="confirm-seat-body">
                     <div class="confirm-seat-warning" id="confirmAccionMensaje">
                         <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        Al cerrar el asiento ya no podrá modificarse desde residencia. Solo el dueño/Admin podrá habilitar edición de emergencia.
+                        Al enviar el asiento ya no podrá modificarse desde Residencia. Quedará a la espera de revisión del Inspector.
                     </div>
                     <div class="confirm-seat-actions">
                         <button type="button" class="confirm-seat-btn cancel" onclick="window.ocultarConfirmarAccionAsiento()">Seguir editando</button>
@@ -745,7 +745,7 @@ def redaccion_asiento_residente():
                     return null;
                 }}
                 if (asientoCerrado && !edicionDuenoActiva && rolUsuario !== 'Admin') {{
-                    if (!silencioso) mostrarAlerta("Este asiento ya está cerrado y no puede modificarse.", "error");
+                    if (!silencioso) mostrarAlerta("Este asiento ya fue enviado o cerrado y no puede modificarse.", "error");
                     return null;
                 }}
                 if (typeof sincronizarDatos === "function") sincronizarDatos();
@@ -810,10 +810,10 @@ def redaccion_asiento_residente():
                 const data = await resp.json().catch(() => null);
                 const asiento = data && data.ok ? data.asiento : null;
                 if (!asiento) return;
-                if (asiento.estado === 'Cerrado') {{
+                if (['Cerrado', 'Firmado', 'Enviado Inspector'].includes(asiento.estado)) {{
                     asientoCerrado = true;
                     bloquearEdicionAsiento();
-                    mostrarAlerta("Este asiento ya fue cerrado. Se abrió en modo solo lectura.", "success");
+                    mostrarAlerta("Este asiento ya fue enviado o cerrado. Se abrió en modo solo lectura.", "success");
                 }} else {{
                     mostrarAlerta(`Borrador existente encontrado. Avance guardado ${{asiento.avance || 0}}%.`, "success");
                 }}
@@ -1451,7 +1451,7 @@ def redaccion_asiento_residente():
                     const payload = {{
                         numero,
                         fecha,
-                        estado,
+                            estado,
                         avance: 100,
                         contenido: {{
                             numero,
@@ -1504,26 +1504,24 @@ def redaccion_asiento_residente():
                 }}
 
                 function mostrarVentanaExitoGuardado(estado, guardadoServidor=true) {{
+                    const enviadoInspector = estado === 'Enviado Inspector';
                     const titulo = guardadoServidor
-                        ? (estado === 'Cerrado' ? 'Asiento cerrado exitosamente' : 'Borrador guardado exitosamente')
+                        ? (enviadoInspector ? 'Asiento enviado al Inspector' : 'Borrador guardado exitosamente')
                         : 'No se pudo sincronizar con el servidor';
                     const texto = guardadoServidor
-                        ? 'El calendario se actualizará automáticamente y ahora se abrirá el resumen del cuaderno.'
+                        ? (enviadoInspector ? 'La Residencia queda bloqueada y el Inspector podrá revisar el asiento.' : 'El calendario se actualizará automáticamente.')
                         : 'Se creó un respaldo local para no perder información. Revise la conexión antes de cerrar definitivamente.';
                     const tipo = guardadoServidor ? 'success' : 'warning';
                     mostrarModalResidencia(titulo, texto, tipo, 1100).then(() => {{
-                        window.redirigirCuadernoAlCerrarResumen = true;
-                        if (typeof abrirResumenCuaderno === 'function') {{
-                            abrirResumenCuaderno();
-                        }} else {{
+                        setTimeout(() => {{
                             window.location.href = '/cuaderno';
-                        }}
+                        }}, 1500);
                     }});
                 }}
 
                 window.accionAsientoPendiente = 'Borrador';
                 function configurarConfirmacionAsiento(tipo) {{
-                    const esCierre = tipo === 'Cerrado';
+                    const esCierre = tipo === 'Enviado Inspector';
                     window.accionAsientoPendiente = tipo;
                     const hero = document.getElementById('confirmAccionHero');
                     const icon = document.getElementById('confirmAccionIcon');
@@ -1534,21 +1532,21 @@ def redaccion_asiento_residente():
                     hero?.classList.toggle('draft', !esCierre);
                     boton?.classList.toggle('draft', !esCierre);
                     if (icon) icon.innerHTML = esCierre ? '<i class="bi bi-shield-lock-fill"></i>' : '<i class="bi bi-save2-fill"></i>';
-                    if (titulo) titulo.innerText = esCierre ? 'Cerrar asiento del cuaderno' : 'Guardar asiento como borrador';
+                    if (titulo) titulo.innerText = esCierre ? 'Enviar asiento al Inspector' : 'Guardar asiento como borrador';
                     if (subtitulo) subtitulo.innerText = esCierre
-                        ? 'Confirme el cierre para revisar el resumen final.'
+                        ? 'Confirme el envío para que el Inspector pueda revisar y firmar.'
                         : 'Se guardará el avance y podrá continuar editando después.';
                     if (mensaje) mensaje.innerHTML = esCierre
-                        ? '<i class="bi bi-exclamation-triangle-fill me-1"></i> Al cerrar el asiento ya no podrá modificarse desde residencia. Solo el dueño/Admin podrá habilitar edición de emergencia.'
+                        ? '<i class="bi bi-exclamation-triangle-fill me-1"></i> Al enviar el asiento ya no podrá modificarse desde Residencia. Quedará a la espera de revisión del Inspector.'
                         : '<i class="bi bi-info-circle-fill me-1"></i> El asiento quedará como borrador y aparecerá en el calendario como en proceso de llenado.';
-                    if (boton) boton.innerText = esCierre ? 'Cerrar asiento y ver resumen' : 'Guardar borrador y ver resumen';
+                    if (boton) boton.innerText = esCierre ? 'Enviar a Inspector' : 'Guardar borrador';
                 }}
                 window.mostrarConfirmarGuardarBorrador = function() {{
                     configurarConfirmacionAsiento('Borrador');
                     document.getElementById('confirmAccionAsiento')?.classList.add('active');
                 }};
                 window.mostrarConfirmarCerrarAsiento = function() {{
-                    configurarConfirmacionAsiento('Cerrado');
+                    configurarConfirmacionAsiento('Enviado Inspector');
                     document.getElementById('confirmAccionAsiento')?.classList.add('active');
                 }};
                 window.ocultarConfirmarAccionAsiento = function() {{
@@ -1636,7 +1634,7 @@ def redaccion_asiento_residente():
                             const data = await resp.json().catch(() => null);
                             const asiento = data && data.ok ? data.asiento : null;
                             if (!asiento) return true;
-                            if (asiento.estado === 'Cerrado' || asiento.bloqueado) {{
+                            if (['Cerrado', 'Firmado', 'Enviado Inspector'].includes(asiento.estado) || asiento.bloqueado) {{
                                 window.location.href = `/cuaderno/asiento/${{encodeURIComponent(numero)}}`;
                                 return true;
                             }}

@@ -313,7 +313,7 @@ HTML_NAVBAR = """
         cuaderno: { 
             navLabel: "Cuaderno de Obra", navUrl: "/cuaderno",
             title: "Módulos de Registro", 
-            main: [{ label: "Residencia", url: "/residencia" }, { label: "Supervisión", url: "/supervision" }], 
+            main: [{ label: "Residencia", url: "/residencia" }, { label: "Inspector de Obra", url: "/inspector" }], 
             sub: [{ label: "Análisis General", url: "#" }] 
         },
         personal: { 
@@ -440,8 +440,8 @@ HTML_NAVBAR = """
         if (esAdmin) return true;
         if (url === '#') return false;
         if (rolUsuario === 'Almacenero' && url.startsWith('/almacen')) return true;
-        if (['Ingeniero', 'Residente', 'Supervisor'].includes(rolUsuario)) {
-            return ['/cuaderno', '/residencia', '/supervision', '/panel'].some(ruta => url.startsWith(ruta));
+        if (['Ingeniero', 'Residente', 'Supervisor', 'Inspector'].includes(rolUsuario)) {
+            return ['/cuaderno', '/residencia', '/inspector', '/panel'].some(ruta => url.startsWith(ruta));
         }
         return false;
     }

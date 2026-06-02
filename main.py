@@ -49,7 +49,7 @@ def iniciar_servidor_samu():
         "vistas_analisis_supervicion", "vistas_anaslisis_registro_personal",
         "vistas_asistencias", "vistas_busqueda_global", "vistas_chat",
         "vistas_combustible_almacen", "vistas_combustible_equipo", "vistas_cuaderno", 
-        "vistas_horas_maquina", "vistas_inicio", "vistas_login", "vistas_maquinaria", 
+        "vistas_horas_maquina", "vistas_inicio", "vistas_inspector", "vistas_login", "vistas_maquinaria", 
         "vistas_mensajes_panel", "vistas_navbar", "vistas_notificaciones", 
         "vistas_operativos_maquinaria", "vistas_papeleta", "vistas_partidas_metrados", 
         "vistas_perfil", "vistas_personal_obra", "vistas_recuperacion_password", 
@@ -106,9 +106,9 @@ def iniciar_servidor_samu():
             return 
 
         # Restricciones de otros roles
-        if rol in ['Ingeniero', 'Residente', 'Supervisor']:
+        if rol in ['Ingeniero', 'Residente', 'Supervisor', 'Inspector']:
             # Se ha añadido 'mod_' para dar permisos a los nuevos micromódulos del cuaderno
-            if not any(ruta.startswith(m) for m in ['cuaderno.', 'residencia.', 'supervision.', 'personal.', 'avance.', 'inicio.', 'mod_']):
+            if not any(ruta.startswith(m) for m in ['cuaderno.', 'residencia.', 'inspector.', 'supervision.', 'personal.', 'avance.', 'inicio.', 'mod_']):
                 return generar_error_403()
                 
         elif rol == 'Maquinaria':

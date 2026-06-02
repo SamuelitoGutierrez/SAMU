@@ -73,10 +73,10 @@ def crear_servidor_samu():
         if rol_usuario == 'Admin':
             return 
 
-        # Reglas para Ingeniero Residente / Supervisor
-        if rol_usuario in ['Ingeniero', 'Residente', 'Supervisor']:
+        # Reglas para Ingeniero Residente / Inspector
+        if rol_usuario in ['Ingeniero', 'Residente', 'Supervisor', 'Inspector']:
             # Solo puede acceder a las vistas que empiecen con estos nombres:
-            modulos_permitidos = ['cuaderno.', 'avance.', 'personal.', 'inicio.']
+            modulos_permitidos = ['cuaderno.', 'residencia.', 'inspector.', 'avance.', 'personal.', 'inicio.']
             if not any(ruta_actual.startswith(m) for m in modulos_permitidos):
                 return generar_pantalla_bloqueo()
 
