@@ -718,6 +718,31 @@ def obtener_personal_gastos_anterior(fecha):
             release_connection(conn)
 
 
+def obtener_catalogo_personal_gastos():
+    if not asegurar_tablas_cuaderno():
+        return []
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT DISTINCT jsonb_array_elements_text(personal_gastos_generales) AS nombre
+            FROM cuaderno_asientos
+            WHERE jsonb_typeof(personal_gastos_generales) = 'array'
+            ORDER BY nombre
+            """
+        )
+        filas = [row[0] for row in cur.fetchall()]
+        cur.close()
+        return _normalizar_lista_texto(filas)
+    except Exception:
+        return []
+    finally:
+        if conn:
+            release_connection(conn)
+
+
 def obtener_personal_supervision_anterior(fecha):
     if not asegurar_tablas_cuaderno():
         return []

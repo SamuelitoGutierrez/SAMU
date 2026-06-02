@@ -313,7 +313,10 @@ HTML_NAVBAR = """
         cuaderno: { 
             navLabel: "Cuaderno de Obra", navUrl: "/cuaderno",
             title: "Módulos de Registro", 
-            main: [{ label: "Residencia", url: "/residencia" }, { label: "Inspector de Obra", url: "/inspector" }], 
+            main: [
+                { label: "Asentar asiento de Residencia", url: "/cuaderno?abrir=residencia" },
+                { label: "Asentar asiento de Supervisión", url: "/cuaderno?abrir=inspector" }
+            ], 
             sub: [{ label: "Análisis General", url: "#" }] 
         },
         personal: { 

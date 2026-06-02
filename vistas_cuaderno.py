@@ -7,7 +7,7 @@ import json
 
 from flask import Blueprint, render_template_string, session, redirect, url_for, request, jsonify
 from navbar import obtener_navbar
-from cuaderno_store import anular_firma_asiento, obtener_panel_cuaderno, obtener_asiento, obtener_asiento_por_fecha, obtener_datos_mes_cuaderno
+from cuaderno_store import anular_firma_asiento, obtener_inspector_asiento, obtener_panel_cuaderno, obtener_asiento, obtener_asiento_por_fecha, obtener_datos_mes_cuaderno
 
 cuaderno_bp = Blueprint('cuaderno', __name__)
 
@@ -34,6 +34,66 @@ def api_anular_firma_asiento(numero):
         return jsonify({"ok": False, "error": "Solo Dueño/Admin puede anular firma."}), 403
     resultado = anular_firma_asiento(numero, session.get('nombre_usuario') or session.get('nombre') or 'Admin')
     return jsonify(resultado), 200 if resultado.get("ok") else 500
+
+
+@cuaderno_bp.route('/cuaderno/asiento/<int:numero>/completo')
+def ver_asiento_completo(numero):
+    if 'usuario_id' not in session:
+        return redirect(url_for('login.mostrar_login'))
+    asiento = obtener_asiento(numero)
+    if not asiento:
+        return redirect(url_for('cuaderno.panel_cuaderno'))
+    inspector = obtener_inspector_asiento(numero=numero, fecha=asiento.get("fecha"))
+    try:
+        contenido = json.loads(asiento.get("contenido") or "{}")
+    except Exception:
+        contenido = {}
+    residencia_html = contenido.get("texto_html") or "<div class='text-slate-500'>Sin contenido de Residencia.</div>"
+    inspector_texto = ""
+    if inspector:
+        inspector_texto = "\n\n".join([
+            "1. Personal de Supervisión: " + ", ".join(f"(1) {x}" for x in inspector.get("personal_supervision") or []),
+            "2. Partidas Ejecutadas:\n" + (inspector.get("partidas_ejecutadas") or "-"),
+            "3. Movimiento de Almacén:\nINGRESO: " + (inspector.get("almacen_ingreso") or "-") + "\nSALIDA: " + (inspector.get("almacen_salida") or "-"),
+            "4. Maquinaria y/o Equipos:\n" + (inspector.get("maquinaria") or "-"),
+            "5. Ocurrencias y/o Obs:\n" + (inspector.get("ocurrencias") or "-"),
+        ])
+    else:
+        inspector_texto = "Inspector/Supervisión aún no registró asiento para esta fecha."
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Asiento completo</title>
+        <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { corePlugins: { preflight: false } };</script>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-slate-100 text-slate-900">
+        {{ menu_superior | safe }}
+        <main class="mx-auto max-w-6xl px-4 py-24">
+            <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h1 class="m-0 text-3xl font-black">Hoja completa del Asiento N° {{ numero }}</h1>
+                    <p class="m-0 mt-1 text-sm font-bold text-slate-500">Residencia + Supervisión/Inspector en una sola vista</p>
+                </div>
+                <a href="/cuaderno" class="rounded-full bg-slate-900 px-4 py-3 text-sm font-black text-white no-underline">Volver</a>
+            </div>
+            <section class="grid gap-4 lg:grid-cols-2">
+                <article class="rounded-3xl bg-white p-5 shadow-xl">
+                    <h2 class="text-xl font-black text-blue-700">Residencia</h2>
+                    <div class="mt-3 overflow-auto">{{ residencia_html | safe }}</div>
+                </article>
+                <article class="rounded-3xl bg-white p-5 shadow-xl">
+                    <h2 class="text-xl font-black text-emerald-700">Supervisión / Inspector</h2>
+                    <pre class="mt-3 whitespace-pre-wrap font-[Candara] text-[17px] italic leading-7 text-sky-700">{{ inspector_texto }}</pre>
+                </article>
+            </section>
+        </main>
+    </body>
+    </html>
+    """, menu_superior=obtener_navbar(session.get('rol') == 'Admin', session.get('nombre', 'Visitante')), numero=numero, residencia_html=residencia_html, inspector_texto=inspector_texto)
 
 
 @cuaderno_bp.route('/cuaderno/asiento/<int:numero>')
@@ -1381,14 +1441,14 @@ def panel_cuaderno():
                         <span class="action-icon"><i class="bi bi-journal-richtext"></i></span>
                         <span>
                             <small>Permiso residencia</small>
-                            <strong>REDACTAR ASIENTO DE RESIDENCIA</strong>
+                            <strong>ASENTAR ASIENTO DE RESIDENCIA</strong>
                         </span>
                     </a>
                     <a class="primary-action supervision" href="/inspector" onclick="abrirModalAsientoInspector(event)">
                         <span class="action-icon"><i class="bi bi-shield-check"></i></span>
                         <span>
-                            <small>Permiso Inspector</small>
-                            <strong>REDACTAR ASIENTO DE INSPECTOR DE OBRA</strong>
+                            <small>Permiso supervisión</small>
+                            <strong>ASENTAR ASIENTO DE SUPERVISIÓN</strong>
                         </span>
                     </a>
                     <div class="export-card">
@@ -2181,6 +2241,13 @@ def panel_cuaderno():
                 renderTimeline();
                 prepararAnimacionFlotarAdentro();
                 refrescarDashboardSiHayCambios();
+                const accionInicial = new URLSearchParams(window.location.search || '').get('abrir');
+                if (accionInicial === 'residencia') {
+                    setTimeout(() => abrirModalAsientoResidencia(null), 250);
+                }
+                if (accionInicial === 'inspector') {
+                    setTimeout(() => abrirModalAsientoInspector(null), 250);
+                }
                 document.getElementById('seatEntryModal')?.addEventListener('click', event => {
                     if (event.target.id === 'seatEntryModal') cerrarModalAsiento();
                 });

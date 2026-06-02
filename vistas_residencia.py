@@ -1017,9 +1017,7 @@ def redaccion_asiento_residente():
                 }}
 
                 function modulosCuaderno() {{
-                    const modulos = modulosCuadernoCompleto();
-                    const paso = Math.max(1, Math.min(totalModulos, parseInt(window.samuCurrentStep || 1, 10) || 1));
-                    return modulos.slice(0, paso);
+                    return modulosCuadernoCompleto();
                 }}
 
                 function camposFormulario() {{

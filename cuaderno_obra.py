@@ -257,22 +257,18 @@ CUADERNO_OBRA_JS = """
 
                     if ((limpia.startsWith('*') || /^7\\.1\\s+/i.test(limpia)) && mayuscula.includes('MATERIALES')) {
                         categoriaActual = 'materiales';
-                        return '7.1 Movimiento de materiales de construcción';
+                        return '* Movimiento de materiales de construcción';
                     }
 
                     if ((limpia.startsWith('*') || /^7\\.2\\s+/i.test(limpia)) && mayuscula.includes('COMBUSTIBLE')) {
                         categoriaActual = 'combustible';
-                        return '7.2 Movimiento de combustible.';
+                        return '* Movimiento de combustible.';
                     }
 
                     const sub = limpia.match(/^(?:-\\s*)?(?:7\\.\\d+\\.\\d+\\s*)?(INGRESO|SALIDA):\\s*(.*)$/i);
                     if (sub) {
-                        const esIngreso = sub[1].toLocaleUpperCase('es-PE') === 'INGRESO';
-                        const numero = categoriaActual === 'combustible'
-                            ? (esIngreso ? '7.2.1' : '7.2.2')
-                            : (esIngreso ? '7.1.1' : '7.1.2');
-                        const etiqueta = esIngreso ? 'Ingreso' : 'Salida';
-                        return `${numero} ${etiqueta}: ${textoMinuscula(sub[2])}`;
+                        const etiqueta = sub[1].toLocaleUpperCase('es-PE') === 'INGRESO' ? 'Ingreso' : 'Salida';
+                        return `- ${etiqueta}: ${textoMinuscula(sub[2])}`;
                     }
 
                     return limpia;
@@ -282,24 +278,15 @@ CUADERNO_OBRA_JS = """
                     const siguiente = lineas[index + 1] || '';
                     const esUltimaLinea = index === lineas.length - 1;
                     
-                    const esSubMovimiento = /^7\\.\\d+\\.\\d+\\s+(Ingreso|Salida):/i.test(limpia) || /^-\\s*(Ingreso|Salida):/i.test(limpia);
-                    const esCategoria = /^7\\.\\d+\\s+/.test(limpia) || limpia.startsWith('*');
-                    const siguienteEsCategoria = /^7\\.\\d+\\s+/.test(siguiente) || siguiente.startsWith('*');
+                    const esSubMovimiento = /^-\\s*(Ingreso|Salida):/i.test(limpia);
+                    const esCategoria = limpia.startsWith('*');
+                    const siguienteEsCategoria = siguiente.startsWith('*');
                     const llevaEspacio = esSubMovimiento ||
                                          (esCategoria && siguienteEsCategoria) ||
                                          esUltimaLinea;
                                          
                     const espacio = llevaEspacio ? '<span class="almacen-espacio"></span>' : '';
                     
-                    if (/^7\\.\\d+\\s+/.test(limpia)) {
-                        return `<div class="almacen-principal">${escaparHtml(limpia)}</div>${espacio}`;
-                    }
-
-                    const subNumerado = limpia.match(/^(7\\.\\d+\\.\\d+\\s+(Ingreso|Salida):)(.*)$/i);
-                    if (subNumerado) {
-                        return `<div class="almacen-sub"><span class="almacen-label">${escaparHtml(subNumerado[1])}</span><span class="almacen-detalle">${escaparHtml(subNumerado[3])}</span></div>${espacio}`;
-                    }
-
                     if (limpia.startsWith('*')) {
                         return `<div class="almacen-principal">${escaparHtml(limpia)}</div>${espacio}`;
                     }

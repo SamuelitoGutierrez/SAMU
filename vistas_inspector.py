@@ -6,6 +6,7 @@ from flask import Blueprint, jsonify, redirect, render_template_string, request,
 from cuaderno_store import (
     extraer_ocurrencias_residencia,
     guardar_asiento_inspector,
+    obtener_catalogo_personal_gastos,
     obtener_asiento,
     obtener_asiento_por_fecha,
     obtener_inspector_asiento,
@@ -67,9 +68,11 @@ def redactar_asiento_inspector():
     estado_inspector = asiento_inspector.get("estado") if asiento_inspector else "Borrador"
     numero_inspector = asiento_inspector.get("numero") if asiento_inspector else None
     residencia_numero = numero_int or (asiento_inspector.get("residencia_numero") if asiento_inspector else None)
+    catalogo_gastos = obtener_catalogo_personal_gastos()
     personal_carry = contenido.get("personal_supervision") or obtener_personal_supervision_anterior(fecha_iso) or PERSONAL_SUP_BASE
     ocurrencias_residencia = extraer_ocurrencias_residencia(asiento_residencia) if asiento_residencia else ""
     ocurrencias_residencia = ocurrencias_residencia or "Residencia aún no registró ocurrencias para esta fecha."
+    ocurrencias_supervision = contenido.get("ocurrencias") or "Supervisión/Inspector aún no registró ocurrencias para esta fecha."
 
     return render_template_string(
         """
@@ -134,11 +137,19 @@ def redactar_asiento_inspector():
 
         <section class="grid-main">
             <aside class="card float-in">
-                <h2 class="m-0 mb-3 text-base font-black"><i class="bi bi-journal-text me-2"></i>Referencia Residencia</h2>
-                <div class="rounded-2xl border border-sky-100 bg-sky-50 p-3 text-sm font-bold text-sky-800 whitespace-pre-wrap">{{ ocurrencias_residencia }}</div>
+                <h2 class="m-0 mb-3 text-base font-black"><i class="bi bi-journal-text me-2"></i>Ocurrencias / Observaciones</h2>
+                <div class="mb-2 rounded-2xl border border-sky-100 bg-sky-50 p-3 text-sm font-bold text-sky-800 whitespace-pre-wrap">
+                    <b>Residencia:</b><br>{{ ocurrencias_residencia }}
+                </div>
+                <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 text-sm font-bold text-emerald-800 whitespace-pre-wrap">
+                    <b>Supervisión / Inspector:</b><br>{{ ocurrencias_supervision }}
+                </div>
                 {% if residencia_numero %}
                 <a class="mt-3 inline-flex rounded-full bg-blue-700 px-4 py-3 text-sm font-black text-white no-underline" href="/cuaderno/asiento/{{ residencia_numero }}" target="_blank" rel="noopener">
                     <i class="bi bi-box-arrow-up-right me-2"></i> Ver asiento completo de Residencia
+                </a>
+                <a class="mt-3 inline-flex rounded-full bg-slate-900 px-4 py-3 text-sm font-black text-white no-underline" href="/cuaderno/asiento/{{ residencia_numero }}/completo" target="_blank" rel="noopener">
+                    <i class="bi bi-journals me-2"></i> Ver hoja completa Residencia + Supervisión
                 </a>
                 {% endif %}
                 <div class="paper mt-4">
@@ -310,8 +321,9 @@ def redactar_asiento_inspector():
         fecha_iso=fecha_iso,
         fecha_texto=_fecha_texto(fecha_iso),
         ocurrencias_residencia=ocurrencias_residencia,
+        ocurrencias_supervision=ocurrencias_supervision,
         estado_inspector=estado_inspector,
-        personal_base=PERSONAL_SUP_BASE,
+        personal_base=list(dict.fromkeys([*PERSONAL_SUP_BASE, *catalogo_gastos])),
         personal_carry=personal_carry,
         contenido_json=json.dumps(contenido, ensure_ascii=False),
     )
