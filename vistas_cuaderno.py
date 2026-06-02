@@ -150,6 +150,10 @@ def ver_asiento_cuaderno(numero):
             .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; }
             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
             .modulo-contenido { display: block; padding-left: 22px; white-space: pre-wrap; }
+            .personal-bloque { display: block; padding-left: 22px; }
+            .personal-subtitulo { display: block; padding-left: 18px; font-weight: 700; line-height: 26px; }
+            .personal-gastos-linea { display: block; padding-left: 48px; line-height: 26px; text-align: justify; }
+            .personal-costo-fila { display: block; padding-left: 0; line-height: 26px; text-align: center; white-space: pre-wrap; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
             .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
             .p-title-box { text-align: center; flex: 1; margin-left: 60px; }
@@ -231,7 +235,24 @@ def ver_asiento_cuaderno(numero):
             }
 
             function htmlModuloVista(modulo) {
+                if (String(modulo.titulo || '').startsWith('2.')) {
+                    return `<div class="modulo-redaccion"><span class="modulo-titulo">${esc(modulo.titulo)}</span><div class="personal-bloque">${htmlPersonalObraVista(modulo.contenido)}</div></div>`;
+                }
                 return `<div class="modulo-redaccion"><span class="modulo-titulo">${esc(modulo.titulo)}</span><span class="modulo-contenido">${esc(modulo.contenido || '-').replace(/\\n/g, '<br>')}</span></div>`;
+            }
+
+            function htmlPersonalObraVista(texto) {
+                let enCosto = false;
+                return String(texto || '-').split('\\n').map(linea => {
+                    const limpia = String(linea || '').trim();
+                    if (!limpia) return '';
+                    if (limpia.startsWith('*')) {
+                        enCosto = /costo\\s+directo/i.test(limpia);
+                        return `<div class="personal-subtitulo">${esc(limpia)}</div>`;
+                    }
+                    if (enCosto && limpia !== '-') return `<div class="personal-costo-fila">${esc(limpia)}</div>`;
+                    return `<div class="personal-gastos-linea">${esc(limpia)}</div>`;
+                }).filter(Boolean).join('');
             }
 
             function numeroModuloDesdeTitulo(titulo) {
@@ -241,10 +262,13 @@ def ver_asiento_cuaderno(numero):
 
             function htmlModuloEditable(modulo) {
                 const step = numeroModuloDesdeTitulo(modulo.titulo);
+                const contenido = String(modulo.titulo || '').startsWith('2.')
+                    ? `<div class="personal-bloque">${htmlPersonalObraVista(modulo.contenido)}</div>`
+                    : `<span class="modulo-contenido">${esc(modulo.contenido || '-').replace(/\\n/g, '<br>')}</span>`;
                 return `<div class="modulo-redaccion modulo-editable">
                     <button type="button" class="edit-module-btn" title="Editar módulo ${step}" onclick="editarModuloResumen(${step})"><i class="bi bi-pencil-fill"></i></button>
                     <span class="modulo-titulo">${esc(modulo.titulo)}</span>
-                    <span class="modulo-contenido">${esc(modulo.contenido || '-').replace(/\\n/g, '<br>')}</span>
+                    ${contenido}
                 </div>`;
             }
 
@@ -501,6 +525,10 @@ def ver_asiento_cuaderno(numero):
                             .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; }
                             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
                             .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; }
+                            .personal-bloque { display: block; padding-left: 22px; }
+                            .personal-subtitulo { display: block; padding-left: 18px; font-weight: 700; line-height: 26px; }
+                            .personal-gastos-linea { display: block; padding-left: 48px; line-height: 26px; text-align: justify; }
+                            .personal-costo-fila { display: block; padding-left: 0; line-height: 26px; text-align: center; white-space: pre-wrap; }
                             .van-final { margin-top: auto; display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
                             .p-footer { flex: 0 0 auto; display: flex; justify-content: space-between; margin-top: 10mm; font-size: 12px; font-weight: bold; color: #000; }
                             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }

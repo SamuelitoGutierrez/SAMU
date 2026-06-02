@@ -22,6 +22,10 @@ CUADERNO_OBRA_CSS = """
             .modulo-redaccion { margin: 0 0 0; }
             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
             .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; }
+            .personal-bloque { display: block; padding-left: 22px; }
+            .personal-subtitulo { display: block; padding-left: 18px; font-weight: 700; line-height: 26px; }
+            .personal-gastos-linea { display: block; padding-left: 48px; line-height: 26px; text-align: justify; }
+            .personal-costo-fila { display: block; padding-left: 0; line-height: 26px; text-align: center; white-space: pre-wrap; }
             .almacen-bloque { display: block; padding-left: 22px; }
             .almacen-principal { display: block; padding-left: 18px; font-weight: 600; line-height: 26px; }
             .almacen-sub { display: block; padding-left: 48px; line-height: 26px; }
@@ -161,13 +165,15 @@ CUADERNO_OBRA_JS = """
                     {k: 'Operadores de maquinaria', v: parseInt(valor('v_ope_maq') || 0)}
                 ].filter(x => x.v > 0);
 
-                if (personal.length > 0) {
-                    const primeraLinea = personal.slice(0, 4).map(x => cantidadPersonal(x.v, x.k)).join('    ');
-                    const segundaLinea = personal.slice(4).map(x => cantidadPersonal(x.v, x.k)).join('    ');
-                    agregarModulo(modulos, '2. Personal de obra', [primeraLinea, segundaLinea].filter(Boolean).join('\\n'));
-                } else {
-                    agregarModulo(modulos, '2. Personal de obra', '');
-                }
+                const primeraLinea = personal.slice(0, 4).map(x => cantidadPersonal(x.v, x.k)).join('    ');
+                const segundaLinea = personal.slice(4).map(x => cantidadPersonal(x.v, x.k)).join('    ');
+                const gastos = (window.m2_gastos_generales || []).map(nombre => `(1) ${nombre}`).join(', ');
+                agregarModulo(modulos, '2. Personal de obra', [
+                    '* Personal de Gastos Generales',
+                    gastos || '-',
+                    '* Personal de Costo Directo',
+                    [primeraLinea, segundaLinea].filter(Boolean).join('\\n') || '-'
+                ].join('\\n'));
 
                 const m3 = listaModulo('m3_lista');
                 if (m3.length > 0) {
@@ -218,6 +224,14 @@ CUADERNO_OBRA_JS = """
             }
 
             function htmlModulo(modulo) {
+                if (modulo.titulo.startsWith('2.')) {
+                    return `
+                        <div class="modulo-redaccion">
+                            <span class="modulo-titulo">${escaparHtml(modulo.titulo)}</span>
+                            <div class="personal-bloque">${htmlPersonalObra(modulo.contenido)}</div>
+                        </div>
+                    `;
+                }
                 if (modulo.titulo.startsWith('7.')) {
                     return `
                         <div class="modulo-redaccion">
@@ -298,6 +312,20 @@ CUADERNO_OBRA_JS = """
 
                     return `<div class="almacen-sub">${escaparHtml(limpia)}</div>${espacio}`;
                 }).join('');
+            }
+
+            function htmlPersonalObra(texto) {
+                let enCosto = false;
+                return String(texto || '-').split('\\n').map(linea => {
+                    const limpia = String(linea || '').trim();
+                    if (!limpia) return '';
+                    if (limpia.startsWith('*')) {
+                        enCosto = /costo\\s+directo/i.test(limpia);
+                        return `<div class="personal-subtitulo">${escaparHtml(limpia)}</div>`;
+                    }
+                    if (enCosto && limpia !== '-') return `<div class="personal-costo-fila">${escaparHtml(limpia)}</div>`;
+                    return `<div class="personal-gastos-linea">${escaparHtml(limpia)}</div>`;
+                }).filter(Boolean).join('');
             }
 
             function htmlMaquinaria(texto) {

@@ -885,7 +885,7 @@ def redaccion_asiento_residente():
                 if (samuValor('v_clima')) jornal.push(`Clima: ${{samuValor('v_clima')}}`);
                 samuAgregarModulo(modulos, '1. Jornal de trabajo', jornal.join(', '));
 
-                const personal = [
+                const personalItems = [
                     ['Operario', samuValor('v_oper')],
                     ['Oficiales', samuValor('v_ofic')],
                     ['Peones', samuValor('v_peon')],
@@ -895,7 +895,16 @@ def redaccion_asiento_residente():
                 ].filter(([_, cantidad]) => parseInt(cantidad || 0) > 0)
                  .map(([nombre, cantidad]) => `(${{String(parseInt(cantidad || 0)).padStart(2, '0')}}) ${{nombre}}`);
                 const gastosGenerales = (window.m2_gastos_generales || []).map(nombre => `(1) ${{nombre}}`).join(', ');
-                samuAgregarModulo(modulos, '2. Personal de obra', [personal.join('    '), gastosGenerales ? `Personal de gastos generales: ${{gastosGenerales}}` : ''].filter(Boolean).join('\\n'));
+                const costoDirecto = [
+                    personalItems.slice(0, 4).join('    '),
+                    personalItems.slice(4).join('    ')
+                ].filter(Boolean).join('\\n');
+                samuAgregarModulo(modulos, '2. Personal de obra', [
+                    '* Personal de Gastos Generales',
+                    gastosGenerales || '-',
+                    '* Personal de Costo Directo',
+                    costoDirecto || '-'
+                ].join('\\n'), true);
 
                 samuAgregarModulo(modulos, '3. Partidas ejecutadas', samuListaModulo('m3_lista').map(samuFormatoItem).join('\\n'));
                 samuAgregarModulo(modulos, '4. Partidas de mayor metrado', samuListaModulo('m4_lista').map(samuFormatoItem).join('\\n'));
@@ -993,7 +1002,7 @@ def redaccion_asiento_residente():
                     if (texto('v_clima')) jornal.push(`Clima: ${{texto('v_clima')}}`);
                     agregar(modulos, '1. Jornal de trabajo', jornal.join(', '));
 
-                    const personal = [
+                    const personalItems = [
                         ['Operario', texto('v_oper')],
                         ['Oficiales', texto('v_ofic')],
                         ['Peones', texto('v_peon')],
@@ -1003,7 +1012,16 @@ def redaccion_asiento_residente():
                     ].filter(([_, cantidad]) => parseInt(cantidad || 0) > 0)
                      .map(([nombre, cantidad]) => `(${{String(parseInt(cantidad || 0)).padStart(2, '0')}}) ${{nombre}}`);
                     const gastosGenerales = (window.m2_gastos_generales || []).map(nombre => `(1) ${{nombre}}`).join(', ');
-                    agregar(modulos, '2. Personal de obra', [personal.join('    '), gastosGenerales ? `Personal de gastos generales: ${{gastosGenerales}}` : ''].filter(Boolean).join('\\n'));
+                    const costoDirecto = [
+                        personalItems.slice(0, 4).join('    '),
+                        personalItems.slice(4).join('    ')
+                    ].filter(Boolean).join('\\n');
+                    agregar(modulos, '2. Personal de obra', [
+                        '* Personal de Gastos Generales',
+                        gastosGenerales || '-',
+                        '* Personal de Costo Directo',
+                        costoDirecto || '-'
+                    ].join('\\n'));
 
                     agregar(modulos, '3. Partidas ejecutadas', lista('m3_lista').map(itemPartida).join('\\n'));
                     agregar(modulos, '4. Partidas de mayor metrado', lista('m4_lista').map(itemPartida).join('\\n'));
@@ -1155,6 +1173,9 @@ def redaccion_asiento_residente():
                 }}
 
                 function htmlContenidoModulo(modulo) {{
+                    if (modulo.titulo.startsWith('2.')) {{
+                        return `<div class="personal-bloque">${{htmlPersonalObra(modulo.contenido)}}</div>`;
+                    }}
                     if (modulo.titulo.startsWith('7.') && typeof htmlAlmacen === 'function') {{
                         return `<div class="almacen-bloque">${{htmlAlmacen(modulo.contenido)}}</div>`;
                     }}
@@ -1162,6 +1183,21 @@ def redaccion_asiento_residente():
                         return `<div class="maquinaria-bloque">${{htmlMaquinaria(modulo.contenido)}}</div>`;
                     }}
                     return `<span class="modulo-contenido">${{escapar(modulo.contenido).replace(/\\n/g, '<br>')}}</span>`;
+                }}
+
+                function htmlPersonalObra(texto) {{
+                    const lineas = String(texto || '-').split('\\n').map(linea => String(linea || '').trim()).filter(Boolean);
+                    let enCostoDirecto = false;
+                    return lineas.map(linea => {{
+                        if (linea.startsWith('*')) {{
+                            enCostoDirecto = /costo\\s+directo/i.test(linea);
+                            return `<div class="personal-subtitulo">${{escapar(linea)}}</div>`;
+                        }}
+                        if (enCostoDirecto && linea !== '-') {{
+                            return `<div class="personal-costo-fila">${{escapar(linea)}}</div>`;
+                        }}
+                        return `<div class="personal-gastos-linea">${{escapar(linea)}}</div>`;
+                    }}).join('');
                 }}
 
                 function htmlCuaderno(asiento, fecha, modulos) {{
