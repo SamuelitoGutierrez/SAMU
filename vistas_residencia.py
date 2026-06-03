@@ -1216,7 +1216,7 @@ def redaccion_asiento_residente():
                                         ${{htmlContenidoModulo(modulo)}}
                                     </div>
                                 `).join('')}}
-                                ${{pagina.van ? '<span class="van-final">(van ...)</span>' : ''}}
+                                ${{pagina.van ? '<span class="van-final">Van . . .</span>' : ''}}
                             </div>
                         </div>
                     `).join('');
@@ -1268,7 +1268,7 @@ def redaccion_asiento_residente():
                             <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
                             ${{htmlContenidoModulo(modulo)}}
                         </div>
-                        ${{incluirVan ? '<span class="van-final">(van ...)</span>' : ''}}
+                        ${{incluirVan ? '<span class="van-final">Van . . .</span>' : ''}}
                     `;
                 }}
 
@@ -1436,7 +1436,7 @@ def redaccion_asiento_residente():
                                                 ${{htmlContenidoModulo(modulo)}}
                                             </div>
                                         `).join('')}}
-                                        ${{pagina.van ? '<span class="van-final">(van ...)</span>' : ''}}
+                                        ${{pagina.van ? '<span class="van-final">Van . . .</span>' : ''}}
                                     </div>
                                 </div>
                             </div>

@@ -8,6 +8,10 @@ CUADERNO_OBRA_CSS = """
             .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0;}
             .p-num { font-size: 24px; font-weight: bold; }
             .p-meta { margin-bottom: 6px; padding-bottom: 7px; border-bottom: 3px solid #000; }
+            .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 4px; }
+            .p-meta-field { display: flex; align-items: flex-end; min-width: 0; }
+            .p-meta-field.fecha { flex: 0 0 46%; }
+            .p-meta-field.modalidad { flex: 1 1 auto; }
             .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
             .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
             .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
@@ -51,9 +55,9 @@ def obtener_cuaderno_obra_html(numero_hoja):
                         <div style="text-align: right; width: 80px;"><div class="p-num">No <span style="font-size: 26px; margin-left:3px;">{numero_hoja}</span></div></div>
                     </div>
                     <div class="p-meta">
-                        <div class="d-flex w-100 mb-1">
-                            <div class="d-flex" style="flex: 0.5;"><span class="p-label">Fecha:</span><div class="p-line"><span class="lapicero-meta" id="lbl_hoja_fecha">--</span></div></div>
-                            <div class="d-flex" style="flex: 0.5; margin-left: 15px;"><span class="p-label">Modalidad:</span><div class="p-line"><span class="lapicero-meta">Administracion Directa</span></div></div>
+                        <div class="p-meta-row">
+                            <div class="p-meta-field fecha"><span class="p-label">Fecha:</span><div class="p-line"><span class="lapicero-meta" id="lbl_hoja_fecha">--</span></div></div>
+                            <div class="p-meta-field modalidad"><span class="p-label">Modalidad:</span><div class="p-line"><span class="lapicero-meta">Administracion Directa</span></div></div>
                         </div>
                         <div class="p-row"><span class="p-label">Obra:</span><div class="p-line"><span class="lapicero-meta">Mejoramiento de la Carretera Asiruni - Rosaspata</span></div></div>
                         <div class="p-row"><span class="p-label">Proyecto:</span><div class="p-line"><span class="lapicero-meta">Tramo I</span></div></div>
@@ -360,7 +364,7 @@ CUADERNO_OBRA_JS = """
                         <div class="lapicero">
                             ${encabezadoPagina(asiento, fecha, continuacion)}
                             ${modulos.map(htmlModulo).join('')}
-                            ${van ? '<span class="van-final">(van ...)</span>' : ''}
+                            ${van ? '<span class="van-final">Van . . .</span>' : ''}
                         </div>
                     </div>
                 `;

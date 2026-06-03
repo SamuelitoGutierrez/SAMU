@@ -160,6 +160,10 @@ def ver_asiento_cuaderno(numero):
             .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0; }
             .p-num { font-size: 24px; font-weight: bold; }
             .p-meta { margin-bottom: 6px; padding-bottom: 7px; border-bottom: 3px solid #000; }
+            .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 4px; }
+            .p-meta-field { display: flex; align-items: flex-end; min-width: 0; }
+            .p-meta-field.fecha { flex: 0 0 46%; }
+            .p-meta-field.modalidad { flex: 1 1 auto; }
             .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
             .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
             .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
@@ -352,7 +356,7 @@ def ver_asiento_cuaderno(numero):
 
             function lineasModuloVista(modulo, incluirVan=false) {
                 const medidor = obtenerMedidorVistaPDF();
-                medidor.innerHTML = `${htmlModuloVista(modulo)}${incluirVan ? '<span class="van-final">(van ...)</span>' : ''}`;
+                medidor.innerHTML = `${htmlModuloVista(modulo)}${incluirVan ? '<span class="van-final">Van . . .</span>' : ''}`;
                 return Math.max(1, Math.ceil(medidor.scrollHeight / PDF_LINE_HEIGHT_PX));
             }
 
@@ -449,7 +453,7 @@ def ver_asiento_cuaderno(numero):
                             <div class="pagina-cuaderno"><div class="lapicero">
                                 ${encabezadoVista(p.continuacion)}
                                 ${p.modulos.map(htmlModuloVista).join('')}
-                                ${p.van ? '<span class="van-final">(van ...)</span>' : ''}
+                                ${p.van ? '<span class="van-final">Van . . .</span>' : ''}
                             </div></div>
                         </div>
                         ${firmasVista()}
@@ -465,9 +469,9 @@ def ver_asiento_cuaderno(numero):
                         <div style="text-align: right; width: 80px;"><div class="p-num">No <span style="font-size: 26px; margin-left:3px;">${asientoNumero}</span></div></div>
                     </div>
                     <div class="p-meta">
-                        <div class="d-flex w-100 mb-1">
-                            <div class="d-flex" style="flex: 0.5;"><span class="p-label">Fecha:</span><div class="p-line"><span class="lapicero-meta">${esc(asientoFechaTexto)}</span></div></div>
-                            <div class="d-flex" style="flex: 0.5; margin-left: 15px;"><span class="p-label">Modalidad:</span><div class="p-line"><span class="lapicero-meta">Administracion Directa</span></div></div>
+                        <div class="p-meta-row">
+                            <div class="p-meta-field fecha"><span class="p-label">Fecha:</span><div class="p-line"><span class="lapicero-meta">${esc(asientoFechaTexto)}</span></div></div>
+                            <div class="p-meta-field modalidad"><span class="p-label">Modalidad:</span><div class="p-line"><span class="lapicero-meta">Administracion Directa</span></div></div>
                         </div>
                         <div class="p-row"><span class="p-label">Obra:</span><div class="p-line"><span class="lapicero-meta">Mejoramiento de la Carretera Asiruni - Rosaspata</span></div></div>
                         <div class="p-row"><span class="p-label">Proyecto:</span><div class="p-line"><span class="lapicero-meta">Tramo I</span></div></div>
@@ -513,6 +517,10 @@ def ver_asiento_cuaderno(numero):
                             .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0; }
                             .p-num { font-size: 24px; font-weight: bold; }
                             .p-meta { flex: 0 0 auto; margin-bottom: 3mm; padding-bottom: 2mm; border-bottom: 3px solid #000; }
+                            .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 4px; }
+                            .p-meta-field { display: flex; align-items: flex-end; min-width: 0; }
+                            .p-meta-field.fecha { flex: 0 0 46%; }
+                            .p-meta-field.modalidad { flex: 1 1 auto; }
                             .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
                             .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
                             .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
@@ -589,6 +597,15 @@ def resumen_cuaderno():
         contenido_inspector = {}
 
     volver = f"/cuaderno/resumen?fecha={asiento.get('fecha')}&asiento={asiento.get('numero')}"
+    continuar_url = url_for(
+        "residencia.redaccion_asiento_residente",
+        asiento=asiento.get("numero"),
+        fecha=asiento.get("fecha"),
+        modo="continuar",
+        modulo=1,
+        paso=1,
+        volver=volver,
+    )
     modulos = [
         {"origen": "Residencia", "paso": 1, "nombre": "Jornal de trabajo", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=1, paso=1, volver=volver)},
         {"origen": "Residencia", "paso": 2, "nombre": "Personal de obra", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=2, paso=2, volver=volver)},
@@ -635,7 +652,7 @@ def resumen_cuaderno():
             })
 
     menu_superior = obtener_navbar(session.get('rol') == 'Admin', session.get('nombre', 'Visitante'))
-    inicio_url = url_for("inicio.panel_principal")
+    calendario_url = url_for("cuaderno.panel_cuaderno")
 
     return render_template_string("""
     <!DOCTYPE html>
@@ -712,11 +729,11 @@ def resumen_cuaderno():
                 <div class="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-3xl text-emerald-600">
                     <i class="bi bi-check2-circle"></i>
                 </div>
-                <h3 class="m-0 text-2xl font-black text-slate-950">Cerrar Asiento</h3>
-                <p class="mb-5 mt-2 text-sm font-bold leading-6 text-slate-600">¿Desea seguir asentando en el cuaderno o cerrar?</p>
+                <h3 class="m-0 text-2xl font-black text-slate-950">Decisión del asiento</h3>
+                <p class="mb-5 mt-2 text-sm font-bold leading-6 text-slate-600">¿Desea seguir asentando el cuaderno o cerrar?</p>
                 <div class="flex flex-wrap justify-end gap-2">
-                    <button type="button" onclick="window.location.href='/cuaderno'" class="rounded-2xl bg-sky-100 px-4 py-3 text-sm font-black text-sky-800">Seguir asentando</button>
-                    <button type="button" onclick="window.location.href='{{ inicio_url }}'" class="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">Cerrar</button>
+                    <button type="button" onclick="window.location.href='{{ continuar_url }}'" class="rounded-2xl bg-sky-100 px-4 py-3 text-sm font-black text-sky-800">Seguir asentando</button>
+                    <button type="button" onclick="window.location.href='{{ calendario_url }}'" class="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">Cerrar</button>
                     <button type="button" onclick="cerrarDecisionCierre()" class="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-600">Cancelar</button>
                 </div>
             </div>
@@ -751,7 +768,7 @@ def resumen_cuaderno():
         </script>
     </body>
     </html>
-    """, menu_superior=menu_superior, asiento=asiento, modulos=modulos, volver=volver, inicio_url=inicio_url)
+    """, menu_superior=menu_superior, asiento=asiento, modulos=modulos, volver=volver, continuar_url=continuar_url, calendario_url=calendario_url)
 
 # NOTA IMPORTANTE: Ahora SOLO maneja la ruta /cuaderno. 
 # Esto permite que vistas_residencia.py funcione correctamente sin interferencias.
