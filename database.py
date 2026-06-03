@@ -4,9 +4,11 @@ import psycopg2
 from psycopg2 import pool
 
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
 DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "localhost"),
-    "database": os.environ.get("DB_NAME", "postgres"),
+    "database": os.environ.get("DB_NAME", "samu"),
     "user": os.environ.get("DB_USER", "postgres"),
     "password": os.environ.get("DB_PASSWORD", ""),
     "port": int(os.environ.get("DB_PORT", "5432")),
@@ -20,11 +22,14 @@ def init_connection_pool(minconn=1, maxconn=10):
     global _connection_pool
 
     if _connection_pool is None:
-        _connection_pool = pool.SimpleConnectionPool(
-            minconn=minconn,
-            maxconn=maxconn,
-            **DB_CONFIG,
-        )
+        if DATABASE_URL:
+            _connection_pool = pool.SimpleConnectionPool(minconn, maxconn, dsn=DATABASE_URL)
+        else:
+            _connection_pool = pool.SimpleConnectionPool(
+                minconn=minconn,
+                maxconn=maxconn,
+                **DB_CONFIG,
+            )
 
     return _connection_pool
 

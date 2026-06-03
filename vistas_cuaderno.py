@@ -1684,9 +1684,9 @@ def panel_cuaderno():
                         <h1>Cuaderno de Obra</h1>
                         <p>Panel principal para redactar asientos, revisar estados del mes, atender observaciones del Inspector y exportar rangos del cuaderno.</p>
                     </div>
-                    <span class="connection-pill {% if not conectado %}offline{% endif %}">
-                        <i class="bi {% if conectado %}bi-database-check{% else %}bi-database-exclamation{% endif %}"></i>
-                        {% if conectado %}Sistema listo{% else %}Sin conexión de datos{% endif %}
+                    <span class="connection-pill">
+                        <i class="bi bi-journal-check"></i>
+                        Listo para registrar
                     </span>
                 </div>
 

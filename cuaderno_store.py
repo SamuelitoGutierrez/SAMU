@@ -149,10 +149,11 @@ def asegurar_tablas_cuaderno():
         conn.commit()
         cur.close()
         return True
-    except Exception:
+    except Exception as exc:
         if conn:
             with suppress(Exception):
                 conn.rollback()
+        print("[CUADERNO][DB] No se pudieron asegurar las tablas:", exc)
         return False
     finally:
         if conn:
@@ -265,6 +266,7 @@ def obtener_panel_cuaderno():
         },
     }
     if not conectado:
+        print("[CUADERNO][DB] Panel sin conexión: asegurar_tablas_cuaderno() devolvió False")
         return datos
 
     conn = None
@@ -340,6 +342,10 @@ def obtener_panel_cuaderno():
         historial = _fetchall_dict(cur)
         cur.close()
 
+        datos_mes = obtener_datos_mes_cuaderno(date.today().year, date.today().month)
+        if datos_mes.get("ok"):
+            asientos = datos_mes.get("asientos") or asientos
+
         ultimo = row[2] or 0
         llenado_ultimo = 0
         if ultimo:
@@ -369,6 +375,11 @@ def obtener_panel_cuaderno():
                 "updated_at": a.get("updated_at"),
                 "tipo": a.get("tipo"),
                 "bloqueado": a.get("bloqueado"),
+                "tiene_residencia": bool(a.get("tiene_residencia", str(a.get("tipo") or "").lower() != "inspector")),
+                "tiene_inspector": bool(a.get("tiene_inspector")),
+                "residencia_numero": a.get("residencia_numero") or (a["numero"] if str(a.get("tipo") or "").lower() != "inspector" else None),
+                "inspector_numero": a.get("inspector_numero"),
+                "inspector_estado": a.get("inspector_estado"),
                 "observacion": "Con observaciones" if any(o["numero"] == a["numero"] for o in obs) else "Sin observaciones activas.",
             }
             for a in asientos
@@ -383,18 +394,23 @@ def obtener_panel_cuaderno():
                 "created_at": ultima_obs[4],
             }
         datos["historial"] = historial
-        cerrados_mes = mes_row[0] or 0
-        borradores_mes = mes_row[1] or 0
-        dias_mes = mes_row[2] or 30
-        sin_registro = max(0, dias_mes - cerrados_mes - borradores_mes)
-        datos["mes_actual"] = {
-            "cerrados": cerrados_mes,
-            "borradores": borradores_mes,
-            "sin_registro": sin_registro,
-            "avance": round((cerrados_mes / dias_mes) * 100) if dias_mes else 0,
-        }
+        if datos_mes.get("ok"):
+            datos["mes_actual"] = datos_mes.get("estadisticas") or datos["mes_actual"]
+        else:
+            cerrados_mes = mes_row[0] or 0
+            borradores_mes = mes_row[1] or 0
+            dias_mes = mes_row[2] or 30
+            sin_registro = max(0, dias_mes - cerrados_mes - borradores_mes)
+            datos["mes_actual"] = {
+                "cerrados": cerrados_mes,
+                "borradores": borradores_mes,
+                "sin_registro": sin_registro,
+                "avance": round((cerrados_mes / dias_mes) * 100) if dias_mes else 0,
+            }
         return datos
-    except Exception:
+    except Exception as exc:
+        print("[CUADERNO][DB] Error cargando panel principal:", exc)
+        datos["conectado"] = False
         return datos
     finally:
         if conn:
