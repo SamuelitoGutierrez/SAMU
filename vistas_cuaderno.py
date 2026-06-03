@@ -144,19 +144,20 @@ def ver_asiento_cuaderno(numero):
             .asiento-btn.pdf { background: linear-gradient(135deg,#991b1b,#ef4444); }
             .asiento-paper { background: #fff; border-radius: 28px; padding: 20px; box-shadow: 0 24px 60px rgba(15,23,42,.12); overflow-x: auto; }
             .pagina-cuaderno { background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px); line-height: 26px; min-height: 760px; padding-top: 0; position: relative; }
-            .lapicero { font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; }
+            .lapicero { font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
             .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-weight: 700; }
             .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
             .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; }
             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
-            .modulo-contenido { display: block; padding-left: 22px; white-space: pre-wrap; }
+            .modulo-contenido { display: block; padding-left: 22px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
             .personal-bloque { display: block; padding-left: 22px; }
             .personal-subtitulo { display: block; padding-left: 18px; font-weight: 700; line-height: 26px; }
             .personal-gastos-linea { display: block; padding-left: 48px; line-height: 26px; text-align: justify; }
             .personal-costo-fila { display: block; padding-left: 0; line-height: 26px; text-align: center; white-space: pre-wrap; }
             .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
+            .page-counter { position: absolute; right: 14mm; bottom: 6mm; font-size: 10px; font-weight: 700; color: #64748b; }
             .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
-            .p-title-box { text-align: center; flex: 1; margin-left: 60px; }
+            .p-title-box { text-align: center; flex: 1; margin-left: 0; }
             .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0; }
             .p-num { font-size: 24px; font-weight: bold; }
             .p-meta { margin-bottom: 6px; padding-bottom: 7px; border-bottom: 3px solid #000; }
@@ -179,15 +180,17 @@ def ver_asiento_cuaderno(numero):
                 #asientoPaper, #asientoPaper * { visibility: visible !important; }
                 @page { size: A4; margin: 0; }
                 #asientoPaper { position: absolute; left: 0; top: 0; width: 210mm; box-shadow: none; border-radius: 0; padding: 0; background: #fff; }
-                #asientoPaper .papel-fisico { width: 210mm !important; height: 297mm !important; min-height: 297mm !important; box-sizing: border-box !important; padding: 12mm 14mm 14mm !important; margin: 0 !important; box-shadow: none !important; border: none !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa !important; }
+                #asientoPaper .papel-fisico { position: relative; width: 210mm !important; height: 297mm !important; min-height: 297mm !important; box-sizing: border-box !important; padding: 12mm 14mm 20mm !important; margin: 0 !important; box-shadow: none !important; border: none !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa !important; }
                 #asientoPaper .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
                 #asientoPaper .p-header-top { flex: 0 0 auto; margin-bottom: 7mm !important; }
                 #asientoPaper .p-meta { flex: 0 0 auto; margin-bottom: 3mm !important; padding-bottom: 2mm !important; }
-                #asientoPaper .p-body-lines { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-                #asientoPaper .pagina-cuaderno { flex: 1 1 auto; min-height: 0 !important; background-size: auto 26px; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px) !important; display: flex; flex-direction: column; }
-                #asientoPaper .lapicero { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; font-size: 17px; line-height: 26px; }
+                #asientoPaper .p-body-lines { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+                #asientoPaper .pagina-cuaderno { flex: 1 1 auto; min-height: 0 !important; overflow: hidden; background-size: auto 26px; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px) !important; display: flex; flex-direction: column; }
+                #asientoPaper .lapicero { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; font-size: 17px; line-height: 26px; overflow-wrap: anywhere; word-break: break-word; }
+                #asientoPaper .modulo-contenido, #asientoPaper .almacen-detalle, #asientoPaper .maquinaria-bloque { overflow-wrap: anywhere !important; word-break: break-word !important; }
                 #asientoPaper .van-final { margin-top: auto !important; text-align: right !important; padding-right: 8px !important; }
-                #asientoPaper .p-footer { flex: 0 0 auto; margin-top: 10mm !important; padding-top: 0 !important; }
+                #asientoPaper .p-footer { flex: 0 0 auto; margin-top: 6mm !important; padding-top: 0 !important; page-break-inside: avoid; break-inside: avoid; }
+                #asientoPaper .p-sig { page-break-inside: avoid; break-inside: avoid; }
             }
         </style>
     </head>
@@ -356,8 +359,27 @@ def ver_asiento_cuaderno(numero):
 
             function lineasModuloVista(modulo, incluirVan=false) {
                 const medidor = obtenerMedidorVistaPDF();
-                medidor.innerHTML = `${htmlModuloVista(modulo)}${incluirVan ? '<span class="van-final">Van . . .</span>' : ''}`;
+                medidor.innerHTML = `${htmlModuloVista(modulo)}${incluirVan ? '<span class="van-final">van . . .</span>' : ''}`;
                 return Math.max(1, Math.ceil(medidor.scrollHeight / PDF_LINE_HEIGHT_PX));
+            }
+
+            function htmlPaginaVistaTemporal(modulos, continuacion=false, van=false) {
+                return `
+                    <div class="pagina-cuaderno">
+                        <div class="lapicero">
+                            ${encabezadoVista(continuacion)}
+                            ${modulos.map(htmlModuloVista).join('')}
+                            ${van ? '<span class="van-final">van . . .</span>' : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function medirPaginaVista(modulos, continuacion=false, van=false) {
+                const medidor = obtenerMedidorVistaPDF();
+                medidor.style.width = '650px';
+                medidor.innerHTML = htmlPaginaVistaTemporal(modulos, continuacion, van);
+                return medidor.scrollHeight || 0;
             }
 
             function estimarLineasTextoVista(texto) {
@@ -390,24 +412,52 @@ def ver_asiento_cuaderno(numero):
                 ];
             }
 
+            function dividirModuloVistaPorAltura(modulo, modulosPrevios, continuacion, maxAltura) {
+                const texto = String(modulo.contenido || '-').trim();
+                const partes = texto.split(/(\s+)/).filter(parte => parte.length > 0);
+                if (partes.length <= 1) return [{...modulo, contenido: texto || '-'}, {...modulo, contenido: ''}];
+
+                let bajo = 1;
+                let alto = partes.length;
+                let mejor = 0;
+                while (bajo <= alto) {
+                    const medio = Math.floor((bajo + alto) / 2);
+                    const candidato = {...modulo, contenido: partes.slice(0, medio).join('').trim()};
+                    const altura = medirPaginaVista([...modulosPrevios, candidato], continuacion, true);
+                    if (altura <= maxAltura) {
+                        mejor = medio;
+                        bajo = medio + 1;
+                    } else {
+                        alto = medio - 1;
+                    }
+                }
+                if (mejor >= partes.length) mejor = Math.max(1, partes.length - 1);
+                return [
+                    {...modulo, contenido: partes.slice(0, mejor).join('').trim()},
+                    {...modulo, contenido: partes.slice(mejor).join('').trim()}
+                ];
+            }
+
             function paginarVista(modulos) {
                 const paginas = [];
                 let actual = [];
                 let usadas = 1;
                 let continuacion = false;
                 const maxLineasPagina = () => continuacion ? 32 : 27;
+                const maxAlturaPagina = () => continuacion ? 870 : 735;
                 modulos.forEach(original => {
                     let pendiente = {...original};
                     while (pendiente && String(pendiente.contenido || '').trim()) {
-                        const lineas = lineasModuloVista(pendiente);
-                        if (usadas + lineas <= maxLineasPagina()) {
+                        if (medirPaginaVista([...actual, pendiente], continuacion, false) <= maxAlturaPagina()) {
                             actual.push(pendiente);
-                            usadas += lineas;
+                            usadas += lineasModuloVista(pendiente);
                             pendiente = null;
-                        } else {
-                            const espacioRestante = maxLineasPagina() - usadas;
-                            if (actual.length > 0 && espacioRestante > 1) {
-                                const partes = dividirModuloVista(pendiente, espacioRestante);
+                            continue;
+                        }
+
+                        {
+                            const partes = dividirModuloVistaPorAltura(pendiente, actual, continuacion, maxAlturaPagina());
+                            if (String(partes[0].contenido || '').trim()) {
                                 actual.push(partes[0]);
                                 paginas.push({modulos: actual, continuacion, van: true});
                                 actual = [];
@@ -425,13 +475,13 @@ def ver_asiento_cuaderno(numero):
                                 continue;
                             }
 
-                            const partes = dividirModuloVista(pendiente, maxLineasPagina() - usadas);
-                            actual.push(partes[0]);
+                            const forzado = dividirModuloVista(pendiente, Math.max(2, maxLineasPagina() - usadas));
+                            actual.push(forzado[0]);
                             paginas.push({modulos: actual, continuacion, van: true});
                             actual = [];
                             usadas = 1;
                             continuacion = true;
-                            pendiente = partes[1].contenido.trim() ? partes[1] : null;
+                            pendiente = forzado[1].contenido.trim() ? forzado[1] : null;
                         }
                     }
                 });
@@ -440,23 +490,25 @@ def ver_asiento_cuaderno(numero):
             }
 
             function encabezadoVista(continuacion) {
-                const titulo = continuacion ? `... viene del ASIENTO N° ${asientoNumero} DEL RESIDENTE DE OBRA` : `ASIENTO N° ${asientoNumero} DEL RESIDENTE DE OBRA`;
+                const titulo = continuacion ? `. . . viene del ASIENTO N° ${asientoNumero} DEL RESIDENTE DE OBRA` : `ASIENTO N° ${asientoNumero} DEL RESIDENTE DE OBRA`;
                 return `<div class="encabezado-asiento"><div class="titulo-asiento">${esc(titulo)}</div><div class="fecha-asiento">${esc(asientoFechaTexto)}</div></div>`;
             }
 
             function prepararAsientoPDF() {
                 if (!Array.isArray(asientoModulos) || asientoModulos.length === 0) return;
-                document.getElementById('asientoPaper').innerHTML = paginarVista(asientoModulos).map((p, idx) => `
+                const paginas = paginarVista(asientoModulos);
+                document.getElementById('asientoPaper').innerHTML = paginas.map((p, idx) => `
                     <div class="papel-fisico hoja-pdf">
                         ${idx === 0 ? encabezadoGeneralVista() : ''}
                         <div class="p-body-lines">
                             <div class="pagina-cuaderno"><div class="lapicero">
                                 ${encabezadoVista(p.continuacion)}
                                 ${p.modulos.map(htmlModuloVista).join('')}
-                                ${p.van ? '<span class="van-final">Van . . .</span>' : ''}
+                                ${p.van ? '<span class="van-final">van . . .</span>' : ''}
                             </div></div>
                         </div>
                         ${firmasVista()}
+                        <div class="page-counter">Página ${idx + 1} de ${paginas.length}</div>
                     </div>
                 `).join('');
             }
@@ -466,7 +518,7 @@ def ver_asiento_cuaderno(numero):
                     <div class="p-header-top">
                         <div style="width: 80px;"></div>
                         <div class="p-title-box"><h1>CUADERNO DE OBRA</h1></div>
-                        <div style="text-align: right; width: 80px;"><div class="p-num">No <span style="font-size: 26px; margin-left:3px;">${asientoNumero}</span></div></div>
+                        <div style="width: 80px;"></div>
                     </div>
                     <div class="p-meta">
                         <div class="p-meta-row">
@@ -510,10 +562,10 @@ def ver_asiento_cuaderno(numero):
                             @page { size: A4; margin: 0; }
                             html, body { margin: 0; padding: 0; background: #fff; }
                             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                            .papel-fisico { width: 210mm; height: 297mm; min-height: 297mm; box-sizing: border-box; padding: 12mm 14mm 14mm; margin: 0; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa; border: none; box-shadow: none; font-family: Arial, sans-serif; color: #000; }
+                            .papel-fisico { position: relative; width: 210mm; height: 297mm; min-height: 297mm; box-sizing: border-box; padding: 12mm 14mm 20mm; margin: 0; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa; border: none; box-shadow: none; font-family: Arial, sans-serif; color: #000; }
                             .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
                             .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7mm; flex: 0 0 auto; }
-                            .p-title-box { text-align: center; flex: 1; margin-left: 60px; }
+                            .p-title-box { text-align: center; flex: 1; margin-left: 0; }
                             .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0; }
                             .p-num { font-size: 24px; font-weight: bold; }
                             .p-meta { flex: 0 0 auto; margin-bottom: 3mm; padding-bottom: 2mm; border-bottom: 3px solid #000; }
@@ -525,21 +577,22 @@ def ver_asiento_cuaderno(numero):
                             .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
                             .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
                             .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; font-weight: 500; white-space: nowrap; }
-                            .p-body-lines { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-                            .pagina-cuaderno { flex: 1 1 auto; min-height: 0; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px); background-size: auto 26px; line-height: 26px; display: flex; flex-direction: column; }
-                            .lapicero { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; }
+                            .p-body-lines { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+                            .pagina-cuaderno { flex: 1 1 auto; min-height: 0; overflow: hidden; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px); background-size: auto 26px; line-height: 26px; display: flex; flex-direction: column; }
+                            .lapicero { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
                             .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-weight: 700; }
                             .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
                             .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; }
                             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
-                            .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; }
+                            .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
                             .personal-bloque { display: block; padding-left: 22px; }
                             .personal-subtitulo { display: block; padding-left: 18px; font-weight: 700; line-height: 26px; }
                             .personal-gastos-linea { display: block; padding-left: 48px; line-height: 26px; text-align: justify; }
                             .personal-costo-fila { display: block; padding-left: 0; line-height: 26px; text-align: center; white-space: pre-wrap; }
                             .van-final { margin-top: auto; display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
-                            .p-footer { flex: 0 0 auto; display: flex; justify-content: space-between; margin-top: 10mm; font-size: 12px; font-weight: bold; color: #000; }
+                            .p-footer { flex: 0 0 auto; display: flex; justify-content: space-between; margin-top: 6mm; font-size: 12px; font-weight: bold; color: #000; page-break-inside: avoid; break-inside: avoid; }
                             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
+                            .page-counter { position: absolute; right: 14mm; bottom: 6mm; font-size: 10px; font-weight: 700; color: #64748b; }
                         </style>
                     </head>
                     <body>${contenido.innerHTML}</body>

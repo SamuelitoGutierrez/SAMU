@@ -333,12 +333,12 @@ def redactar_asiento_inspector():
             }
             document.getElementById('estadoInspector').textContent = data.estado;
             localStorage.setItem('samu_dashboard_refresh', JSON.stringify({ numero: data.numero || numeroResidencia, fecha: fechaAsiento, estado: data.estado === 'firmado_inspector' ? 'Cerrado' : 'Enviado Inspector', tipo: 'Inspector', updated_at: new Date().toISOString() }));
+            if (estado === 'Borrador' && numeroResidencia) {
+                window.location.href = `/cuaderno/resumen?fecha=${encodeURIComponent(fechaAsiento)}&asiento=${encodeURIComponent(numeroResidencia)}`;
+                return;
+            }
             abrirModal(data.estado === 'firmado_inspector' ? 'Asiento firmado' : 'Borrador guardado', 'Los datos del Inspector fueron guardados correctamente.');
             setTimeout(() => {
-                if (estado === 'Borrador' && numeroResidencia) {
-                    window.location.href = `/cuaderno/resumen?fecha=${encodeURIComponent(fechaAsiento)}&asiento=${encodeURIComponent(numeroResidencia)}`;
-                    return;
-                }
                 window.location.href = '/cuaderno';
             }, 1500);
         }

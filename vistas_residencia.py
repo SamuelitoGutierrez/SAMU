@@ -1216,7 +1216,7 @@ def redaccion_asiento_residente():
                                         ${{htmlContenidoModulo(modulo)}}
                                     </div>
                                 `).join('')}}
-                                ${{pagina.van ? '<span class="van-final">Van . . .</span>' : ''}}
+                                ${{pagina.van ? '<span class="van-final">van . . .</span>' : ''}}
                             </div>
                         </div>
                     `).join('');
@@ -1224,7 +1224,7 @@ def redaccion_asiento_residente():
 
                 function htmlEncabezadoPagina(asiento, fecha, continuacion=false) {{
                     const titulo = continuacion
-                        ? `... viene del ASIENTO N° ${{asiento}} DEL RESIDENTE DE OBRA`
+                        ? `. . . viene del ASIENTO N° ${{asiento}} DEL RESIDENTE DE OBRA`
                         : `ASIENTO N° ${{asiento}} DEL RESIDENTE DE OBRA`;
                     return `
                         <div class="encabezado-asiento ${{continuacion ? 'continuacion' : ''}}">
@@ -1268,7 +1268,7 @@ def redaccion_asiento_residente():
                             <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
                             ${{htmlContenidoModulo(modulo)}}
                         </div>
-                        ${{incluirVan ? '<span class="van-final">Van . . .</span>' : ''}}
+                        ${{incluirVan ? '<span class="van-final">van . . .</span>' : ''}}
                     `;
                 }}
 
@@ -1276,6 +1276,30 @@ def redaccion_asiento_residente():
                     const medidor = obtenerMedidorPDF();
                     medidor.innerHTML = htmlModuloMedicion(modulo, incluirVan);
                     return Math.max(1, Math.ceil(medidor.scrollHeight / PDF_LINE_HEIGHT_PX));
+                }}
+
+                function htmlPaginaMedicionPDF(asiento, fecha, modulos, continuacion=false, van=false) {{
+                    return `
+                        <div class="pagina-cuaderno">
+                            <div class="lapicero">
+                                ${{htmlEncabezadoPagina(asiento, fecha, continuacion)}}
+                                ${{modulos.map(modulo => `
+                                    <div class="modulo-redaccion">
+                                        <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
+                                        ${{htmlContenidoModulo(modulo)}}
+                                    </div>
+                                `).join('')}}
+                                ${{van ? '<span class="van-final">van . . .</span>' : ''}}
+                            </div>
+                        </div>
+                    `;
+                }}
+
+                function medirPaginaPDF(asiento, fecha, modulos, continuacion=false, van=false) {{
+                    const medidor = obtenerMedidorPDF();
+                    medidor.style.width = '650px';
+                    medidor.innerHTML = htmlPaginaMedicionPDF(asiento, fecha, modulos, continuacion, van);
+                    return medidor.scrollHeight || 0;
                 }}
 
                 function estimarLineasTexto(texto) {{
@@ -1318,27 +1342,58 @@ def redaccion_asiento_residente():
                     ];
                 }}
 
+                function dividirModuloPorAltura(asiento, fecha, modulo, modulosPrevios, continuacion, maxAltura) {{
+                    const texto = String(modulo.contenido || '-').trim();
+                    const palabras = texto.split(/(\\s+)/).filter(parte => parte.length > 0);
+                    if (palabras.length <= 1) {{
+                        return [
+                            {{ titulo: modulo.titulo, contenido: texto || '-' }},
+                            {{ titulo: modulo.titulo, contenido: '' }}
+                        ];
+                    }}
+
+                    let bajo = 1;
+                    let alto = palabras.length;
+                    let mejor = 0;
+                    while (bajo <= alto) {{
+                        const medio = Math.floor((bajo + alto) / 2);
+                        const candidato = {{ ...modulo, contenido: palabras.slice(0, medio).join('').trim() }};
+                        const altura = medirPaginaPDF(asiento, fecha, [...modulosPrevios, candidato], continuacion, true);
+                        if (altura <= maxAltura) {{
+                            mejor = medio;
+                            bajo = medio + 1;
+                        }} else {{
+                            alto = medio - 1;
+                        }}
+                    }}
+
+                    if (mejor >= palabras.length) mejor = Math.max(1, palabras.length - 1);
+                    return [
+                        {{ titulo: modulo.titulo, contenido: palabras.slice(0, mejor).join('').trim() }},
+                        {{ titulo: modulo.titulo, contenido: palabras.slice(mejor).join('').trim() }}
+                    ];
+                }}
+
                 function paginarModulos(asiento, fecha, modulos) {{
                     const paginas = [];
                     let actual = [];
                     let usadas = 1;
                     let continuacion = false;
                     const maxLineasPagina = () => continuacion ? 32 : 27;
+                    const maxAlturaPagina = () => continuacion ? 870 : 735;
 
                     modulos.forEach(moduloOriginal => {{
                         let pendiente = {{ ...moduloOriginal }};
                         while (pendiente && String(pendiente.contenido || '').trim()) {{
-                            const lineas = lineasModulo(pendiente);
-                            if (usadas + lineas <= maxLineasPagina()) {{
+                            if (medirPaginaPDF(asiento, fecha, [...actual, pendiente], continuacion, false) <= maxAlturaPagina()) {{
                                 actual.push(pendiente);
-                                usadas += lineas;
+                                usadas += lineasModulo(pendiente);
                                 pendiente = null;
                                 continue;
                             }}
 
-                            const espacioRestante = maxLineasPagina() - usadas;
-                            if (actual.length > 0 && espacioRestante > 1) {{
-                                const partes = dividirModuloPorLineas(pendiente, espacioRestante);
+                            const partes = dividirModuloPorAltura(asiento, fecha, pendiente, actual, continuacion, maxAlturaPagina());
+                            if (String(partes[0].contenido || '').trim()) {{
                                 actual.push(partes[0]);
                                 paginas.push({{ modulos: actual, continuacion, van: true }});
                                 actual = [];
@@ -1356,13 +1411,13 @@ def redaccion_asiento_residente():
                                 continue;
                             }}
 
-                            const partes = dividirModuloPorLineas(pendiente, maxLineasPagina() - usadas);
-                            actual.push(partes[0]);
+                            const forzado = dividirModuloPorLineas(pendiente, Math.max(2, maxLineasPagina() - usadas));
+                            actual.push(forzado[0]);
                             paginas.push({{ modulos: actual, continuacion, van: true }});
                             actual = [];
                             usadas = 1;
                             continuacion = true;
-                            pendiente = partes[1].contenido.trim() ? partes[1] : null;
+                            pendiente = forzado[1].contenido.trim() ? forzado[1] : null;
                         }}
                     }});
 
@@ -1436,11 +1491,12 @@ def redaccion_asiento_residente():
                                                 ${{htmlContenidoModulo(modulo)}}
                                             </div>
                                         `).join('')}}
-                                        ${{pagina.van ? '<span class="van-final">Van . . .</span>' : ''}}
+                                        ${{pagina.van ? '<span class="van-final">van . . .</span>' : ''}}
                                     </div>
                                 </div>
                             </div>
                             ${{firmas}}
+                            <div class="page-counter">Página ${{idx + 1}} de ${{paginas.length}}</div>
                         </div>
                     `).join('');
                 }}
@@ -1580,6 +1636,12 @@ def redaccion_asiento_residente():
 
                 function mostrarVentanaExitoGuardado(estado, guardadoServidor=true, redirectUrlServidor='') {{
                     const enviadoInspector = estado === 'Enviado Inspector';
+                    const fechaResumen = encodeURIComponent(window.g_fechaRaw || '');
+                    const numeroResumen = encodeURIComponent(window.g_numAsiento || '');
+                    if (guardadoServidor && !enviadoInspector) {{
+                        window.location.href = redirectUrlServidor || (fechaResumen && numeroResumen ? `/cuaderno/resumen?fecha=${{fechaResumen}}&asiento=${{numeroResumen}}` : '/cuaderno');
+                        return;
+                    }}
                     const titulo = guardadoServidor
                         ? (enviadoInspector ? 'Asiento enviado al Inspector' : 'Borrador guardado exitosamente')
                         : 'No se pudo sincronizar con el servidor';
@@ -1589,8 +1651,6 @@ def redaccion_asiento_residente():
                     const tipo = guardadoServidor ? 'success' : 'warning';
                     mostrarModalResidencia(titulo, texto, tipo, 1100).then(() => {{
                         setTimeout(() => {{
-                            const fechaResumen = encodeURIComponent(window.g_fechaRaw || '');
-                            const numeroResumen = encodeURIComponent(window.g_numAsiento || '');
                             if (redirectUrlServidor) {{
                                 window.location.href = redirectUrlServidor;
                                 return;

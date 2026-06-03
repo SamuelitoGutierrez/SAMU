@@ -21,15 +21,17 @@ RESUMEN_ASIENTO_HTML = """
         body * { visibility: hidden !important; }
         #resumenCuadernoContenido, #resumenCuadernoContenido * { visibility: visible !important; }
         #resumenCuadernoContenido { position: absolute; left: 0; top: 0; width: 210mm !important; transform: none !important; background: #fff !important; }
-        #resumenCuadernoContenido .papel-fisico { width: 210mm !important; height: 297mm !important; min-height: 297mm !important; box-sizing: border-box !important; padding: 12mm 14mm 14mm !important; margin: 0 !important; box-shadow: none !important; border: none !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa !important; }
+        #resumenCuadernoContenido .papel-fisico { position: relative; width: 210mm !important; height: 297mm !important; min-height: 297mm !important; box-sizing: border-box !important; padding: 12mm 14mm 20mm !important; margin: 0 !important; box-shadow: none !important; border: none !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa !important; }
         #resumenCuadernoContenido .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
         #resumenCuadernoContenido .p-header-top { flex: 0 0 auto; margin-bottom: 7mm !important; }
         #resumenCuadernoContenido .p-meta { flex: 0 0 auto; margin-bottom: 3mm !important; padding-bottom: 2mm !important; }
-        #resumenCuadernoContenido .p-body-lines { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-        #resumenCuadernoContenido .pagina-cuaderno { flex: 1 1 auto; width: 100%; min-height: 0 !important; background-size: auto 26px; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px) !important; display: flex; flex-direction: column; }
-        #resumenCuadernoContenido .lapicero { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; font-size: 17px; line-height: 26px; }
+        #resumenCuadernoContenido .p-body-lines { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+        #resumenCuadernoContenido .pagina-cuaderno { flex: 1 1 auto; width: 100%; min-height: 0 !important; overflow: hidden; background-size: auto 26px; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px) !important; display: flex; flex-direction: column; }
+        #resumenCuadernoContenido .lapicero { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; font-size: 17px; line-height: 26px; overflow-wrap: anywhere; word-break: break-word; }
+        #resumenCuadernoContenido .modulo-contenido, #resumenCuadernoContenido .almacen-detalle, #resumenCuadernoContenido .maquinaria-bloque { overflow-wrap: anywhere !important; word-break: break-word !important; }
         #resumenCuadernoContenido .van-final { margin-top: auto !important; text-align: right !important; padding-right: 8px !important; }
-        #resumenCuadernoContenido .p-footer { flex: 0 0 auto; margin-top: 10mm !important; padding-top: 0 !important; }
+        #resumenCuadernoContenido .p-footer { flex: 0 0 auto; margin-top: 6mm !important; padding-top: 0 !important; page-break-inside: avoid; break-inside: avoid; }
+        #resumenCuadernoContenido .p-sig { page-break-inside: avoid; break-inside: avoid; }
     }
     @media (max-width: 768px) {
         .resumen-overlay { padding: 8px; align-items: stretch; }
@@ -146,11 +148,12 @@ RESUMEN_ASIENTO_HTML = """
                     html, body { margin: 0; padding: 0; background: #fff; }
                     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     .papel-fisico {
+                        position: relative;
                         width: 210mm;
                         height: 297mm;
                         min-height: 297mm;
                         box-sizing: border-box;
-                        padding: 12mm 14mm 14mm;
+                        padding: 12mm 14mm 20mm;
                         margin: 0;
                         page-break-after: always;
                         break-after: page;
@@ -165,31 +168,36 @@ RESUMEN_ASIENTO_HTML = """
                     }
                     .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
                     .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7mm; flex: 0 0 auto; }
-                    .p-title-box { text-align: center; flex: 1; margin-left: 60px; }
+                    .p-title-box { text-align: center; flex: 1; margin-left: 0; }
                     .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0; }
                     .p-num { font-size: 24px; font-weight: bold; }
                     .p-meta { flex: 0 0 auto; margin-bottom: 3mm; padding-bottom: 2mm; border-bottom: 3px solid #000; }
+                    .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 4px; }
+                    .p-meta-field { display: flex; align-items: flex-end; min-width: 0; }
+                    .p-meta-field.fecha { flex: 0 0 46%; }
+                    .p-meta-field.modalidad { flex: 1 1 auto; }
                     .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
                     .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
                     .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
                     .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; font-weight: 500; white-space: nowrap; }
-                    .p-body-lines { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+                    .p-body-lines { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
                     .pagina-cuaderno {
                         flex: 1 1 auto;
                         min-height: 0;
                         background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px);
+                        overflow: hidden;
                         background-size: auto 26px;
                         line-height: 26px;
                         display: flex;
                         flex-direction: column;
                     }
-                    .lapicero { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; }
+                    .lapicero { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
                     .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-weight: 700; }
                     .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
                     .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; }
                     .modulo-redaccion { margin: 0; }
                     .modulo-titulo { display: block; font-weight: 700; color: #075985; }
-                    .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; }
+                    .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
                     .almacen-bloque { display: block; padding-left: 22px; }
                     .almacen-principal { display: block; padding-left: 18px; font-weight: 600; line-height: 26px; }
                     .almacen-sub { display: block; padding-left: 48px; line-height: 26px; }
@@ -202,8 +210,9 @@ RESUMEN_ASIENTO_HTML = """
                     .maquinaria-fila { display: grid; grid-template-columns: 30% 20% 20% 15% 15%; column-gap: 0; padding-left: 44px; line-height: 26px; font-size: 16px; white-space: nowrap; }
                     .maquinaria-fila span { min-width: 0; white-space: nowrap; overflow: visible; }
                     .van-final { margin-top: auto; display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
-                    .p-footer { flex: 0 0 auto; display: flex; justify-content: space-between; margin-top: 10mm; font-size: 12px; font-weight: bold; color: #000; }
+                    .p-footer { flex: 0 0 auto; display: flex; justify-content: space-between; margin-top: 6mm; font-size: 12px; font-weight: bold; color: #000; page-break-inside: avoid; break-inside: avoid; }
                     .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
+                    .page-counter { position: absolute; right: 14mm; bottom: 6mm; font-size: 10px; font-weight: 700; color: #64748b; }
                 </style>
             </head>
             <body>${contenido.innerHTML}</body>
