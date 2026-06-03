@@ -557,6 +557,202 @@ def resumen_asiento_fecha(fecha):
         return redirect(url_for('cuaderno.panel_cuaderno'))
     return ver_asiento_cuaderno(asiento["numero"])
 
+
+@cuaderno_bp.route('/cuaderno/resumen')
+def resumen_cuaderno():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login.mostrar_login'))
+
+    fecha = (request.args.get("fecha") or "").strip()
+    numero = (request.args.get("asiento") or request.args.get("numero") or "").strip()
+    asiento = None
+    if numero:
+        try:
+            asiento = obtener_asiento(int(numero))
+        except (TypeError, ValueError):
+            asiento = None
+    if not asiento and fecha:
+        asiento = obtener_asiento_por_fecha(fecha)
+    if not asiento:
+        return redirect(url_for('cuaderno.panel_cuaderno'))
+
+    try:
+        contenido = json.loads(asiento.get("contenido") or "{}")
+    except Exception:
+        contenido = {}
+
+    modulos_guardados = contenido.get("modulos") or []
+    inspector = obtener_inspector_asiento(numero=asiento.get("numero"), fecha=asiento.get("fecha"))
+    try:
+        contenido_inspector = json.loads(inspector.get("contenido") or "{}") if inspector else {}
+    except Exception:
+        contenido_inspector = {}
+
+    volver = f"/cuaderno/resumen?fecha={asiento.get('fecha')}&asiento={asiento.get('numero')}"
+    modulos = [
+        {"origen": "Residencia", "paso": 1, "nombre": "Jornal de trabajo", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=1, paso=1, volver=volver)},
+        {"origen": "Residencia", "paso": 2, "nombre": "Personal de obra", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=2, paso=2, volver=volver)},
+        {"origen": "Residencia", "paso": 3, "nombre": "Partidas ejecutadas", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=3, paso=3, volver=volver)},
+        {"origen": "Residencia", "paso": 4, "nombre": "Partidas de mayor metrado", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=4, paso=4, volver=volver)},
+        {"origen": "Residencia", "paso": 5, "nombre": "Sub partidas ejecutadas", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=5, paso=5, volver=volver)},
+        {"origen": "Residencia", "paso": 6, "nombre": "Actividades ejecutadas", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=6, paso=6, volver=volver)},
+        {"origen": "Residencia", "paso": 7, "nombre": "Movimiento de almacén", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=7, paso=7, volver=volver)},
+        {"origen": "Residencia", "paso": 8, "nombre": "Equipo mecánico / Maquinarias", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=8, paso=8, volver=volver)},
+        {"origen": "Residencia", "paso": 9, "nombre": "Herramientas manuales", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=9, paso=9, volver=volver)},
+        {"origen": "Residencia", "paso": 10, "nombre": "Ocurrencias y otros", "contenido": "", "edit_url": url_for("residencia.redaccion_asiento_residente", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modo="continuar", modulo=10, paso=10, volver=volver)},
+    ]
+    for modulo in modulos:
+        modulo["titulo_guardado"] = ""
+        for guardado in modulos_guardados:
+            titulo = str((guardado or {}).get("titulo") or "")
+            if titulo.startswith(f"{modulo['paso']}."):
+                modulo["titulo_guardado"] = titulo
+                modulo["contenido"] = str((guardado or {}).get("contenido") or "").strip()
+                break
+        modulo["tiene_contenido"] = modulo["contenido"] not in ("", "-")
+
+    if inspector:
+        inspector_modulos = [
+            (1, "Personal de Supervisión", ", ".join(f"(1) {nombre}" for nombre in (contenido_inspector.get("personal_supervision") or inspector.get("personal_supervision") or []))),
+            (2, "Partidas ejecutadas", contenido_inspector.get("partidas_ejecutadas") or inspector.get("partidas_ejecutadas") or ""),
+            (3, "Movimiento de almacén", "\n".join([
+                "INGRESO: " + (contenido_inspector.get("almacen_ingreso") or inspector.get("almacen_ingreso") or "-"),
+                "SALIDA: " + (contenido_inspector.get("almacen_salida") or inspector.get("almacen_salida") or "-"),
+            ])),
+            (4, "Equipo mecánico / Maquinaria", contenido_inspector.get("maquinaria") or inspector.get("maquinaria") or ""),
+            (5, "Ocurrencias y observaciones", contenido_inspector.get("ocurrencias") or inspector.get("ocurrencias") or ""),
+        ]
+        for paso, nombre, texto in inspector_modulos:
+            contenido_modulo = str(texto or "").strip()
+            modulos.append({
+                "origen": "Supervisión",
+                "paso": paso,
+                "nombre": nombre,
+                "titulo_guardado": f"{paso}. {nombre}",
+                "contenido": contenido_modulo,
+                "tiene_contenido": contenido_modulo not in ("", "-"),
+                "edit_url": url_for("inspector.redactar_asiento_inspector", asiento=asiento.get("numero"), fecha=asiento.get("fecha"), modulo=paso, paso=paso, volver=volver),
+            })
+
+    menu_superior = obtener_navbar(session.get('rol') == 'Admin', session.get('nombre', 'Visitante'))
+    inicio_url = url_for("inicio.panel_principal")
+
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Resumen del asiento</title>
+        <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { corePlugins: { preflight: false } };</script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    </head>
+    <body class="min-h-screen bg-slate-100 text-slate-900">
+        {{ menu_superior | safe }}
+        <main class="mx-auto max-w-5xl px-4 py-24">
+            <section class="mb-6 rounded-[30px] border border-white/80 bg-white/90 p-6 shadow-2xl shadow-slate-200/70">
+                <p class="mb-2 text-xs font-black uppercase tracking-[.22em] text-sky-700">Cuaderno de Obra</p>
+                <div class="flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                        <h1 class="m-0 text-3xl font-black tracking-tight text-slate-950">Resumen del Asiento N° {{ asiento.numero }}</h1>
+                        <p class="m-0 mt-2 text-sm font-bold text-slate-500">Fecha: {{ asiento.fecha }} · Estado: {{ asiento.estado }}</p>
+                    </div>
+                    <a href="/resumen_asiento/{{ asiento.fecha }}" class="rounded-full bg-slate-950 px-5 py-3 text-xs font-black uppercase tracking-wide text-white no-underline shadow-lg shadow-slate-300">
+                        Ver hoja completa
+                    </a>
+                </div>
+            </section>
+
+            <section class="rounded-[30px] border border-white/80 bg-white/90 p-4 shadow-2xl shadow-slate-200/70">
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-3 px-2">
+                    <div>
+                        <h2 class="m-0 text-xl font-black text-slate-950">Módulos registrados</h2>
+                        <p class="m-0 mt-1 text-sm font-semibold text-slate-500">Despliegue un módulo para revisar el contenido y corregirlo en su ventana original.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="btnDesglosarModulos" onclick="alternarDesgloseModulos()" class="rounded-full bg-sky-100 px-6 py-3 text-xs font-black uppercase tracking-wide text-sky-800 shadow-lg shadow-sky-100">
+                            Desglosar módulos
+                        </button>
+                        <button type="button" onclick="abrirDecisionCierre()" class="rounded-full bg-gradient-to-r from-emerald-600 to-slate-950 px-6 py-3 text-xs font-black uppercase tracking-wide text-white shadow-lg shadow-emerald-200">
+                            Cerrar Asiento
+                        </button>
+                    </div>
+                </div>
+                <div class="grid gap-3" id="listaModulosResumen">
+                    {% for modulo in modulos %}
+                    <details class="group rounded-3xl border border-slate-200 bg-slate-50/80 p-2 open:bg-white open:shadow-lg">
+                        <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-2xl p-3">
+                            <div class="flex items-center gap-4">
+                                <div class="grid h-12 w-12 place-items-center rounded-2xl {% if modulo.origen == 'Supervisión' %}bg-blue-100 text-blue-800{% else %}bg-emerald-100 text-emerald-800{% endif %} text-lg font-black">{{ modulo.paso }}</div>
+                                <div>
+                                    <div class="mb-1 inline-flex rounded-full {% if modulo.origen == 'Supervisión' %}bg-blue-50 text-blue-700{% else %}bg-emerald-50 text-emerald-700{% endif %} px-2 py-1 text-[10px] font-black uppercase tracking-wide">{{ modulo.origen }}</div>
+                                    <h3 class="m-0 text-base font-black text-slate-900">Módulo {{ modulo.paso }}: {{ modulo.nombre }}</h3>
+                                    <p class="m-0 mt-1 text-xs font-bold {% if modulo.tiene_contenido %}text-emerald-600{% else %}text-slate-400{% endif %}">
+                                        {% if modulo.tiene_contenido %}Con información registrada{% else %}Sin información registrada{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <i class="bi bi-chevron-down text-xl text-slate-400 transition group-open:rotate-180"></i>
+                        </summary>
+                        <div class="px-4 pb-4">
+                            <pre class="mb-4 max-h-72 overflow-auto whitespace-pre-wrap rounded-2xl border border-slate-200 bg-white p-4 font-[Candara] text-[16px] italic leading-7 text-sky-700">{{ modulo.contenido or 'Sin información registrada.' }}</pre>
+                            <a href="{{ modulo.edit_url }}" class="inline-flex rounded-full bg-gradient-to-r from-sky-700 to-slate-950 px-5 py-3 text-xs font-black uppercase tracking-wide text-white no-underline shadow-lg shadow-sky-200">
+                                <i class="bi bi-pencil-square mr-2"></i> Corregir/Editar
+                            </a>
+                        </div>
+                    </details>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
+
+        <div id="decisionCierreModal" class="fixed inset-0 z-[2500] hidden place-items-center bg-slate-950/70 p-4 backdrop-blur-md">
+            <div id="decisionCierreCard" class="w-full max-w-md scale-95 rounded-3xl bg-white p-6 opacity-0 shadow-2xl transition">
+                <div class="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-3xl text-emerald-600">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+                <h3 class="m-0 text-2xl font-black text-slate-950">Cerrar Asiento</h3>
+                <p class="mb-5 mt-2 text-sm font-bold leading-6 text-slate-600">¿Desea seguir asentando en el cuaderno o cerrar?</p>
+                <div class="flex flex-wrap justify-end gap-2">
+                    <button type="button" onclick="window.location.href='/cuaderno'" class="rounded-2xl bg-sky-100 px-4 py-3 text-sm font-black text-sky-800">Seguir asentando</button>
+                    <button type="button" onclick="window.location.href='{{ inicio_url }}'" class="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">Cerrar</button>
+                    <button type="button" onclick="cerrarDecisionCierre()" class="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-600">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let modulosResumenAbiertos = false;
+            function alternarDesgloseModulos() {
+                modulosResumenAbiertos = !modulosResumenAbiertos;
+                document.querySelectorAll('#listaModulosResumen details').forEach(item => {
+                    item.open = modulosResumenAbiertos;
+                });
+                const boton = document.getElementById('btnDesglosarModulos');
+                if (boton) boton.textContent = modulosResumenAbiertos ? 'Contraer módulos' : 'Desglosar módulos';
+            }
+            function abrirDecisionCierre() {
+                const overlay = document.getElementById('decisionCierreModal');
+                const card = document.getElementById('decisionCierreCard');
+                overlay.classList.remove('hidden');
+                overlay.classList.add('grid');
+                requestAnimationFrame(() => card.classList.remove('scale-95', 'opacity-0'));
+            }
+            function cerrarDecisionCierre() {
+                const overlay = document.getElementById('decisionCierreModal');
+                const card = document.getElementById('decisionCierreCard');
+                card.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    overlay.classList.remove('grid');
+                }, 150);
+            }
+        </script>
+    </body>
+    </html>
+    """, menu_superior=menu_superior, asiento=asiento, modulos=modulos, volver=volver, inicio_url=inicio_url)
+
 # NOTA IMPORTANTE: Ahora SOLO maneja la ruta /cuaderno. 
 # Esto permite que vistas_residencia.py funcione correctamente sin interferencias.
 @cuaderno_bp.route('/cuaderno')
@@ -1082,6 +1278,21 @@ def panel_cuaderno():
                 background: linear-gradient(135deg, #fff7ed, #ffedd5);
             }
             .calendar-day.observed .day-number { background: #f97316; color: #fff; }
+            .calendar-day.residencia {
+                border-color: #86efac;
+                background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            }
+            .calendar-day.residencia .day-number { background: #16a34a; color: #fff; }
+            .calendar-day.supervision {
+                border-color: #93c5fd;
+                background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            }
+            .calendar-day.supervision .day-number { background: #2563eb; color: #fff; }
+            .calendar-day.mixto {
+                border-color: #7dd3fc;
+                background: linear-gradient(135deg, #dcfce7 0%, #dcfce7 49%, #dbeafe 50%, #dbeafe 100%);
+            }
+            .calendar-day.mixto .day-number { background: linear-gradient(135deg, #16a34a, #2563eb); color: #fff; }
 
             .calendar-tooltip {
                 position: absolute;
@@ -1335,6 +1546,21 @@ def panel_cuaderno():
                 background: linear-gradient(135deg, #fff7ed, #ffedd5);
                 color: #9a3412;
             }
+            .mini-seat-day.residencia {
+                border-color: #86efac;
+                background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+                color: #166534;
+            }
+            .mini-seat-day.supervision {
+                border-color: #93c5fd;
+                background: linear-gradient(135deg, #eff6ff, #dbeafe);
+                color: #1d4ed8;
+            }
+            .mini-seat-day.mixto {
+                border-color: #7dd3fc;
+                background: linear-gradient(135deg, #dcfce7 0%, #dcfce7 49%, #dbeafe 50%, #dbeafe 100%);
+                color: #0f172a;
+            }
 
             .mini-seat-day.selected {
                 outline: 3px solid rgba(2,99,160,.26);
@@ -1460,7 +1686,7 @@ def panel_cuaderno():
                     </div>
                     <span class="connection-pill {% if not conectado %}offline{% endif %}">
                         <i class="bi {% if conectado %}bi-database-check{% else %}bi-database-exclamation{% endif %}"></i>
-                        {% if conectado %}PostgreSQL conectado{% else %}PostgreSQL pendiente{% endif %}
+                        {% if conectado %}Sistema listo{% else %}Sin conexión de datos{% endif %}
                     </span>
                 </div>
 
@@ -1621,6 +1847,21 @@ def panel_cuaderno():
             </div>
         </div>
 
+        <div id="selectorAsientoHistorico" class="hidden fixed inset-0 z-[2200] place-items-center bg-slate-950/70 p-4 backdrop-blur-md" role="dialog" aria-modal="true">
+            <div id="selectorAsientoHistoricoCard" class="w-full max-w-md scale-95 rounded-3xl bg-white p-6 opacity-0 shadow-2xl transition">
+                <div class="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-2xl text-blue-600">
+                    <i class="bi bi-journals"></i>
+                </div>
+                <h3 class="m-0 text-xl font-black text-slate-950">Abrir asiento registrado</h3>
+                <p id="selectorAsientoHistoricoTexto" class="mb-5 mt-2 text-sm font-bold leading-6 text-slate-600">Este día tiene registros de Residencia y Supervisión. Elija cuál desea abrir.</p>
+                <div class="flex flex-wrap justify-end gap-2">
+                    <button type="button" onclick="cerrarSelectorAsientoHistorico()" class="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-700">Cancelar</button>
+                    <button type="button" onclick="abrirHistoricoSeleccionado('residencia')" class="rounded-2xl bg-emerald-100 px-4 py-3 text-sm font-black text-emerald-800">Residencia</button>
+                    <button type="button" onclick="abrirHistoricoSeleccionado('supervision')" class="rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white">Supervisión</button>
+                </div>
+            </div>
+        </div>
+
         <script>
             // Datos iniciales Jinja2. Luego se pueden reemplazar por Fetch/AJAX desde PostgreSQL.
             const dashboardSeed = {
@@ -1635,6 +1876,7 @@ def panel_cuaderno():
                 historial: {{ historial_json | safe }},
                 mesActual: {{ mes_actual_json | safe }}
             };
+            const rolUsuarioActual = {{ rol_usuario | tojson }};
 
             const estadoColor = {
                 cerrado: '#22c55e',
@@ -1653,6 +1895,7 @@ def panel_cuaderno():
             let asientoModalActual = null;
             let fechaModalSeleccionada = null;
             let modoModalAsiento = 'residencia';
+            let asientoHistoricoPendiente = null;
 
             function escapeHtml(valor) {
                 return String(valor ?? '')
@@ -1814,16 +2057,18 @@ def panel_cuaderno():
                     const fechaISO = fechaISODesdePartes(year, month, dia);
                     const estado = asiento ? normalizarEstado(asiento.estado) : (esFechaFutura(fechaISO) ? 'future' : 'pendiente');
                     const estadoVisual = estado === 'enviado_inspector' ? 'cerrado' : estado;
+                    const tipoVisual = asiento ? claseOrigenAsiento(asiento) : '';
                     const item = document.createElement('button');
                     item.type = 'button';
-                    item.className = `calendar-day ${estadoVisual}`;
+                    item.className = `calendar-day ${estadoVisual} ${tipoVisual}`.trim();
                     item.innerHTML = `
                         <span class="day-number">${dia}</span>
-                        <span class="day-caption">${textoEstado(asiento, estado)}</span>
+                        <span class="day-caption">${textoEstado(asiento, estado)}${asiento ? `<br>${textoOrigenAsiento(asiento)}` : ''}</span>
                         <span class="calendar-tooltip">
                             ${asiento ? `
                                 <b>Asiento N° ${escapeHtml(String(asiento.numero).padStart(3, '0'))}</b><br>
                                 Estado: ${escapeHtml(asiento.estado || '-')}<br>
+                                Registro: ${escapeHtml(textoOrigenAsiento(asiento))}<br>
                                 Avance: ${escapeHtml(asiento.avance || 0)}%<br>
                                 Inspector: ${escapeHtml(asiento.supervisor || '-')}<br>
                                 ${escapeHtml(asiento.observacion || 'Sin observaciones activas.')}
@@ -1834,12 +2079,10 @@ def panel_cuaderno():
                         </span>
                     `;
                     item.dataset.fecha = fechaISO;
-                    if (asiento && asiento.numero && estado === 'borrador') {
-                        item.addEventListener('click', () => abrirModalAsientoResidencia(null, fechaISO));
+                    if (asiento && (asiento.numero || asiento.residencia_numero || asiento.inspector_numero)) {
+                        item.addEventListener('click', () => abrirAsientoHistorico(asiento, fechaISO));
                     } else if (!asiento && estado === 'pendiente') {
                         item.addEventListener('click', () => abrirModalAsientoResidencia(null, fechaISO));
-                    } else if (asiento && asiento.numero) {
-                        item.addEventListener('click', () => irAAsiento(asiento.numero));
                     }
                     grid.appendChild(item);
                 }
@@ -1901,6 +2144,11 @@ def panel_cuaderno():
                     avance: /cerrado|firmado|inspector/i.test(String(cambio.estado || '')) ? 100 : 60,
                     supervisor: '-',
                     observacion: 'Sin observaciones activas.',
+                    tipo: /inspector|super/i.test(String(cambio.tipo || '')) ? 'Inspector' : 'Residente',
+                    tiene_residencia: !/inspector|super/i.test(String(cambio.tipo || '')),
+                    tiene_inspector: /inspector|super/i.test(String(cambio.tipo || '')),
+                    residencia_numero: !/inspector|super/i.test(String(cambio.tipo || '')) ? cambio.numero : null,
+                    inspector_numero: /inspector|super/i.test(String(cambio.tipo || '')) ? cambio.numero : null,
                     updated_at: cambio.updated_at || new Date().toISOString()
                 });
                 dashboardSeed.asientos = [
@@ -1926,6 +2174,36 @@ def panel_cuaderno():
                 if (!fecha) return null;
                 if (fecha.year !== year || fecha.monthIndex !== month) return null;
                 return mapa.get(fecha.day) || null;
+            }
+
+            function tieneResidencia(asiento) {
+                return Boolean(asiento?.tiene_residencia || asiento?.residencia_numero || String(asiento?.tipo || '').toLowerCase() !== 'inspector');
+            }
+
+            function tieneSupervision(asiento) {
+                return Boolean(asiento?.tiene_inspector || asiento?.inspector_numero || String(asiento?.tipo || '').toLowerCase() === 'inspector');
+            }
+
+            function claseOrigenAsiento(asiento) {
+                const residencia = tieneResidencia(asiento);
+                const supervision = tieneSupervision(asiento);
+                if (residencia && supervision) return 'mixto';
+                if (supervision) return 'supervision';
+                if (residencia) return 'residencia';
+                return '';
+            }
+
+            function textoOrigenAsiento(asiento) {
+                const residencia = tieneResidencia(asiento);
+                const supervision = tieneSupervision(asiento);
+                if (residencia && supervision) return 'Residencia + Supervisión';
+                if (supervision) return 'Supervisión';
+                if (residencia) return 'Residencia';
+                return 'Sin origen';
+            }
+
+            function usuarioEsSupervision() {
+                return /inspector|super/i.test(String(rolUsuarioActual || ''));
             }
 
             function abrirModalAsientoResidencia(event, fechaISO=null) {
@@ -1990,9 +2268,11 @@ def panel_cuaderno():
                     const asiento = buscarAsientoPorFecha(fechaISO, modalAsientosMes, year, month);
                     const estado = asiento ? normalizarEstado(asiento.estado) : (esFechaFutura(fechaISO) ? 'future' : 'pendiente');
                     const estadoVisual = estado === 'observado' ? 'draft' : (estado === 'enviado_inspector' ? 'cerrado' : estado);
+                    const tipoVisual = asiento ? claseOrigenAsiento(asiento) : '';
                     const day = document.createElement('button');
                     day.type = 'button';
-                    day.className = `mini-seat-day ${estadoVisual}`;
+                    day.className = `mini-seat-day ${estadoVisual} ${tipoVisual}`.trim();
+                    day.title = asiento ? textoOrigenAsiento(asiento) : 'Sin registro';
                     day.textContent = dia;
                     if (estado !== 'future') {
                         day.addEventListener('click', () => gestionarClickDiaRedaccion(fechaISO, asiento));
@@ -2004,16 +2284,12 @@ def panel_cuaderno():
             function gestionarClickDiaRedaccion(fechaISO, asiento) {
                 if (modoModalAsiento === 'inspector') {
                     const params = new URLSearchParams({ fecha: fechaISO });
-                    if (asiento?.numero) params.set('asiento', asiento.numero);
+                    if (asiento?.residencia_numero || asiento?.numero) params.set('asiento', asiento.residencia_numero || asiento.numero);
                     window.location.href = `/inspector?${params.toString()}`;
                     return;
                 }
-                if (asiento && normalizarEstado(asiento.estado) === 'borrador') {
-                    continuarBorradorSeguro(fechaISO, asiento.numero);
-                    return;
-                }
                 if (asiento) {
-                    irAAsiento(asiento.numero);
+                    abrirAsientoHistorico(asiento, fechaISO);
                     return;
                 }
                 pedirNumeroAsientoElegante(fechaISO).then(numero => {
@@ -2131,7 +2407,72 @@ def panel_cuaderno():
                 renderDashboardMes();
             }
 
-            function irAAsiento(numero) {
+            function abrirAsientoHistorico(asiento, fechaISO) {
+                if (!asiento) return;
+                const fecha = fechaISO || asiento.fecha || '';
+                if (tieneResidencia(asiento) && tieneSupervision(asiento)) {
+                    mostrarSelectorAsientoHistorico(asiento, fecha);
+                    return;
+                }
+                if (tieneSupervision(asiento)) {
+                    abrirHistoricoSupervision(asiento, fecha);
+                    return;
+                }
+                abrirHistoricoResidencia(asiento, fecha);
+            }
+
+            function abrirHistoricoResidencia(asiento, fecha) {
+                const numeroResidencia = asiento.residencia_numero || (tieneResidencia(asiento) ? asiento.numero : '');
+                if (numeroResidencia) {
+                    continuarBorradorSeguro(fecha, numeroResidencia);
+                }
+            }
+
+            function abrirHistoricoSupervision(asiento, fecha) {
+                const params = new URLSearchParams({ fecha });
+                const numeroBase = asiento.residencia_numero || asiento.numero;
+                if (numeroBase) params.set('asiento', numeroBase);
+                params.set('modo', 'continuar');
+                window.location.href = `/inspector?${params.toString()}`;
+            }
+
+            function mostrarSelectorAsientoHistorico(asiento, fecha) {
+                asientoHistoricoPendiente = { asiento, fecha };
+                const texto = document.getElementById('selectorAsientoHistoricoTexto');
+                if (texto) texto.textContent = `El día ${fecha} tiene asiento de Residencia y Supervisión. Elija cuál desea abrir para revisar o corregir.`;
+                const overlay = document.getElementById('selectorAsientoHistorico');
+                const card = document.getElementById('selectorAsientoHistoricoCard');
+                overlay.classList.remove('hidden');
+                overlay.classList.add('grid');
+                requestAnimationFrame(() => card.classList.remove('scale-95', 'opacity-0'));
+            }
+
+            function cerrarSelectorAsientoHistorico() {
+                const overlay = document.getElementById('selectorAsientoHistorico');
+                const card = document.getElementById('selectorAsientoHistoricoCard');
+                card.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    overlay.classList.remove('grid');
+                }, 150);
+            }
+
+            function abrirHistoricoSeleccionado(tipo) {
+                const pendiente = asientoHistoricoPendiente;
+                if (!pendiente) return;
+                cerrarSelectorAsientoHistorico();
+                if (tipo === 'supervision') {
+                    abrirHistoricoSupervision(pendiente.asiento, pendiente.fecha);
+                    return;
+                }
+                abrirHistoricoResidencia(pendiente.asiento, pendiente.fecha);
+            }
+
+            function irAAsiento(numero, fecha=null) {
+                if (fecha) {
+                    continuarBorradorSeguro(fecha, numero);
+                    return;
+                }
                 window.location.href = `/cuaderno/asiento/${numero}`;
             }
 

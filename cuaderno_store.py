@@ -61,9 +61,16 @@ def asegurar_tablas_cuaderno():
             """
         )
         cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS tipo VARCHAR(40) NOT NULL DEFAULT 'Residente'")
+        cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS estado VARCHAR(40) NOT NULL DEFAULT 'Borrador'")
+        cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS avance INTEGER NOT NULL DEFAULT 0")
         cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS bloqueado BOOLEAN NOT NULL DEFAULT FALSE")
+        cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS firmado_por VARCHAR(160)")
+        cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS firmado_en TIMESTAMP")
+        cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS contenido TEXT")
         cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS observaciones TEXT")
         cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS personal_gastos_generales JSONB NOT NULL DEFAULT '[]'::jsonb")
+        cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()")
+        cur.execute("ALTER TABLE cuaderno_asientos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()")
         cur.execute(
             """
             CREATE TABLE IF NOT EXISTS cuaderno_observaciones (
@@ -531,6 +538,7 @@ def obtener_datos_mes_cuaderno(year=None, month=None):
         cur.execute(
             """
             SELECT COALESCE(numero, residencia_numero) AS numero,
+                   residencia_numero,
                    fecha::TEXT AS fecha,
                    EXTRACT(DAY FROM fecha)::INTEGER AS dia,
                    estado,
@@ -547,10 +555,24 @@ def obtener_datos_mes_cuaderno(year=None, month=None):
             """,
             (year, month),
         )
-        inspector_asientos = [
-            item for item in _fetchall_dict(cur)
-            if item.get("fecha") not in fechas_residencia
-        ]
+        inspector_rows = _fetchall_dict(cur)
+        inspector_por_fecha = {item.get("fecha"): item for item in inspector_rows if item.get("fecha")}
+        for asiento in asientos:
+            inspector = inspector_por_fecha.get(asiento.get("fecha"))
+            asiento["tiene_residencia"] = True
+            asiento["tiene_inspector"] = bool(inspector)
+            asiento["inspector_numero"] = inspector.get("numero") if inspector else None
+            asiento["inspector_estado"] = inspector.get("estado") if inspector else None
+            asiento["residencia_numero"] = asiento.get("numero")
+        inspector_asientos = []
+        for item in inspector_rows:
+            if item.get("fecha") in fechas_residencia:
+                continue
+            item["tiene_residencia"] = False
+            item["tiene_inspector"] = True
+            item["inspector_numero"] = item.get("numero")
+            item["inspector_estado"] = item.get("estado")
+            inspector_asientos.append(item)
         asientos.extend(inspector_asientos)
         cur.execute(
             """
@@ -590,6 +612,11 @@ def obtener_datos_mes_cuaderno(year=None, month=None):
                     "updated_at": a.get("updated_at"),
                     "tipo": a.get("tipo"),
                     "bloqueado": a.get("bloqueado"),
+                    "tiene_residencia": bool(a.get("tiene_residencia", str(a.get("tipo") or "").lower() != "inspector")),
+                    "tiene_inspector": bool(a.get("tiene_inspector")),
+                    "residencia_numero": a.get("residencia_numero") or (a["numero"] if str(a.get("tipo") or "").lower() != "inspector" else None),
+                    "inspector_numero": a.get("inspector_numero"),
+                    "inspector_estado": a.get("inspector_estado"),
                     "observacion": a.get("observaciones") or "Sin observaciones activas.",
                 }
                 for a in asientos

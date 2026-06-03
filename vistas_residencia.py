@@ -111,15 +111,19 @@ def api_guardar_asiento():
     elif "cerrado" in str(resultado.get("error", "")).lower() or "bloqueado" in str(resultado.get("error", "")).lower():
         status = 403
     else:
+        print("[CUADERNO][ERROR] No se pudo guardar asiento:", resultado.get("error"))
         status = 500
     if resultado.get("ok"):
         estado_api = str(resultado.get("estado") or estado).strip().lower().replace(" ", "_")
+        fecha_guardada = data.get("fecha") or resultado.get("fecha") or datetime.now().strftime('%Y-%m-%d')
+        redirect_url = f"/cuaderno/resumen?fecha={fecha_guardada}&asiento={numero}" if estado_api == "borrador" else f"/resumen_asiento/{fecha_guardada}"
         resultado = {
             **resultado,
             "status": "success",
-            "fecha": data.get("fecha") or datetime.now().strftime('%Y-%m-%d'),
+            "fecha": fecha_guardada,
             "estado": estado_api,
             "estado_label": resultado.get("estado"),
+            "redirect_url": redirect_url,
         }
     return jsonify(resultado), status
 
@@ -409,7 +413,7 @@ def redaccion_asiento_residente():
                         Al enviar el asiento quedará listo para firma del Inspector. Podrá corregirse desde el resumen hasta que la firma sea estampada.
                     </div>
                     <div class="confirm-seat-actions">
-                        <button type="button" class="confirm-seat-btn cancel" onclick="window.ocultarConfirmarAccionAsiento()">Seguir editando</button>
+                        <button type="button" class="confirm-seat-btn cancel" id="confirmAccionCancelar" onclick="window.ocultarConfirmarAccionAsiento()">Cancelar</button>
                         <button type="button" class="confirm-seat-btn primary" id="confirmAccionBoton" onclick="window.confirmarAccionAsiento()">Sí, enviar a firma</button>
                     </div>
                 </div>
@@ -1542,6 +1546,7 @@ def redaccion_asiento_residente():
                     }}
 
                     let guardadoServidor = false;
+                    let redirectUrlServidor = '';
                     try {{
                         const resp = await fetch('/residencia/api/asiento', {{
                             method: 'POST',
@@ -1553,11 +1558,13 @@ def redaccion_asiento_residente():
                             console.warn('No se pudo guardar en servidor:', data.error || resp.status);
                         }} else {{
                             guardadoServidor = true;
+                            redirectUrlServidor = data.redirect_url || '';
                             try {{
                                 localStorage.setItem('samu_dashboard_refresh', JSON.stringify({{
                                     numero,
                                     fecha,
                                     estado,
+                                    tipo: 'Residente',
                                     updated_at: new Date().toISOString()
                                 }}));
                             }} catch (e) {{}}
@@ -1568,10 +1575,10 @@ def redaccion_asiento_residente():
                     if (guardadoServidor) {{
                         try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
                     }}
-                    mostrarVentanaExitoGuardado(estado, guardadoServidor);
+                    mostrarVentanaExitoGuardado(estado, guardadoServidor, redirectUrlServidor);
                 }}
 
-                function mostrarVentanaExitoGuardado(estado, guardadoServidor=true) {{
+                function mostrarVentanaExitoGuardado(estado, guardadoServidor=true, redirectUrlServidor='') {{
                     const enviadoInspector = estado === 'Enviado Inspector';
                     const titulo = guardadoServidor
                         ? (enviadoInspector ? 'Asiento enviado al Inspector' : 'Borrador guardado exitosamente')
@@ -1583,6 +1590,15 @@ def redaccion_asiento_residente():
                     mostrarModalResidencia(titulo, texto, tipo, 1100).then(() => {{
                         setTimeout(() => {{
                             const fechaResumen = encodeURIComponent(window.g_fechaRaw || '');
+                            const numeroResumen = encodeURIComponent(window.g_numAsiento || '');
+                            if (redirectUrlServidor) {{
+                                window.location.href = redirectUrlServidor;
+                                return;
+                            }}
+                            if (!enviadoInspector && fechaResumen && numeroResumen) {{
+                                window.location.href = `/cuaderno/resumen?fecha=${{fechaResumen}}&asiento=${{numeroResumen}}`;
+                                return;
+                            }}
                             window.location.href = fechaResumen ? `/resumen_asiento/${{fechaResumen}}` : '/cuaderno';
                         }}, 1500);
                     }});
@@ -1597,18 +1613,20 @@ def redaccion_asiento_residente():
                     const titulo = document.getElementById('confirmAccionTitulo');
                     const subtitulo = document.getElementById('confirmAccionSubtitulo');
                     const mensaje = document.getElementById('confirmAccionMensaje');
+                    const cancelar = document.getElementById('confirmAccionCancelar');
                     const boton = document.getElementById('confirmAccionBoton');
                     hero?.classList.toggle('draft', !esCierre);
                     boton?.classList.toggle('draft', !esCierre);
                     if (icon) icon.innerHTML = esCierre ? '<i class="bi bi-shield-lock-fill"></i>' : '<i class="bi bi-save2-fill"></i>';
-                    if (titulo) titulo.innerText = esCierre ? 'Enviar asiento al Inspector' : 'Guardar asiento como borrador';
+                    if (titulo) titulo.innerText = esCierre ? 'Enviar asiento al Inspector' : 'Guardar borrador';
                     if (subtitulo) subtitulo.innerText = esCierre
                         ? 'Confirme el envío para que el Inspector pueda revisar y firmar.'
-                        : 'Se guardará el avance y podrá continuar editando después.';
+                        : '¿Desea guardar el borrador y pasar al resumen del asiento?';
                     if (mensaje) mensaje.innerHTML = esCierre
                         ? '<i class="bi bi-exclamation-triangle-fill me-1"></i> Al enviar el asiento quedará listo para firma del Inspector. Podrá corregirse desde el resumen mientras no esté firmado.'
-                        : '<i class="bi bi-info-circle-fill me-1"></i> El asiento quedará como borrador y aparecerá en el calendario como en proceso de llenado.';
-                    if (boton) boton.innerText = esCierre ? 'Sí, enviar a firma' : 'Guardar borrador';
+                        : '<i class="bi bi-info-circle-fill me-1"></i> Al confirmar, se guardará el avance y se abrirá el resumen del asiento.';
+                    if (cancelar) cancelar.innerText = esCierre ? 'Seguir editando' : 'Cancelar';
+                    if (boton) boton.innerText = esCierre ? 'Sí, enviar a firma' : 'Confirmar';
                 }}
                 window.mostrarConfirmarGuardarBorrador = function() {{
                     configurarConfirmacionAsiento('Borrador');

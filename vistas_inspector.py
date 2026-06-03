@@ -183,7 +183,7 @@ def redactar_asiento_inspector():
                     <textarea id="sup_ocurrencias" class="word-editor" placeholder="Ocurrencias y/o observaciones..."></textarea>
                 </div>
                 <div class="mt-4 flex flex-wrap justify-end gap-2">
-                    <button class="btn-modern btn-draft" type="button" onclick="guardarInspector('Borrador')"><i class="bi bi-save2-fill"></i> Guardar como Borrador</button>
+                    <button class="btn-modern btn-draft" type="button" onclick="confirmarGuardarInspector()"><i class="bi bi-save2-fill"></i> Guardar como Borrador</button>
                     <button class="btn-modern btn-sign" type="button" onclick="guardarInspector('Firmado')"><i class="bi bi-pen-fill"></i> Firmar Asiento</button>
                 </div>
             </section>
@@ -199,6 +199,18 @@ def redactar_asiento_inspector():
         </div>
     </div>
 
+    <div id="confirmInspectorModal" class="modal-backdrop-samu hidden">
+        <div id="confirmInspectorCard" class="modal-card-samu">
+            <div class="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-amber-50 text-2xl text-amber-600"><i class="bi bi-save2-fill"></i></div>
+            <h3 class="m-0 text-xl font-black text-slate-900">Guardar borrador</h3>
+            <p class="mb-5 mt-2 text-sm font-bold leading-6 text-slate-600">¿Desea guardar el borrador y pasar al resumen del asiento?</p>
+            <div class="flex flex-wrap justify-end gap-2">
+                <button type="button" class="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-700" onclick="cerrarConfirmInspector()">Cancelar</button>
+                <button type="button" class="rounded-2xl bg-amber-500 px-4 py-3 text-sm font-black text-white" onclick="confirmarGuardarInspectorAhora()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const numeroResidencia = {{ residencia_numero | tojson }};
         const fechaAsiento = {{ fecha_iso | tojson }};
@@ -206,10 +218,14 @@ def redactar_asiento_inspector():
         const personalCarry = {{ personal_carry | tojson }};
         const contenidoInicial = {{ contenido_json | safe }};
         const storagePrefix = `inspector_fecha_${fechaAsiento}`;
+        const paramsInspector = new URLSearchParams(window.location.search || '');
+        const moduloInicialInspector = Math.max(1, Math.min(5, parseInt(paramsInspector.get('paso') || paramsInspector.get('modulo') || '1', 10) || 1));
+        const cargarDesdeBase = paramsInspector.get('modo') === 'continuar' || paramsInspector.has('asiento') || paramsInspector.has('numero');
 
         function keyModulo(id) { return `${storagePrefix}_${id}`; }
         function guardarLocal(id, valor) { localStorage.setItem(keyModulo(id), JSON.stringify(valor)); }
         function leerLocal(id, fallback) {
+            if (cargarDesdeBase) return fallback;
             try {
                 const raw = localStorage.getItem(keyModulo(id));
                 return raw ? JSON.parse(raw) : fallback;
@@ -286,6 +302,22 @@ def redactar_asiento_inspector():
             card.classList.remove('active');
             setTimeout(() => overlay.classList.add('hidden'), 150);
         }
+        function confirmarGuardarInspector() {
+            const overlay = document.getElementById('confirmInspectorModal');
+            const card = document.getElementById('confirmInspectorCard');
+            overlay.classList.remove('hidden');
+            requestAnimationFrame(() => card.classList.add('active'));
+        }
+        function cerrarConfirmInspector() {
+            const overlay = document.getElementById('confirmInspectorModal');
+            const card = document.getElementById('confirmInspectorCard');
+            card.classList.remove('active');
+            setTimeout(() => overlay.classList.add('hidden'), 150);
+        }
+        function confirmarGuardarInspectorAhora() {
+            cerrarConfirmInspector();
+            guardarInspector('Borrador');
+        }
         async function guardarInspector(estado) {
             sincronizarInspector();
             const payload = estadoInspectorActual();
@@ -300,12 +332,19 @@ def redactar_asiento_inspector():
                 return;
             }
             document.getElementById('estadoInspector').textContent = data.estado;
-            localStorage.setItem('samu_dashboard_refresh', JSON.stringify({ numero: data.numero || numeroResidencia, fecha: fechaAsiento, estado: data.estado === 'firmado_inspector' ? 'Cerrado' : 'Enviado Inspector', updated_at: new Date().toISOString() }));
+            localStorage.setItem('samu_dashboard_refresh', JSON.stringify({ numero: data.numero || numeroResidencia, fecha: fechaAsiento, estado: data.estado === 'firmado_inspector' ? 'Cerrado' : 'Enviado Inspector', tipo: 'Inspector', updated_at: new Date().toISOString() }));
             abrirModal(data.estado === 'firmado_inspector' ? 'Asiento firmado' : 'Borrador guardado', 'Los datos del Inspector fueron guardados correctamente.');
-            setTimeout(() => { window.location.href = '/cuaderno'; }, 1500);
+            setTimeout(() => {
+                if (estado === 'Borrador' && numeroResidencia) {
+                    window.location.href = `/cuaderno/resumen?fecha=${encodeURIComponent(fechaAsiento)}&asiento=${encodeURIComponent(numeroResidencia)}`;
+                    return;
+                }
+                window.location.href = '/cuaderno';
+            }, 1500);
         }
         document.addEventListener('DOMContentLoaded', () => {
             hidratarFormulario();
+            irModuloInspector(moduloInicialInspector);
             document.querySelectorAll('textarea').forEach(el => el.addEventListener('input', sincronizarInspector));
         });
     </script>
