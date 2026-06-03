@@ -11,8 +11,8 @@ RESUMEN_ASIENTO_HTML = """
     .resumen-btn.dark { color: #fff; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18); }
     .resumen-btn.pdf { color: #fff; background: linear-gradient(135deg, #991b1b, #ef4444); }
     .resumen-body { overflow: auto; padding: 24px; background: linear-gradient(135deg, #f8fafc, #eff6ff); }
-    .resumen-paper { width: min(760px, 100%); margin: 0 auto; transform-origin: top center; }
-    .resumen-paper .papel-fisico { margin: 0 auto; }
+    .resumen-paper { width: min(210mm, 100%); margin: 0 auto; transform-origin: top center; display: grid; gap: 28px; }
+    .resumen-paper .papel-fisico { width: 210mm; height: 297mm; min-height: 297mm; max-height: 297mm; box-sizing: border-box; margin: 0 auto; border-radius: 0; }
     .resumen-zoom { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: rgba(255,255,255,.78); border-bottom: 1px solid #dbeafe; }
     .resumen-zoom button { border: 0; border-radius: 999px; padding: 7px 11px; font-size: 12px; font-weight: 900; color: #0f172a; background: #e0f2fe; }
     .resumen-zoom span { margin-left: auto; font-size: 11px; font-weight: 900; color: #475569; }
@@ -21,16 +21,22 @@ RESUMEN_ASIENTO_HTML = """
         body * { visibility: hidden !important; }
         #resumenCuadernoContenido, #resumenCuadernoContenido * { visibility: visible !important; }
         #resumenCuadernoContenido { position: absolute; left: 0; top: 0; width: 210mm !important; transform: none !important; background: #fff !important; }
-        #resumenCuadernoContenido .papel-fisico { position: relative; width: 210mm !important; height: 297mm !important; min-height: 297mm !important; box-sizing: border-box !important; padding: 12mm 14mm 20mm !important; margin: 0 !important; box-shadow: none !important; border: none !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa !important; }
+        #resumenCuadernoContenido .papel-fisico { position: relative; width: 210mm !important; height: 297mm !important; min-height: 297mm !important; max-height: 297mm !important; box-sizing: border-box !important; padding: 8mm 12mm 9mm !important; margin: 0 !important; box-shadow: none !important; border: none !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa !important; }
         #resumenCuadernoContenido .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
-        #resumenCuadernoContenido .p-header-top { flex: 0 0 auto; margin-bottom: 7mm !important; }
-        #resumenCuadernoContenido .p-meta { flex: 0 0 auto; margin-bottom: 3mm !important; padding-bottom: 2mm !important; }
-        #resumenCuadernoContenido .p-body-lines { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-        #resumenCuadernoContenido .pagina-cuaderno { flex: 1 1 auto; width: 100%; min-height: 0 !important; overflow: hidden; background-size: auto 26px; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px) !important; display: flex; flex-direction: column; }
+        #resumenCuadernoContenido .p-header-top { flex: 0 0 auto; margin-bottom: 2mm !important; }
+        #resumenCuadernoContenido .p-header-side { width: 86px !important; flex: 0 0 86px !important; }
+        #resumenCuadernoContenido .p-qr-link { width: 62px !important; display: block !important; margin-left: auto !important; text-decoration: none !important; }
+        #resumenCuadernoContenido .p-qr-link img { width: 62px !important; height: 62px !important; display: block !important; object-fit: contain !important; border: 0 !important; border-radius: 0 !important; padding: 0 !important; background: transparent !important; }
+        #resumenCuadernoContenido .p-qr-link span { display: none !important; }
+        #resumenCuadernoContenido .p-meta { flex: 0 0 auto; margin-bottom: 1mm !important; padding-bottom: 1mm !important; }
+        #resumenCuadernoContenido .p-body-lines { flex: 0 0 780px !important; min-height: 780px !important; max-height: 780px !important; margin-top: 1px !important; margin-bottom: 2mm !important; overflow: hidden; display: flex; flex-direction: column; }
+        #resumenCuadernoContenido .pagina-cuaderno { flex: 0 0 780px !important; width: 100%; height: 780px !important; min-height: 780px !important; max-height: 780px !important; overflow: hidden; background-size: 100% 26px !important; background-position: top left !important; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 25px, #cbd5e1 25px, #cbd5e1 26px) !important; display: flex; flex-direction: column; }
+        #resumenCuadernoContenido .encabezado-asiento.continuacion .titulo-asiento { padding: 0 128px 0 8px !important; text-align: center !important; text-transform: none !important; }
+        #resumenCuadernoContenido .encabezado-asiento.continuacion .fecha-asiento { display: block !important; }
         #resumenCuadernoContenido .lapicero { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; font-size: 17px; line-height: 26px; overflow-wrap: anywhere; word-break: break-word; }
         #resumenCuadernoContenido .modulo-contenido, #resumenCuadernoContenido .almacen-detalle, #resumenCuadernoContenido .maquinaria-bloque { overflow-wrap: anywhere !important; word-break: break-word !important; }
         #resumenCuadernoContenido .van-final { margin-top: auto !important; text-align: right !important; padding-right: 8px !important; }
-        #resumenCuadernoContenido .p-footer { flex: 0 0 auto; margin-top: 6mm !important; padding-top: 0 !important; page-break-inside: avoid; break-inside: avoid; }
+        #resumenCuadernoContenido .p-footer { flex: 0 0 auto; margin-top: auto !important; padding-top: 5mm !important; padding-bottom: 2mm !important; page-break-inside: avoid; break-inside: avoid; }
         #resumenCuadernoContenido .p-sig { page-break-inside: avoid; break-inside: avoid; }
     }
     @media (max-width: 768px) {
@@ -50,7 +56,7 @@ RESUMEN_ASIENTO_HTML = """
         <div class="resumen-head">
             <div>
                 <h5><i class="bi bi-journal-text me-2"></i>Resumen final del asiento</h5>
-                <small>Vista previa de la hoja asentada, lista para exportar.</small>
+                <small>Vista previa A4 paginada, exactamente como saldrá en PDF.</small>
             </div>
             <div class="resumen-actions">
                 <button type="button" class="resumen-btn dark" onclick="actualizarResumenCuaderno()"><i class="bi bi-arrow-clockwise me-1"></i>Actualizar</button>
@@ -95,9 +101,14 @@ RESUMEN_ASIENTO_HTML = """
     function actualizarResumenCuaderno() {
         if (typeof window.samuActualizarCuaderno === 'function') window.samuActualizarCuaderno();
         else if (typeof sincronizarDatos === 'function') sincronizarDatos();
-        const origen = document.getElementById('papelOficial');
         const destino = document.getElementById('resumenCuadernoContenido');
-        if (!origen || !destino) return;
+        if (!destino) return;
+        if (typeof window.samuPrepararResumenPDF === 'function') {
+            window.samuPrepararResumenPDF();
+            return;
+        }
+        const origen = document.getElementById('papelOficial');
+        if (!origen) return;
         destino.innerHTML = origen.outerHTML;
         aplicarZoomResumenCuaderno();
     }
@@ -122,10 +133,8 @@ RESUMEN_ASIENTO_HTML = """
     }
 
     function exportarResumenPDF() {
-        if (typeof window.samuPrepararResumenPDF === 'function') window.samuPrepararResumenPDF();
-        else actualizarResumenCuaderno();
+        actualizarResumenCuaderno();
         imprimirResumenEnVentana();
-        setTimeout(actualizarResumenCuaderno, 700);
     }
 
     function imprimirResumenEnVentana() {
@@ -152,8 +161,9 @@ RESUMEN_ASIENTO_HTML = """
                         width: 210mm;
                         height: 297mm;
                         min-height: 297mm;
+                        max-height: 297mm;
                         box-sizing: border-box;
-                        padding: 12mm 14mm 20mm;
+                        padding: 8mm 12mm 9mm;
                         margin: 0;
                         page-break-after: always;
                         break-after: page;
@@ -167,26 +177,33 @@ RESUMEN_ASIENTO_HTML = """
                         color: #000;
                     }
                     .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
-                    .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7mm; flex: 0 0 auto; }
+                    .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2mm; flex: 0 0 auto; }
+                    .p-header-side { width: 86px; flex: 0 0 86px; }
+                    .p-qr-link { width: 62px; display: block; margin-left: auto; text-decoration: none; }
+                    .p-qr-link img { width: 62px; height: 62px; display: block; object-fit: contain; border: 0; border-radius: 0; padding: 0; background: transparent; }
+                    .p-qr-link span { display: none; }
                     .p-title-box { text-align: center; flex: 1; margin-left: 0; }
                     .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0; }
                     .p-num { font-size: 24px; font-weight: bold; }
-                    .p-meta { flex: 0 0 auto; margin-bottom: 3mm; padding-bottom: 2mm; border-bottom: 3px solid #000; }
-                    .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 4px; }
+                    .p-meta { flex: 0 0 auto; margin-bottom: 1mm; padding-bottom: 1mm; border-bottom: 3px solid #000; }
+                    .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 2px; }
                     .p-meta-field { display: flex; align-items: flex-end; min-width: 0; }
                     .p-meta-field.fecha { flex: 0 0 46%; }
                     .p-meta-field.modalidad { flex: 1 1 auto; }
-                    .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
+                    .p-row { display: flex; align-items: flex-end; margin-bottom: 2px; }
                     .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
-                    .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
-                    .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; font-weight: 500; white-space: nowrap; }
-                    .p-body-lines { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+                    .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 17px; }
+                    .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 16px; font-weight: 500; white-space: nowrap; }
+                    .p-body-lines { flex: 0 0 780px; min-height: 780px; max-height: 780px; margin-top: 1px; margin-bottom: 2mm; overflow: hidden; display: flex; flex-direction: column; }
                     .pagina-cuaderno {
-                        flex: 1 1 auto;
-                        min-height: 0;
-                        background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px);
+                        flex: 0 0 780px;
+                        height: 780px;
+                        min-height: 780px;
+                        max-height: 780px;
+                        background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 25px, #cbd5e1 25px, #cbd5e1 26px);
                         overflow: hidden;
-                        background-size: auto 26px;
+                        background-size: 100% 26px;
+                        background-position: top left;
                         line-height: 26px;
                         display: flex;
                         flex-direction: column;
@@ -195,6 +212,8 @@ RESUMEN_ASIENTO_HTML = """
                     .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-weight: 700; }
                     .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
                     .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; }
+                    .encabezado-asiento.continuacion .titulo-asiento { padding: 0 128px 0 8px; text-align: center; text-transform: none; }
+                    .encabezado-asiento.continuacion .fecha-asiento { display: block; }
                     .modulo-redaccion { margin: 0; }
                     .modulo-titulo { display: block; font-weight: 700; color: #075985; }
                     .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
@@ -210,9 +229,9 @@ RESUMEN_ASIENTO_HTML = """
                     .maquinaria-fila { display: grid; grid-template-columns: 30% 20% 20% 15% 15%; column-gap: 0; padding-left: 44px; line-height: 26px; font-size: 16px; white-space: nowrap; }
                     .maquinaria-fila span { min-width: 0; white-space: nowrap; overflow: visible; }
                     .van-final { margin-top: auto; display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
-                    .p-footer { flex: 0 0 auto; display: flex; justify-content: space-between; margin-top: 6mm; font-size: 12px; font-weight: bold; color: #000; page-break-inside: avoid; break-inside: avoid; }
+                    .p-footer { flex: 0 0 auto; display: flex; justify-content: space-between; margin-top: auto; padding-top: 5mm; padding-bottom: 2mm; font-size: 12px; font-weight: bold; color: #000; page-break-inside: avoid; break-inside: avoid; }
                     .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
-                    .page-counter { position: absolute; right: 14mm; bottom: 6mm; font-size: 10px; font-weight: 700; color: #64748b; }
+                    .page-counter { position: absolute; right: 14mm; bottom: 5mm; font-size: 9px; font-weight: 600; color: #94a3b8; }
                 </style>
             </head>
             <body>${contenido.innerHTML}</body>

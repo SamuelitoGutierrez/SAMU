@@ -5,10 +5,17 @@
 
 from flask import Blueprint, render_template_string, session, redirect, url_for, request, jsonify
 from navbar import obtener_navbar
-from datetime import datetime
+from datetime import datetime, timedelta
 from cuaderno_obra import CUADERNO_OBRA_CSS, CUADERNO_OBRA_JS, obtener_cuaderno_obra_html
 from resumen_asiento import RESUMEN_ASIENTO_HTML
-from cuaderno_store import guardar_asiento, obtener_asiento, obtener_personal_gastos_anterior
+from cuaderno_store import (
+    extraer_ocurrencias_residencia,
+    guardar_asiento,
+    obtener_asiento,
+    obtener_asiento_por_fecha,
+    obtener_inspector_asiento,
+    obtener_personal_gastos_anterior,
+)
 
 # ==============================================================================
 # IMPORTACIÓN DINÁMICA
@@ -66,6 +73,41 @@ def api_carryover_residencia():
     })
 
 
+@residencia_bp.route('/residencia/api/ocurrencias-previas')
+def api_ocurrencias_previas_residencia():
+    if 'usuario_id' not in session:
+        return jsonify({"ok": False, "error": "No autorizado"}), 401
+    fecha_raw = request.args.get("fecha") or datetime.now().strftime('%Y-%m-%d')
+    try:
+        fecha_actual = datetime.strptime(fecha_raw, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"ok": False, "error": "Fecha inválida"}), 400
+
+    dias_retroceso = 2 if fecha_actual.weekday() == 0 else 1
+    fecha_anterior = fecha_actual - timedelta(days=dias_retroceso)
+    fecha_anterior_iso = fecha_anterior.strftime("%Y-%m-%d")
+
+    asiento_residencia = obtener_asiento_por_fecha(fecha_anterior_iso)
+    asiento_supervision = obtener_inspector_asiento(fecha=fecha_anterior_iso)
+    ocurrencia_residencia = extraer_ocurrencias_residencia(asiento_residencia) if asiento_residencia else ""
+    ocurrencia_supervision = (asiento_supervision or {}).get("ocurrencias") or ""
+
+    return jsonify({
+        "ok": True,
+        "fecha": fecha_raw,
+        "fecha_anterior": fecha_anterior_iso,
+        "residencia": {
+            "numero": asiento_residencia.get("numero") if asiento_residencia else None,
+            "texto": ocurrencia_residencia,
+        },
+        "supervision": {
+            "numero": asiento_supervision.get("numero") if asiento_supervision else None,
+            "residencia_numero": asiento_supervision.get("residencia_numero") if asiento_supervision else None,
+            "texto": ocurrencia_supervision,
+        },
+    })
+
+
 @residencia_bp.route('/residencia/api/asiento', methods=['POST'])
 @residencia_bp.route('/guardar_asiento', methods=['POST'])
 def api_guardar_asiento():
@@ -116,7 +158,10 @@ def api_guardar_asiento():
     if resultado.get("ok"):
         estado_api = str(resultado.get("estado") or estado).strip().lower().replace(" ", "_")
         fecha_guardada = data.get("fecha") or resultado.get("fecha") or datetime.now().strftime('%Y-%m-%d')
-        redirect_url = f"/cuaderno/resumen?fecha={fecha_guardada}&asiento={numero}" if estado_api == "borrador" else f"/resumen_asiento/{fecha_guardada}"
+        redirect_url = "" if estado_api == "borrador" else f"/resumen_asiento/{fecha_guardada}"
+        modulo_activo = data.get("modulo_activo")
+        if not modulo_activo and isinstance(contenido, dict):
+            modulo_activo = (contenido.get("estado_local") or {}).get("step")
         resultado = {
             **resultado,
             "status": "success",
@@ -124,6 +169,7 @@ def api_guardar_asiento():
             "estado": estado_api,
             "estado_label": resultado.get("estado"),
             "redirect_url": redirect_url,
+            "modulo_activo": modulo_activo,
         }
     return jsonify(resultado), status
 
@@ -150,6 +196,18 @@ def redaccion_asiento_residente():
         <script>
             window.tailwind = window.tailwind || {{}};
             window.tailwind.config = {{ corePlugins: {{ preflight: false }} }};
+            (function() {{
+                try {{
+                    const params = new URLSearchParams(window.location.search || '');
+                    const pasoURL = parseInt(params.get('paso') || params.get('modulo') || '', 10);
+                    const estado = JSON.parse(localStorage.getItem('samu_residencia_asiento_en_edicion') || sessionStorage.getItem('samu_residencia_asiento_en_edicion') || 'null');
+                    const pasoLocal = parseInt(localStorage.getItem('samu_residencia_modulo_activo') || sessionStorage.getItem('samu_residencia_modulo_activo') || estado?.step || '', 10);
+                    window.__samuModuloInicial = Math.max(1, Math.min(10, pasoURL || pasoLocal || 1));
+                    document.documentElement.classList.add('samu-restoring');
+                }} catch (e) {{
+                    window.__samuModuloInicial = 1;
+                }}
+            }})();
         </script>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
@@ -160,36 +218,58 @@ def redaccion_asiento_residente():
             @keyframes floatInUp {{ from {{ opacity: 0; transform: translateY(30px); }} to {{ opacity: 1; transform: translateY(0); }} }}
             @keyframes floatOutDown {{ from {{ opacity: 1; transform: translateY(0); }} to {{ opacity: 0; transform: translateY(30px); }} }}
             
-            .stepper-container {{ position: fixed; top: var(--nav-height); left: 0; width: 100%; background: rgba(255,255,255,0.84); backdrop-filter: blur(22px); border-bottom: 1px solid rgba(15,23,42,0.08); z-index: 900; padding: 14px 18px 16px; overflow-x: auto; white-space: nowrap; display: grid; grid-template-columns: repeat(11, minmax(106px, 1fr)); align-items: center; gap: 10px; opacity: 0; pointer-events: none; transition: opacity 0.5s; box-shadow: 0 14px 35px rgba(15,23,42,0.05); }}
-            .stepper-container::-webkit-scrollbar {{ display: none; }}
-            .step-btn {{ position: relative; border: 1px solid #dbeafe; border-radius: 999px; padding: 10px 16px 10px 34px; min-width: 112px; max-width: 175px; font-size: 10.5px; line-height: 1.15; font-weight: 800; color: #475569; background: rgba(255,255,255,0.92); cursor: pointer; transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease; transform-origin: center; box-shadow: 0 8px 20px rgba(15,23,42,0.04); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
-            .step-btn::before {{ content: attr(data-percent); position: absolute; left: 7px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #f1f5f9; color: #64748b; font-size: 8px; font-weight: 900; box-shadow: inset 0 0 0 1px #e2e8f0; }}
-            .step-btn::after {{ content: ""; position: absolute; left: 12px; right: 12px; bottom: -7px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, #0284c7 var(--pct, 0%), #e2e8f0 0); opacity: .9; }}
-            .step-btn:hover {{ transform: translateY(-2px) scale(1.03); border-color: #0284c7; box-shadow: 0 16px 30px rgba(2,132,199,0.15); z-index: 3; }}
-            .step-btn.active {{ background: #ffffff !important; color: #020617 !important; font-weight: 900 !important; transform: scale(1.04); box-shadow: 0 16px 35px rgba(15,23,42,0.15); border-color: #020617 !important; margin: 0 3px; }}
-            .step-btn.completed {{ border-color: #22c55e; color: #166534; background: #f0fdf4; }}
-            .step-btn.completed::before {{ content: "✓"; background: #22c55e; color: #fff; box-shadow: 0 6px 14px rgba(34,197,94,.25); }}
-            .step-btn.missing {{ border-color: #fed7aa; color: #9a3412; background: #fff7ed; }}
+            .stepper-container {{ position: fixed; top: calc(var(--nav-height) + 16px); bottom: 92px; left: 18px; width: 218px; background: transparent; backdrop-filter: none; border: 0; border-radius: 0; z-index: 900; padding: 4px 34px 4px 0; overflow-y: auto; overflow-x: visible; white-space: normal; display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: 8px; opacity: 0; pointer-events: none; transition: opacity 0.5s; box-shadow: none; }}
+            .stepper-container::before {{ content: none; display: none; }}
+            .stepper-container::-webkit-scrollbar {{ width: 0; height: 0; display: none; }}
+            .step-btn {{ position: relative; width: 100%; min-height: 48px; border: 0; border-radius: 18px; padding: 12px 12px 12px 46px; min-width: 0; max-width: none; font-size: 10.5px; line-height: 1.12; letter-spacing: .045em; text-transform: uppercase; font-weight: 950; color: #475569; background: rgba(255,255,255,0.62); cursor: pointer; transition: transform .36s cubic-bezier(.16,1,.3,1), color .24s ease, background .24s ease, box-shadow .36s cubic-bezier(.16,1,.3,1); transform-origin: left center; box-shadow: none; overflow: visible; text-align: left; will-change: transform; }}
+            .step-label-short, .step-label-full {{ position: absolute; left: 46px; right: 14px; top: 50%; display: block; transform: translateY(-50%); transition: opacity .22s ease; will-change: opacity; }}
+            .step-label-short {{ opacity: 1; }}
+            .step-label-full {{ opacity: 0; font-size: 9.5px; line-height: 1.1; letter-spacing: .025em; white-space: normal; pointer-events: none; }}
+            .step-btn::before {{ content: ""; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 12px; display: grid; place-items: center; background: #f1f5f9; color: #64748b; font-size: 13px; font-weight: 900; box-shadow: inset 0 0 0 1px #e2e8f0; }}
+            .step-main-icon {{ position: absolute; left: 14px; top: 50%; transform: translateY(-50%); z-index: 2; font-size: 14px; line-height: 1; color: #64748b; pointer-events: none; }}
+            .step-btn::after {{ content: ""; position: absolute; left: 46px; right: 14px; bottom: 7px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, #0284c7 var(--pct, 0%), #e2e8f0 0); opacity: .9; }}
+            .step-btn:hover {{ transform: translateX(10px) scale(1.03); color: #0f172a; background: rgba(255,255,255,0.92); box-shadow: 0 16px 30px rgba(2,132,199,0.15); z-index: 3; }}
+            .step-btn:hover .step-label-short {{ opacity: 0; }}
+            .step-btn:hover .step-label-full {{ opacity: 1; }}
+            .step-btn.active {{ background: #ffffff !important; color: #020617 !important; font-weight: 950 !important; transform: translateX(6px) scale(1.02); box-shadow: 0 16px 35px rgba(15,23,42,0.13); }}
+            .step-btn:hover .step-main-icon, .step-btn.active .step-main-icon {{ color: #0284c7; }}
+            .step-btn.completed {{ color: #166534; background: rgba(240,253,244,.72); }}
+            .step-btn.completed::before {{ background: #22c55e; color: #fff; box-shadow: 0 6px 14px rgba(34,197,94,.25); }}
+            .step-btn.completed .step-main-icon {{ color: #fff; }}
+            .step-btn.missing {{ color: #9a3412; background: rgba(255,247,237,.78); }}
             .step-btn.missing::before {{ background: #ffedd5; color: #9a3412; }}
-            .step-btn.resumen {{ color: #fff; background: linear-gradient(135deg, #0f172a, #0263a0); border-color: #0263a0; }}
-            .step-btn.resumen::before {{ content: "Ver"; width: 24px; background: rgba(255,255,255,.16); color: #fff; box-shadow: none; }}
+            .step-btn.resumen {{ color: #fff; background: linear-gradient(135deg, #0f172a, #0263a0); }}
+            .step-btn.resumen::before {{ background: rgba(255,255,255,.16); color: #fff; box-shadow: none; }}
+            .step-btn.resumen .step-main-icon {{ color: #fff; }}
             .step-btn.resumen::after {{ background: linear-gradient(90deg, #38bdf8 100%, #38bdf8 0); }}
+            .sidebar-accordion {{ overflow: visible; }}
+            .step-btn.accordion-toggle {{ display: flex; align-items: center; justify-content: flex-start; }}
+            .step-btn.accordion-toggle .step-label-short, .step-btn.accordion-toggle .step-label-full {{ right: 30px; }}
+            .step-btn.accordion-toggle .accordion-caret {{ margin-left: auto; font-size: 12px; transition: transform .3s ease; }}
+            .sidebar-accordion.open .accordion-caret {{ transform: rotate(180deg); }}
+            .sidebar-submenu {{ max-height: 0; overflow: hidden; padding-left: 18px; transition: max-height .46s cubic-bezier(.16,1,.3,1), opacity .3s ease, transform .46s cubic-bezier(.16,1,.3,1), margin .32s ease; opacity: 0; transform: translateY(-8px); will-change: max-height, opacity, transform; }}
+            .sidebar-accordion.open .sidebar-submenu {{ max-height: 112px; margin-top: 6px; opacity: 1; transform: translateY(0); }}
+            .sidebar-sub-btn {{ width: calc(100% - 8px); border: 0; border-radius: 14px; margin: 4px 0; padding: 9px 10px 9px 18px; text-align: left; font-size: 10px; line-height: 1.1; letter-spacing: .035em; text-transform: uppercase; font-weight: 900; color: #075985; background: rgba(224,242,254,.72); transition: transform .42s cubic-bezier(.16,1,.3,1), background .25s ease, color .25s ease, box-shadow .42s cubic-bezier(.16,1,.3,1); will-change: transform; }}
+            .sidebar-sub-btn:hover {{ transform: translateX(10px) scale(1.03); background: #e0f2fe; color: #0f172a; box-shadow: 0 12px 24px rgba(2,132,199,.14); }}
             
-            #globalTooltip {{ position: fixed; background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(10px); color: #ffffff; padding: 10px 14px; border-radius: 14px; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 18px 35px rgba(15,23,42,0.25); pointer-events: none; z-index: 999999; opacity: 0; transform: translateY(10px) scale(.96); transition: opacity 0.2s ease, transform 0.2s ease; border: 1px solid rgba(255,255,255,.12); }}
-            #globalTooltip.visible {{ opacity: 1; transform: translateY(0); }}
+            #globalTooltip {{ position: fixed; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(10px); color: #ffffff; padding: 11px 15px; border-radius: 14px; font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 18px 35px rgba(15,23,42,0.25); pointer-events: none; z-index: 999999; opacity: 0; transform: translateX(10px) scale(.96); transition: opacity 0.2s ease, transform 0.2s ease; border: 1px solid rgba(255,255,255,.12); }}
+            #globalTooltip.visible {{ opacity: 1; transform: translateX(0) scale(1); }}
 
             .elegant-alert {{ position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 50px; padding: 12px 25px; display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,1); z-index: 9999999; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; pointer-events: none; }}
             .elegant-alert.show {{ transform: translateX(-50%) translateY(0); opacity: 1; }}
 
-            .split-layout {{ display: flex; gap: 40px; max-width: 1500px; margin: 140px auto 0 auto; padding: 0 20px; align-items: flex-start; filter: blur(5px); pointer-events: none; transition: filter 0.5s; }}
+            .split-layout {{ display: grid; grid-template-columns: minmax(500px, .92fr) minmax(680px, 1.08fr); gap: 24px; max-width: none; margin: calc(var(--nav-height) + 18px) 24px 0 260px; padding: 0; align-items: flex-start; filter: blur(5px); pointer-events: none; transition: filter 0.5s; }}
             .split-layout.unlocked {{ filter: blur(0); pointer-events: all; }}
-            .form-column {{ flex: 1; max-width: 600px; }}
-            .preview-column {{ flex: 1; position: sticky; top: 140px; height: calc(100vh - 240px); overflow-y: auto; }}
+            .form-column {{ min-width: 0; width: 100%; max-width: none; }}
+            .preview-column {{ min-width: 0; position: sticky; top: calc(var(--nav-height) + 18px); height: calc(100vh - 154px); overflow-y: auto; display: flex; justify-content: center; }}
+            .preview-column .cuaderno-preview-pages {{ width: min(100%, 840px); }}
+            .preview-column .papel-fisico {{ width: 100%; }}
             .mobile-preview-btn {{ position: fixed; right: 18px; bottom: 88px; z-index: 920; border: none; border-radius: 999px; padding: 13px 16px; color: #fff; background: linear-gradient(135deg, #0f172a, #0263a0); box-shadow: 0 18px 38px rgba(15,23,42,.26); font-size: 12px; font-weight: 900; display: none; align-items: center; gap: 8px; opacity: 0; pointer-events: none; transform: translateY(12px); transition: .25s ease; }}
             .mobile-preview-btn.unlocked {{ opacity: 1; pointer-events: all; transform: translateY(0); }}
             
             .step-view {{ display: none; opacity: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(25px); padding: 30px; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,1);}}
             .step-view.active {{ display: block; animation: floatInUp 0.35s forwards; }}
+            .samu-restoring .step-view.active {{ animation: none !important; opacity: 1; transform: none; }}
             .step-view.exit {{ display: block; animation: floatOutDown 0.3s forwards; }}
             .step-title {{ font-size: 22px; font-weight: 800; margin-bottom: 25px; color: #0f172a; letter-spacing: -0.5px;}}
 
@@ -211,6 +291,11 @@ def redaccion_asiento_residente():
             .bottom-bar.unlocked {{ opacity: 1; pointer-events: all; }}
             .asiento-actions {{ display: none; gap: 8px; flex-wrap: wrap; align-items: center; margin-left: auto; }}
             .asiento-actions.visible {{ display: flex; }}
+            .save-inline-status {{ display: inline-flex; align-items: center; gap: 7px; min-width: 148px; min-height: 34px; padding: 7px 12px; border-radius: 999px; font-size: 11px; font-weight: 900; color: #64748b; background: rgba(248,250,252,.9); border: 1px solid rgba(226,232,240,.9); opacity: 0; transform: translateY(4px); pointer-events: none; transition: opacity .22s ease, transform .22s ease, color .22s ease, background .22s ease; }}
+            .save-inline-status.visible {{ opacity: 1; transform: translateY(0); }}
+            .save-inline-status.saving {{ color: #075985; background: #e0f2fe; border-color: #bae6fd; }}
+            .save-inline-status.saved {{ color: #166534; background: #dcfce7; border-color: #bbf7d0; }}
+            .save-inline-status.error {{ color: #991b1b; background: #fee2e2; border-color: #fecaca; }}
             .asiento-lock-banner {{ display: none; position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%); z-index: 930; border-radius: 999px; padding: 10px 16px; background: #0f172a; color: #fff; font-size: 12px; font-weight: 800; box-shadow: 0 18px 34px rgba(15,23,42,.22); }}
             .asiento-lock-banner.visible {{ display: inline-flex; gap: 8px; align-items: center; }}
             .confirm-seat-overlay {{ position: fixed; inset: 0; z-index: 999999; display: none; align-items: center; justify-content: center; padding: 18px; background: rgba(15,23,42,.48); backdrop-filter: blur(14px); }}
@@ -251,32 +336,61 @@ def redaccion_asiento_residente():
             .inicio-input {{ border-radius: 16px !important; border: 1px solid #dbeafe !important; background: #f8fafc !important; font-weight: 800; }}
             .inicio-input:focus {{ border-color: #0263a0 !important; box-shadow: 0 0 0 4px rgba(2,99,160,0.12) !important; background: #fff !important; }}
             @media (max-width: 1200px) {{
-                .stepper-container {{ grid-template-columns: repeat(11, minmax(116px, 1fr)); }}
-                .split-layout {{ gap: 22px; padding: 0 16px; }}
-                .form-column {{ max-width: 560px; }}
+                .stepper-container {{ left: 12px; width: 190px; padding-right: 26px; }}
+                .split-layout {{ grid-template-columns: minmax(430px, .95fr) minmax(500px, 1.05fr); gap: 18px; margin-left: 214px; margin-right: 14px; }}
+                .step-btn {{ min-height: 46px; padding-left: 44px; font-size: 9.8px; }}
+                .step-label-short, .step-label-full {{ left: 44px; }}
+            }}
+            @media (min-width: 993px) and (max-width: 1180px) {{
+                .preview-column .cuaderno-preview-pages {{ width: min(100%, 760px); }}
+                .step-view {{ padding: 24px; }}
             }}
             @media (max-width: 992px) {{
-                body {{ padding-bottom: 112px; }}
-                .stepper-container {{ padding: 12px 12px 15px; display: flex; gap: 8px; overflow-x: auto; }}
-                .step-btn {{ flex: 0 0 auto; min-width: 126px; max-width: 170px; padding-right: 16px; }}
-                .step-btn:hover {{ transform: translateY(-2px) scale(1.02); }}
+                body {{ padding-bottom: 156px; overflow-x: hidden; }}
+                .stepper-container {{ top: var(--nav-height); left: 0; width: 100%; max-height: none; border-radius: 0; border-left: 0; border-right: 0; padding: 12px 12px 15px; display: flex; flex-direction: row; gap: 8px; overflow-x: auto; overflow-y: hidden; white-space: nowrap; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; background: rgba(255,255,255,.86); backdrop-filter: blur(18px); }}
+                .stepper-container::before {{ display: none; }}
+                .step-btn {{ flex: 0 0 auto; min-width: 132px; max-width: 174px; padding-right: 16px; scroll-snap-align: start; }}
+                .step-btn::after {{ left: 12px; right: 12px; top: auto; bottom: -7px; width: auto; height: 3px; background: linear-gradient(90deg, #0284c7 var(--pct, 0%), #e2e8f0 0); }}
+                .step-btn:hover {{ transform: translateX(6px) scale(1.02); }}
                 .step-btn.active {{ transform: scale(1.02); margin: 0 2px; }}
-                .split-layout {{ display: block; max-width: 760px; margin-top: 132px; padding: 0 14px; }}
+                .sidebar-accordion {{ flex: 0 0 auto; }}
+                .sidebar-accordion.open .sidebar-submenu {{ position: fixed; left: 12px; right: 12px; top: calc(var(--nav-height) + 58px); z-index: 950; display: flex; gap: 8px; max-height: 62px; padding: 8px; border-radius: 18px; background: rgba(255,255,255,.96); box-shadow: 0 18px 40px rgba(15,23,42,.14); }}
+                .sidebar-sub-btn {{ flex: 1 1 0; width: auto; margin: 0; white-space: normal; }}
+                .split-layout {{ display: block; max-width: 820px; margin: 132px auto 0 auto; padding: 0 14px; }}
                 .form-column {{ max-width: none; width: 100%; }}
+                #formResidencia input, #formResidencia textarea, #formResidencia select {{ font-size: 16px; }}
                 .preview-column {{ display: none; }}
                 .mobile-preview-btn {{ display: inline-flex; }}
                 .step-view {{ padding: 22px; border-radius: 22px; }}
-                .bottom-bar {{ padding: 12px 14px; gap: 10px; }}
-                .bottom-bar .btn {{ padding-left: 16px !important; padding-right: 16px !important; font-size: 12px; }}
+                .bottom-bar {{ padding: 10px 12px; gap: 8px; flex-wrap: wrap; align-items: center; }}
+                .bottom-bar .btn {{ padding: 10px 14px !important; font-size: 12px; }}
+                .asiento-actions {{ width: 100%; order: 3; justify-content: center; margin-left: 0; }}
+                #moduloNavActions {{ flex: 1 1 auto; justify-content: flex-end; min-width: 0; }}
+                .save-inline-status {{ order: 2; min-width: auto; flex: 1 1 160px; justify-content: center; }}
                 .asiento-lock-banner {{ bottom: 90px; max-width: calc(100vw - 24px); border-radius: 18px; }}
             }}
             @media (max-width: 576px) {{
-                .split-layout {{ margin-top: 126px; padding: 0 10px; }}
+                body {{ padding-bottom: 182px; }}
+                .stepper-container {{ padding: 10px 10px 13px; gap: 7px; }}
+                .step-btn {{ min-width: 116px; max-width: 144px; min-height: 46px; font-size: 9.3px; border-radius: 15px; }}
+                .step-label-full {{ font-size: 8.7px; }}
+                .split-layout {{ margin: 124px auto 0 auto; padding: 0 10px; }}
                 .step-view {{ padding: 18px 14px; border-radius: 20px; }}
                 .step-title {{ font-size: 18px; margin-bottom: 18px; }}
-                .mobile-preview-btn {{ right: 12px; bottom: 82px; padding: 12px 14px; }}
-                .bottom-bar {{ align-items: center; }}
+                .bottom-bar {{ padding: 9px 10px; }}
+                .bottom-bar .btn {{ flex: 1 1 auto; padding: 10px 11px !important; }}
+                #btnAtras {{ flex: 0 0 auto; }}
+                #moduloNavActions {{ width: 100%; order: 4; }}
+                #moduloNavActions .btn {{ min-width: 0; }}
+                .save-inline-status {{ width: 100%; order: 2; }}
+                .mobile-preview-btn {{ right: 12px; bottom: 114px; padding: 11px 13px; }}
+                .bottom-bar {{ align-items: stretch; justify-content: center; }}
                 .bottom-bar .d-flex {{ gap: 6px !important; }}
+                #btnAtras {{ flex: 1 1 100px; }}
+                #moduloNavActions {{ width: 100%; order: 2; display: grid !important; grid-template-columns: 1fr 1.3fr; gap: 8px !important; }}
+                #moduloNavActions.d-none {{ display: none !important; }}
+                #moduloNavActions .btn {{ width: 100%; margin: 0; }}
+                .asiento-actions .btn {{ flex: 1 1 100%; width: 100%; }}
             }}
         </style>
     </head>
@@ -351,17 +465,28 @@ def redaccion_asiento_residente():
         </div>
 
         <div class="stepper-container" id="stepperBar">
-            <button type="button" class="step-btn active" id="btnStep1" data-step="1" data-percent="0%" onclick="window.irModulo(1)">1. Jornal</button>
-            <button type="button" class="step-btn" id="btnStep2" data-step="2" data-percent="0%" onclick="window.irModulo(2)">2. Personal</button>
-            <button type="button" class="step-btn" id="btnStep3" data-step="3" data-percent="0%" onclick="window.irModulo(3)">3. Partidas</button>
-            <button type="button" class="step-btn" id="btnStep4" data-step="4" data-percent="0%" onclick="window.irModulo(4)">4. Mayor Metrado</button>
-            <button type="button" class="step-btn" id="btnStep5" data-step="5" data-percent="0%" onclick="window.irModulo(5)">5. Sub Partidas</button>
-            <button type="button" class="step-btn" id="btnStep6" data-step="6" data-percent="0%" onclick="window.irModulo(6)">6. Actividades</button>
-            <button type="button" class="step-btn" id="btnStep7" data-step="7" data-percent="0%" onclick="window.irModulo(7)">7. Almacén</button>
-            <button type="button" class="step-btn" id="btnStep8" data-step="8" data-percent="0%" onclick="window.irModulo(8)">8. Maquinaria</button>
-            <button type="button" class="step-btn" id="btnStep9" data-step="9" data-percent="0%" onclick="window.irModulo(9)">9. Herramientas</button>
-            <button type="button" class="step-btn" id="btnStep10" data-step="10" data-percent="0%" onclick="window.irModulo(10)">10. Ocurrencias</button>
-            <button type="button" class="step-btn resumen" id="btnResumenCuaderno" data-percent="Ver" data-tooltip="Resumen del cuaderno · Vista previa completa" onclick="abrirResumenCuaderno()">Resumen</button>
+            <button type="button" class="step-btn active" id="btnStep1" data-step="1" data-percent="0%" onclick="window.irModulo(1)"><i class="bi bi-calendar-check step-main-icon"></i><span class="step-label-short">JORNAL</span><span class="step-label-full">JORNAL DE TRABAJO</span></button>
+            <div class="sidebar-accordion" id="sidebarM2Accordion">
+                <button type="button" class="step-btn accordion-toggle" id="btnStep2" data-step="2" data-percent="0%" onclick="toggleModulo2Sidebar(event)">
+                    <i class="bi bi-people-fill step-main-icon"></i>
+                    <span class="step-label-short">PERSONAL</span>
+                    <span class="step-label-full">PERSONAL DE OBRA</span>
+                    <i class="bi bi-chevron-down accordion-caret"></i>
+                </button>
+                <div class="sidebar-submenu" id="sidebarM2Submenu">
+                    <button type="button" class="sidebar-sub-btn" onclick="abrirSubModuloPersonal('m2_panel_gastos')">Gastos Generales</button>
+                    <button type="button" class="sidebar-sub-btn" onclick="abrirSubModuloPersonal('m2_panel_directo')">Costo Directo</button>
+                </div>
+            </div>
+            <button type="button" class="step-btn" id="btnStep3" data-step="3" data-percent="0%" onclick="window.irModulo(3)"><i class="bi bi-list-check step-main-icon"></i><span class="step-label-short">PARTIDAS</span><span class="step-label-full">PARTIDAS EJECUTADAS</span></button>
+            <button type="button" class="step-btn" id="btnStep4" data-step="4" data-percent="0%" onclick="window.irModulo(4)"><i class="bi bi-rulers step-main-icon"></i><span class="step-label-short">METRADO</span><span class="step-label-full">MAYOR METRADO</span></button>
+            <button type="button" class="step-btn" id="btnStep5" data-step="5" data-percent="0%" onclick="window.irModulo(5)"><i class="bi bi-diagram-3 step-main-icon"></i><span class="step-label-short">SUB PART.</span><span class="step-label-full">SUB PARTIDAS</span></button>
+            <button type="button" class="step-btn" id="btnStep6" data-step="6" data-percent="0%" onclick="window.irModulo(6)"><i class="bi bi-clipboard2-check step-main-icon"></i><span class="step-label-short">ACTIVID.</span><span class="step-label-full">ACTIVIDADES</span></button>
+            <button type="button" class="step-btn" id="btnStep7" data-step="7" data-percent="0%" onclick="window.irModulo(7)"><i class="bi bi-box-seam step-main-icon"></i><span class="step-label-short">ALMACEN</span><span class="step-label-full">ALMACEN</span></button>
+            <button type="button" class="step-btn" id="btnStep8" data-step="8" data-percent="0%" onclick="window.irModulo(8)"><i class="bi bi-truck step-main-icon"></i><span class="step-label-short">MAQUIN.</span><span class="step-label-full">EQUIPO MECANICO</span></button>
+            <button type="button" class="step-btn" id="btnStep9" data-step="9" data-percent="0%" onclick="window.irModulo(9)"><i class="bi bi-tools step-main-icon"></i><span class="step-label-short">HERRAM.</span><span class="step-label-full">HERRAMIENTAS</span></button>
+            <button type="button" class="step-btn" id="btnStep10" data-step="10" data-percent="0%" onclick="window.irModulo(10)"><i class="bi bi-chat-square-text step-main-icon"></i><span class="step-label-short">OCURRENC.</span><span class="step-label-full">OCURRENCIAS</span></button>
+            <button type="button" class="step-btn resumen" id="btnResumenCuaderno" data-percent="Ver" onclick="abrirResumenCuaderno()"><i class="bi bi-journal-text step-main-icon"></i><span class="step-label-short">RESUMEN</span><span class="step-label-full">RESUMEN DEL CUADERNO</span></button>
         </div>
         <div id="globalTooltip"></div>
 
@@ -389,13 +514,14 @@ def redaccion_asiento_residente():
         <div class="bottom-bar shadow-lg" id="bottomBarUI">
             <button type="button" id="btnAtras" class="btn btn-light border fw-bold rounded-pill px-4 text-dark shadow-sm d-none" onclick="window.anteriorModulo()"><i class="bi bi-arrow-left"></i> Anterior</button>
             <div class="asiento-actions" id="asientoActions">
-                <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm" onclick="window.mostrarConfirmarGuardarBorrador()"><i class="bi bi-save2"></i> Guardar borrador</button>
-                <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" onclick="window.mostrarConfirmarCerrarAsiento()"><i class="bi bi-send-check-fill"></i> Enviar a Inspector</button>
+                <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm" onclick="window.mostrarConfirmarGuardarBorrador()"><i class="bi bi-save2"></i> Guardar como Borrador</button>
+                <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" id="btnEnviarInspector" onclick="window.mostrarConfirmarCerrarAsiento()"><i class="bi bi-send-check-fill"></i> Enviar a Inspector</button>
                 <button type="button" class="btn btn-dark fw-bold rounded-pill px-4 shadow-sm d-none" id="btnEditarComoDueno" onclick="habilitarEdicionComoDueno()"><i class="bi bi-unlock-fill"></i> Editar como dueño</button>
             </div>
+            <div class="save-inline-status" id="saveInlineStatus" aria-live="polite"><i class="bi bi-check2-circle"></i><span>Guardado local</span></div>
             <div class="d-flex gap-2 align-items-center ms-auto" id="moduloNavActions">
-                <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill px-4" onclick="window.siguienteModulo()">Omitir</button>
-                <button type="button" class="btn btn-dark fw-bold rounded-pill px-4" onclick="window.siguienteModulo()">Guardar y Continuar <i class="bi bi-arrow-right"></i></button>
+                <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill px-4" onclick="window.omitirModulo()">Omitir</button>
+                <button type="button" class="btn btn-dark fw-bold rounded-pill px-4" id="btnGuardarContinuar" onclick="window.guardarYContinuarModulo()">Guardar y Continuar <i class="bi bi-arrow-right"></i></button>
             </div>
         </div>
         <div class="asiento-lock-banner" id="asientoLockBanner"><i class="bi bi-lock-fill"></i> Asiento firmado. La edición de Residencia está bloqueada.</div>
@@ -415,6 +541,22 @@ def redaccion_asiento_residente():
                     <div class="confirm-seat-actions">
                         <button type="button" class="confirm-seat-btn cancel" id="confirmAccionCancelar" onclick="window.ocultarConfirmarAccionAsiento()">Cancelar</button>
                         <button type="button" class="confirm-seat-btn primary" id="confirmAccionBoton" onclick="window.confirmarAccionAsiento()">Sí, enviar a firma</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="confirm-seat-overlay" id="modalBorradorGuardado">
+            <div class="confirm-seat-card">
+                <div class="confirm-seat-hero draft">
+                    <div class="icon"><i class="bi bi-check-circle-fill"></i></div>
+                    <h5>Borrador guardado correctamente</h5>
+                    <p>El asiento fue guardado en la base de datos.</p>
+                </div>
+                <div class="confirm-seat-body">
+                    <div class="confirm-seat-actions">
+                        <button type="button" class="confirm-seat-btn primary draft" onclick="window.seguirAsentandoOtroDia()">Seguir asentando otro día</button>
+                        <button type="button" class="confirm-seat-btn cancel" onclick="window.cerrarModalBorradorGuardado()">Cerrar</button>
                     </div>
                 </div>
             </div>
@@ -523,6 +665,23 @@ def redaccion_asiento_residente():
             }};
             window.anteriorModulo = function() {{
                 window.irModulo((window.samuCurrentStep || 1) - 1);
+            }};
+            window.toggleModulo2Sidebar = function(event) {{
+                if (event) event.preventDefault();
+                const accordion = document.getElementById('sidebarM2Accordion');
+                const wasOpen = accordion?.classList.contains('open');
+                window.irModulo(2);
+                accordion?.classList.toggle('open', !wasOpen);
+            }};
+            window.abrirSubModuloPersonal = function(panelId) {{
+                window.irModulo(2);
+                document.getElementById('sidebarM2Accordion')?.classList.add('open');
+                setTimeout(() => {{
+                    const panel = document.getElementById(panelId);
+                    if (!panel) return;
+                    panel.classList.remove('closed');
+                    panel.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+                }}, 120);
             }};
             document.addEventListener('DOMContentLoaded', function() {{
                 document.getElementById('formResidencia')?.addEventListener('input', function() {{
@@ -639,17 +798,18 @@ def redaccion_asiento_residente():
                 const tooltip = document.getElementById('globalTooltip');
                 document.querySelectorAll('.step-btn').forEach(btn => {{
                     btn.addEventListener('mouseenter', () => {{
-                        tooltip.innerText = btn.dataset.tooltip || '';
+                        const text = btn.dataset.tooltip || '';
+                        if (!text) return;
+                        tooltip.innerText = text;
                         const rect = btn.getBoundingClientRect();
-                        tooltip.style.left = `${{rect.left + rect.width / 2}}px`;
-                        tooltip.style.top = `${{rect.bottom + 12}}px`;
-                        tooltip.style.transform = 'translateX(-50%) translateY(0) scale(1)';
+                        tooltip.style.left = `${{rect.right + 14}}px`;
+                        tooltip.style.top = `${{rect.top + rect.height / 2 - tooltip.offsetHeight / 2}}px`;
                         tooltip.classList.add('visible');
                     }});
                     btn.addEventListener('mousemove', () => {{
                         const rect = btn.getBoundingClientRect();
-                        tooltip.style.left = `${{rect.left + rect.width / 2}}px`;
-                        tooltip.style.top = `${{rect.bottom + 12}}px`;
+                        tooltip.style.left = `${{rect.right + 14}}px`;
+                        tooltip.style.top = `${{rect.top + rect.height / 2 - tooltip.offsetHeight / 2}}px`;
                     }});
                     btn.addEventListener('mouseleave', () => {{
                         tooltip.classList.remove('visible');
@@ -711,16 +871,17 @@ def redaccion_asiento_residente():
             }}
 
             // NAVEGACIÓN Y UX
-            function jumpToStep(stepIndex) {{ if (isAnimating || currentStep === stepIndex) return; isAnimating = true; const currentView = document.getElementById(`step${{currentStep}}`); currentView.classList.remove('active'); currentView.classList.add('exit'); document.getElementById(`btnStep${{currentStep}}`).classList.remove('active'); setTimeout(() => {{ currentView.classList.remove('exit'); currentStep = stepIndex; document.getElementById(`step${{currentStep}}`).classList.add('active'); document.getElementById(`btnStep${{currentStep}}`).classList.add('active'); const btnAtras = document.getElementById('btnAtras'); if (currentStep > 1) btnAtras.classList.remove('d-none'); else btnAtras.classList.add('d-none'); actualizarAccionesAsiento(); if (typeof sincronizarDatos === "function") sincronizarDatos(); isAnimating = false; }}, 300); }}
+            function jumpToStep(stepIndex) {{ if (isAnimating || currentStep === stepIndex) return; isAnimating = true; const currentView = document.getElementById(`step${{currentStep}}`); currentView.classList.remove('active'); currentView.classList.add('exit'); document.getElementById(`btnStep${{currentStep}}`).classList.remove('active'); setTimeout(() => {{ currentView.classList.remove('exit'); currentStep = stepIndex; window.samuCurrentStep = stepIndex; document.getElementById(`step${{currentStep}}`).classList.add('active'); document.getElementById(`btnStep${{currentStep}}`).classList.add('active'); const btnAtras = document.getElementById('btnAtras'); if (currentStep > 1) btnAtras.classList.remove('d-none'); else btnAtras.classList.add('d-none'); actualizarAccionesAsiento(); if (typeof sincronizarDatos === "function") sincronizarDatos(); if (typeof guardarEstadoLocal === "function") guardarEstadoLocal(); isAnimating = false; }}, 300); }}
             function siguientePaso() {{ if (g_numAsiento && !asientoCerrado) autoGuardarBorrador(); if(currentStep < totalSteps) jumpToStep(currentStep + 1); }} function anteriorPaso() {{ if(currentStep > 1) jumpToStep(currentStep - 1); }} function omitirPaso() {{ siguientePaso(); }}
 
             function actualizarAccionesAsiento() {{
                 const acciones = document.getElementById('asientoActions');
-                if (acciones) acciones.classList.toggle('visible', currentStep === 10 || asientoCerrado);
+                if (acciones) acciones.classList.toggle('visible', currentStep > 1);
+                document.getElementById('btnEnviarInspector')?.classList.toggle('d-none', currentStep !== 10);
                 const navegacion = document.getElementById('moduloNavActions');
                 if (navegacion) navegacion.classList.toggle('d-none', currentStep === 10);
                 const btnAtras = document.getElementById('btnAtras');
-                if (btnAtras) btnAtras.classList.toggle('d-none', currentStep <= 1 || currentStep === 10);
+                if (btnAtras) btnAtras.classList.toggle('d-none', currentStep <= 1);
                 const btnDueno = document.getElementById('btnEditarComoDueno');
                 if (btnDueno) btnDueno.classList.toggle('d-none', !(asientoCerrado && rolUsuario === 'Admin'));
             }}
@@ -739,7 +900,7 @@ def redaccion_asiento_residente():
                     fecha_texto: g_fechaAsiento,
                     avance: avanceAsiento(),
                     modulos: modulos,
-                    texto_html: document.getElementById('contenedorLineasCuaderno')?.innerHTML || '',
+                    texto_html: document.getElementById('papelOficial')?.innerHTML || '',
                     datos: {{
                         jornal_m: document.getElementById('v_jornal_m')?.value || '',
                         jornal_t: document.getElementById('v_jornal_t')?.value || '',
@@ -780,6 +941,7 @@ def redaccion_asiento_residente():
                     fecha: g_fechaRaw,
                     estado: estado,
                     avance: avanceAsiento(),
+                    modulo_activo: window.samuCurrentStep || 1,
                     contenido: contenidoAsiento()
                 }};
                 const resp = await fetch('/residencia/api/asiento', {{
@@ -932,7 +1094,8 @@ def redaccion_asiento_residente():
                     const contenedor = document.getElementById('contenedorLineasCuaderno');
                     if (!contenedor || !numero) return;
                     const asiento = numero.padStart(4, '0');
-                    const modulos = samuRedactarCuadernoCompleto();
+                    const maxStep = Math.max(1, Math.min(10, parseInt(window.samuMaxStepReached || window.samuCurrentStep || 1, 10) || 1));
+                    const modulos = samuRedactarCuadernoCompleto().filter((_, index) => index + 1 <= maxStep);
                     contenedor.innerHTML = paginaHtml(asiento, fecha, modulos, false, false);
                 }} catch (error) {{
                     console.error('No se pudo sincronizar el cuaderno:', error);
@@ -947,7 +1110,7 @@ def redaccion_asiento_residente():
                     window.__samuSyncLigeroTimer = setTimeout(() => {{
                         const fn = window.samuActualizarCuaderno || window.samuSincronizarCuaderno;
                         if (typeof fn === 'function') fn();
-                    }}, 160);
+                    }}, 35);
                 }};
                 document.getElementById('formResidencia')?.addEventListener('input', refrescar);
                 document.getElementById('formResidencia')?.addEventListener('change', refrescar);
@@ -960,7 +1123,10 @@ def redaccion_asiento_residente():
             (function() {{
                 const totalModulos = 10;
                 const estadoKey = 'samu_residencia_asiento_en_edicion';
+                const moduloActivoKey = 'samu_residencia_modulo_activo';
+                const draftAsientoKey = 'samu_draft_asiento';
                 window.samuCurrentStep = window.samuCurrentStep || 1;
+                window.samuMaxStepReached = window.samuMaxStepReached || window.samuCurrentStep || 1;
 
                 function texto(id, saltos=false) {{
                     const el = document.getElementById(id);
@@ -1039,7 +1205,8 @@ def redaccion_asiento_residente():
                 }}
 
                 function modulosCuaderno() {{
-                    return modulosCuadernoCompleto();
+                    const maxStep = Math.max(1, Math.min(totalModulos, parseInt(window.samuMaxStepReached || window.samuCurrentStep || 1, 10) || 1));
+                    return modulosCuadernoCompleto().filter((_, index) => index + 1 <= maxStep);
                 }}
 
                 function camposFormulario() {{
@@ -1072,6 +1239,7 @@ def redaccion_asiento_residente():
                         fechaRaw: window.g_fechaRaw || '',
                         fechaTexto: window.g_fechaAsiento || '',
                         step: window.samuCurrentStep || 1,
+                        maxStepReached: window.samuMaxStepReached || window.samuCurrentStep || 1,
                         campos: camposFormulario(),
                         listas: {{
                             catalogoMaestro: window.catalogoMaestro || [],
@@ -1093,19 +1261,110 @@ def redaccion_asiento_residente():
                     }};
                 }}
 
+                function aplicarListasEstado(listas = {{}}) {{
+                    if (Array.isArray(listas.catalogoMaestro)) window.catalogoMaestro = listas.catalogoMaestro;
+                    if (Array.isArray(listas.m2_gastos_base)) window.m2_gastos_base = listas.m2_gastos_base;
+                    if (Array.isArray(listas.m2_gastos_generales)) window.m2_gastos_generales = listas.m2_gastos_generales;
+                    if (Array.isArray(listas.m3_lista)) window.m3_lista = listas.m3_lista;
+                    if (Array.isArray(listas.m4_lista)) window.m4_lista = listas.m4_lista;
+                    if (Array.isArray(listas.m5_lista)) window.m5_lista = listas.m5_lista;
+                    if (Array.isArray(listas.m6_lista)) window.m6_lista = listas.m6_lista;
+                    if (listas.m8_base) window.m8_base = listas.m8_base;
+                    if (listas.m8_registros) window.m8_registros = listas.m8_registros;
+                    if (listas.m8_entidad_actual) window.m8_entidad_actual = listas.m8_entidad_actual;
+                    if (listas.m8_entidades_registradas) window.m8_entidades_registradas = listas.m8_entidades_registradas;
+                    if (Array.isArray(listas.m9_herramientas)) window.m9_herramientas = listas.m9_herramientas;
+                    if (Array.isArray(listas.m9_seleccionadas)) window.m9_seleccionadas = listas.m9_seleccionadas;
+                    if (listas.m10_tipo_actual) window.m10_tipo_actual = listas.m10_tipo_actual;
+                }}
+
+                function guardarDraftAsientoCliente() {{
+                    try {{
+                        const draft = {{
+                            ...estadoActualAsiento(),
+                            clave: draftAsientoKey,
+                            actualizadoEn: new Date().toISOString()
+                        }};
+                        localStorage.setItem(draftAsientoKey, JSON.stringify(draft));
+                    }} catch (e) {{
+                        console.warn('No se pudo guardar el borrador de emergencia.', e);
+                    }}
+                }}
+                window.guardarDraftAsientoCliente = guardarDraftAsientoCliente;
+
+                function limpiarDraftAsientoCliente() {{
+                    try {{ localStorage.removeItem(draftAsientoKey); }} catch (e) {{}}
+                }}
+                window.limpiarDraftAsientoCliente = limpiarDraftAsientoCliente;
+
+                function restaurarDraftAsientoCliente() {{
+                    let draft = null;
+                    try {{
+                        draft = JSON.parse(localStorage.getItem(draftAsientoKey) || 'null');
+                    }} catch (e) {{
+                        draft = null;
+                    }}
+                    if (!draft || typeof draft !== 'object') return false;
+                    if (window.g_numAsiento && draft.numero && String(window.g_numAsiento) !== String(draft.numero)) return false;
+
+                    if (draft.numero && !window.g_numAsiento) window.g_numAsiento = draft.numero;
+                    if (draft.fechaRaw && !window.g_fechaRaw) window.g_fechaRaw = draft.fechaRaw;
+                    if (draft.fechaTexto && !window.g_fechaAsiento) window.g_fechaAsiento = draft.fechaTexto;
+                    if (typeof g_numAsiento !== 'undefined' && window.g_numAsiento) g_numAsiento = window.g_numAsiento;
+                    if (typeof g_fechaRaw !== 'undefined' && window.g_fechaRaw) g_fechaRaw = window.g_fechaRaw;
+                    if (typeof g_fechaAsiento !== 'undefined' && window.g_fechaAsiento) g_fechaAsiento = window.g_fechaAsiento;
+
+                    const lblFecha = document.getElementById('lbl_hoja_fecha');
+                    if (lblFecha && window.g_fechaAsiento) lblFecha.innerText = window.g_fechaAsiento;
+                    aplicarCamposFormulario(draft.campos || {{}});
+                    aplicarListasEstado(draft.listas || {{}});
+                    window.samuCurrentStep = Math.max(1, Math.min(totalModulos, parseInt(draft.step || window.samuCurrentStep || 1, 10) || 1));
+                    window.samuMaxStepReached = Math.max(parseInt(draft.maxStepReached || 1, 10) || 1, window.samuCurrentStep);
+                    window.borradorAsiento = draft;
+                    restaurarRenderModulos();
+                    desbloquearPantallaAsiento();
+                    window.irModulo(window.samuCurrentStep);
+                    window.samuActualizarCuaderno();
+                    return true;
+                }}
+                window.restaurarDraftAsientoCliente = restaurarDraftAsientoCliente;
+
                 function guardarEstadoLocal() {{
                     if (!window.g_numAsiento) return;
                     try {{
                         window.borradorAsiento = estadoActualAsiento();
                         localStorage.setItem(estadoKey, JSON.stringify(window.borradorAsiento));
+                        sessionStorage.setItem(estadoKey, JSON.stringify(window.borradorAsiento));
+                        localStorage.setItem(moduloActivoKey, String(window.borradorAsiento.step || 1));
+                        sessionStorage.setItem(moduloActivoKey, String(window.borradorAsiento.step || 1));
+                        guardarDraftAsientoCliente();
                     }} catch (e) {{
                         console.warn('No se pudo guardar el estado local del asiento.', e);
                     }}
                 }}
                 window.guardarEstadoLocal = guardarEstadoLocal;
 
+                function guardarEstadoLocalInmediato() {{
+                    try {{
+                        if (typeof window.samuActualizarCuaderno === 'function') window.samuActualizarCuaderno();
+                        guardarEstadoLocal();
+                    }} catch (e) {{
+                        console.warn('No se pudo guardar el estado inmediato del asiento.', e);
+                    }}
+                }}
+                window.guardarEstadoLocalInmediato = guardarEstadoLocalInmediato;
+
+                function programarAutoGuardadoContinuo() {{
+                    if (!window.g_numAsiento || !window.g_fechaRaw || (typeof asientoCerrado !== 'undefined' && asientoCerrado)) return;
+                    clearTimeout(window.__samuAutoGuardadoServidorTimer);
+                    window.__samuAutoGuardadoServidorTimer = setTimeout(() => {{
+                        guardarBorradorSilenciosoServidor();
+                    }}, 2600);
+                }}
+                window.programarAutoGuardadoContinuo = programarAutoGuardadoContinuo;
+
                 function restaurarRenderModulos() {{
-                    ['m2_render', 'm3_render', 'm4_render', 'm5_render', 'm6_render', 'm8_render', 'm8_render_base', 'm8_refrescar_select', 'm8_actualizar_cuaderno', 'm9_render', 'm9_sincronizar', 'm10_sincronizar'].forEach(nombre => {{
+                    ['m2_render', 'm3_render', 'm4_render', 'm5_render', 'm6_render', 'm8_render', 'm8_render_base', 'm8_refrescar_select', 'm8_actualizar_cuaderno', 'm9_render', 'm9_sincronizar', 'm10_sincronizar', 'm10_render_historial'].forEach(nombre => {{
                         if (typeof window[nombre] === 'function') {{
                             try {{ window[nombre](); }} catch (e) {{ console.warn(`No se pudo ejecutar ${{nombre}}`, e); }}
                         }}
@@ -1130,16 +1389,19 @@ def redaccion_asiento_residente():
                 function restaurarEstadoLocal() {{
                     let estado = null;
                     try {{
-                        estado = JSON.parse(localStorage.getItem(estadoKey) || 'null');
+                        estado = JSON.parse(localStorage.getItem(estadoKey) || sessionStorage.getItem(estadoKey) || 'null');
                     }} catch (e) {{
                         estado = null;
                     }}
                     if (!estado || !estado.numero || !estado.fechaRaw) return false;
+                    const pasoPersistido = parseInt(localStorage.getItem(moduloActivoKey) || sessionStorage.getItem(moduloActivoKey) || estado.step || '1', 10) || 1;
+                    estado.step = Math.max(1, Math.min(totalModulos, pasoPersistido));
 
                     window.borradorAsiento = estado;
                     window.g_numAsiento = estado.numero;
                     window.g_fechaRaw = estado.fechaRaw;
                     window.g_fechaAsiento = estado.fechaTexto || estado.fechaRaw;
+                    window.samuMaxStepReached = Math.max(parseInt(estado.maxStepReached || 1, 10) || 1, parseInt(estado.step || 1, 10) || 1);
                     if (typeof g_numAsiento !== 'undefined') g_numAsiento = window.g_numAsiento;
                     if (typeof g_fechaRaw !== 'undefined') g_fechaRaw = window.g_fechaRaw;
                     if (typeof g_fechaAsiento !== 'undefined') g_fechaAsiento = window.g_fechaAsiento;
@@ -1212,7 +1474,7 @@ def redaccion_asiento_residente():
                                 ${{htmlEncabezadoPagina(asiento, fecha, pagina.continuacion)}}
                                 ${{pagina.modulos.map(modulo => `
                                     <div class="modulo-redaccion">
-                                        <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
+                                        ${{modulo.continuacionModulo ? '' : `<span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>`}}
                                         ${{htmlContenidoModulo(modulo)}}
                                     </div>
                                 `).join('')}}
@@ -1265,27 +1527,83 @@ def redaccion_asiento_residente():
                 function htmlModuloMedicion(modulo, incluirVan=false) {{
                     return `
                         <div class="modulo-redaccion">
-                            <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
+                            ${{modulo.continuacionModulo ? '' : `<span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>`}}
                             ${{htmlContenidoModulo(modulo)}}
                         </div>
                         ${{incluirVan ? '<span class="van-final">van . . .</span>' : ''}}
                     `;
                 }}
 
+                function estimarLineasHtmlModulo(modulo) {{
+                    const html = htmlContenidoModulo(modulo);
+                    const bloques = (html.match(/<div\\b/gi) || []).length;
+                    const saltos = (html.match(/<br\\s*\\/?\\s*>/gi) || []).length;
+                    return Math.max(0, bloques + saltos);
+                }}
+
+                function anchoLineaCuadernoPDF() {{
+                    const hoja = document.querySelector('#papelOficial .pagina-cuaderno') || document.querySelector('.pagina-cuaderno');
+                    const ancho = hoja?.clientWidth || 836;
+                    return Math.max(760, Math.floor(ancho - 28));
+                }}
+
+                function contextoLineasCuadernoPDF() {{
+                    if (!window.__samuLineMeasureCanvas) {{
+                        window.__samuLineMeasureCanvas = document.createElement('canvas');
+                    }}
+                    const ctx = window.__samuLineMeasureCanvas.getContext('2d');
+                    ctx.font = 'italic 17px Candara, Calibri, Arial, sans-serif';
+                    return ctx;
+                }}
+
+                function contarLineasTextoCuaderno(texto) {{
+                    const ctx = contextoLineasCuadernoPDF();
+                    const anchoMaximo = anchoLineaCuadernoPDF();
+                    const parrafos = String(texto || '-').split('\\n');
+                    let total = 0;
+
+                    parrafos.forEach(parrafo => {{
+                        const limpio = String(parrafo || '').trim();
+                        if (!limpio) {{
+                            total += 1;
+                            return;
+                        }}
+
+                        let lineaActual = '';
+                        limpio.split(/\\s+/).filter(Boolean).forEach(palabra => {{
+                            const candidata = lineaActual ? `${{lineaActual}} ${{palabra}}` : palabra;
+                            if (lineaActual && ctx.measureText(candidata).width > anchoMaximo) {{
+                                total += 1;
+                                lineaActual = palabra;
+                            }} else {{
+                                lineaActual = candidata;
+                            }}
+                        }});
+                        total += 1;
+                    }});
+
+                    return Math.max(1, total);
+                }}
+
+                function estimarLineasModulo(modulo) {{
+                    const titulo = modulo.continuacionModulo ? 0 : 1;
+                    const texto = contarLineasTextoCuaderno(modulo.contenido || '-');
+                    const html = estimarLineasHtmlModulo(modulo);
+                    return titulo + Math.max(texto, html);
+                }}
+
                 function lineasModulo(modulo, incluirVan=false) {{
-                    const medidor = obtenerMedidorPDF();
-                    medidor.innerHTML = htmlModuloMedicion(modulo, incluirVan);
-                    return Math.max(1, Math.ceil(medidor.scrollHeight / PDF_LINE_HEIGHT_PX));
+                    return Math.max(1, estimarLineasModulo(modulo) + (incluirVan ? 1 : 0));
                 }}
 
                 function htmlPaginaMedicionPDF(asiento, fecha, modulos, continuacion=false, van=false) {{
                     return `
-                        <div class="pagina-cuaderno">
-                            <div class="lapicero">
+                        <div class="pagina-cuaderno" style="height:auto;min-height:0;max-height:none;overflow:visible;background:none;display:block;">
+                            <div class="lapicero" style="display:block;min-height:0;overflow:visible;">
                                 ${{htmlEncabezadoPagina(asiento, fecha, continuacion)}}
                                 ${{modulos.map(modulo => `
                                     <div class="modulo-redaccion">
-                                        <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
+                                        ${{modulo.continuacionModulo ? '' : `<span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>`}}
                                         ${{htmlContenidoModulo(modulo)}}
                                     </div>
                                 `).join('')}}
@@ -1299,52 +1617,18 @@ def redaccion_asiento_residente():
                     const medidor = obtenerMedidorPDF();
                     medidor.style.width = '650px';
                     medidor.innerHTML = htmlPaginaMedicionPDF(asiento, fecha, modulos, continuacion, van);
-                    return medidor.scrollHeight || 0;
+                    const contenido = medidor.querySelector('.lapicero');
+                    return contenido ? contenido.scrollHeight : (medidor.scrollHeight || 0);
                 }}
 
                 function estimarLineasTexto(texto) {{
-                    return String(texto || '-').split('\\n').reduce((sum, linea) => sum + Math.max(1, Math.ceil(String(linea || '').length / 96)), 0);
+                    return contarLineasTextoCuaderno(texto);
                 }}
 
                 function dividirModuloPorLineas(modulo, maxLineas) {{
                     const texto = String(modulo.contenido || '-').trim();
                     const lineasDisponibles = Math.max(1, maxLineas);
-                    const palabras = texto.split(/(\\s+)/).filter(parte => parte.length > 0);
-                    if (palabras.length <= 1) {{
-                        return [
-                            {{ titulo: modulo.titulo, contenido: texto || '-' }},
-                            {{ titulo: modulo.titulo, contenido: '' }}
-                        ];
-                    }}
-
-                    let bajo = 1;
-                    let alto = palabras.length;
-                    let mejor = 1;
-                    while (bajo <= alto) {{
-                        const medio = Math.floor((bajo + alto) / 2);
-                        const candidato = palabras.slice(0, medio).join('').trim();
-                        if (lineasModulo({{ ...modulo, contenido: candidato }}, true) <= lineasDisponibles) {{
-                            mejor = medio;
-                            bajo = medio + 1;
-                        }} else {{
-                            alto = medio - 1;
-                        }}
-                    }}
-
-                    if (mejor >= palabras.length) {{
-                        mejor = Math.max(1, palabras.length - 1);
-                    }}
-                    const primera = palabras.slice(0, mejor).join('').trim();
-                    const segunda = palabras.slice(mejor).join('').trim();
-                    return [
-                        {{ titulo: modulo.titulo, contenido: primera || '-' }},
-                        {{ titulo: modulo.titulo, contenido: segunda }}
-                    ];
-                }}
-
-                function dividirModuloPorAltura(asiento, fecha, modulo, modulosPrevios, continuacion, maxAltura) {{
-                    const texto = String(modulo.contenido || '-').trim();
-                    const palabras = texto.split(/(\\s+)/).filter(parte => parte.length > 0);
+                    const palabras = texto.split(/\\s+/).filter(Boolean);
                     if (palabras.length <= 1) {{
                         return [
                             {{ titulo: modulo.titulo, contenido: texto || '-' }},
@@ -1357,8 +1641,50 @@ def redaccion_asiento_residente():
                     let mejor = 0;
                     while (bajo <= alto) {{
                         const medio = Math.floor((bajo + alto) / 2);
-                        const candidato = {{ ...modulo, contenido: palabras.slice(0, medio).join('').trim() }};
-                        const altura = medirPaginaPDF(asiento, fecha, [...modulosPrevios, candidato], continuacion, true);
+                        const candidato = palabras.slice(0, medio).join(' ').trim();
+                        if (lineasModulo({{ ...modulo, contenido: candidato }}, false) <= lineasDisponibles) {{
+                            mejor = medio;
+                            bajo = medio + 1;
+                        }} else {{
+                            alto = medio - 1;
+                        }}
+                    }}
+
+                    if (mejor <= 0) {{
+                        return [
+                            {{ titulo: modulo.titulo, contenido: '', continuacionModulo: modulo.continuacionModulo }},
+                            {{ titulo: modulo.titulo, contenido: texto || '-', continuacionModulo: true }}
+                        ];
+                    }}
+
+                    if (mejor >= palabras.length) {{
+                        mejor = Math.max(1, palabras.length - 1);
+                    }}
+                    const primera = palabras.slice(0, mejor).join(' ').trim();
+                    const segunda = palabras.slice(mejor).join(' ').trim();
+                    return [
+                        {{ titulo: modulo.titulo, contenido: primera || '-' }},
+                        {{ titulo: modulo.titulo, contenido: segunda, continuacionModulo: true }}
+                    ];
+                }}
+
+                function dividirModuloPorAltura(asiento, fecha, modulo, modulosPrevios, continuacion, maxAltura) {{
+                    const texto = String(modulo.contenido || '-').trim();
+                    const palabras = texto.split(/\\s+/).filter(Boolean);
+                    if (palabras.length <= 1) {{
+                        return [
+                            {{ titulo: modulo.titulo, contenido: texto || '-' }},
+                            {{ titulo: modulo.titulo, contenido: '' }}
+                        ];
+                    }}
+
+                    let bajo = 1;
+                    let alto = palabras.length;
+                    let mejor = 0;
+                    while (bajo <= alto) {{
+                        const medio = Math.floor((bajo + alto) / 2);
+                        const candidato = {{ ...modulo, contenido: palabras.slice(0, medio).join(' ').trim() }};
+                        const altura = medirPaginaPDF(asiento, fecha, [...modulosPrevios, candidato], continuacion, false);
                         if (altura <= maxAltura) {{
                             mejor = medio;
                             bajo = medio + 1;
@@ -1369,37 +1695,48 @@ def redaccion_asiento_residente():
 
                     if (mejor >= palabras.length) mejor = Math.max(1, palabras.length - 1);
                     return [
-                        {{ titulo: modulo.titulo, contenido: palabras.slice(0, mejor).join('').trim() }},
-                        {{ titulo: modulo.titulo, contenido: palabras.slice(mejor).join('').trim() }}
+                        {{ titulo: modulo.titulo, contenido: palabras.slice(0, mejor).join(' ').trim() }},
+                        {{ titulo: modulo.titulo, contenido: palabras.slice(mejor).join(' ').trim(), continuacionModulo: true }}
                     ];
                 }}
 
-                function paginarModulos(asiento, fecha, modulos) {{
+                function paginarModulos(asiento, fecha, modulos, opciones = {{}}) {{
                     const paginas = [];
                     let actual = [];
                     let usadas = 1;
                     let continuacion = false;
-                    const maxLineasPagina = () => continuacion ? 32 : 27;
-                    const maxAlturaPagina = () => continuacion ? 870 : 735;
+                    const lineasPorPagina = parseInt(opciones.lineasPorPagina || 30, 10) || 30;
+                    const maxLineasContenido = () => Math.max(2, lineasPorPagina - 1);
+                    const maxAlturaContenido = () => PDF_LINE_HEIGHT_PX * maxLineasContenido();
 
                     modulos.forEach(moduloOriginal => {{
                         let pendiente = {{ ...moduloOriginal }};
                         while (pendiente && String(pendiente.contenido || '').trim()) {{
-                            if (medirPaginaPDF(asiento, fecha, [...actual, pendiente], continuacion, false) <= maxAlturaPagina()) {{
+                            const lineasPendiente = lineasModulo(pendiente);
+                            const lineasDisponibles = maxLineasContenido() - usadas;
+
+                            if (lineasPendiente <= lineasDisponibles) {{
                                 actual.push(pendiente);
-                                usadas += lineasModulo(pendiente);
+                                usadas += lineasPendiente;
                                 pendiente = null;
                                 continue;
                             }}
 
-                            const partes = dividirModuloPorAltura(asiento, fecha, pendiente, actual, continuacion, maxAlturaPagina());
-                            if (String(partes[0].contenido || '').trim()) {{
-                                actual.push(partes[0]);
-                                paginas.push({{ modulos: actual, continuacion, van: true }});
-                                actual = [];
-                                usadas = 1;
-                                continuacion = true;
-                                pendiente = partes[1].contenido.trim() ? partes[1] : null;
+                            if (lineasDisponibles >= 1) {{
+                                const partes = dividirModuloPorLineas(pendiente, lineasDisponibles);
+                                const resto = String(partes[1].contenido || '').trim();
+                                if (String(partes[0].contenido || '').trim()) {{
+                                    actual.push(partes[0]);
+                                }}
+                                if (resto) {{
+                                    paginas.push({{ modulos: actual, continuacion, van: true }});
+                                    actual = [];
+                                    usadas = 1;
+                                    continuacion = true;
+                                    pendiente = {{ ...partes[1], contenido: resto }};
+                                }} else {{
+                                    pendiente = null;
+                                }}
                                 continue;
                             }}
 
@@ -1411,47 +1748,76 @@ def redaccion_asiento_residente():
                                 continue;
                             }}
 
-                            const forzado = dividirModuloPorLineas(pendiente, Math.max(2, maxLineasPagina() - usadas));
+                            const forzado = dividirModuloPorLineas(pendiente, Math.max(2, maxLineasContenido() - usadas));
+                            const restoForzado = String(forzado[1].contenido || '').trim();
                             actual.push(forzado[0]);
-                            paginas.push({{ modulos: actual, continuacion, van: true }});
-                            actual = [];
-                            usadas = 1;
-                            continuacion = true;
-                            pendiente = forzado[1].contenido.trim() ? forzado[1] : null;
+                            if (restoForzado) {{
+                                paginas.push({{ modulos: actual, continuacion, van: true }});
+                                actual = [];
+                                usadas = 1;
+                                continuacion = true;
+                                pendiente = {{ ...forzado[1], contenido: restoForzado }};
+                            }} else {{
+                                pendiente = null;
+                            }}
                         }}
                     }});
 
-                    paginas.push({{ modulos: actual, continuacion, van: false }});
+                    if (actual.length > 0 || paginas.length === 0) {{
+                        paginas.push({{ modulos: actual, continuacion, van: false }});
+                    }}
                     return paginas;
                 }}
 
-                function htmlCuadernoPlano(asiento, fecha, modulos) {{
-                    const contenido = modulos.map(modulo => `
-                        <div class="modulo-redaccion">
-                            <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
-                            ${{htmlContenidoModulo(modulo)}}
+                function htmlCuadernoVistaA4(asiento, fecha, modulos) {{
+                    const paginas = paginarModulos(asiento, fecha, modulos, {{ lineasPorPagina: 30, alturaPagina: 780 }});
+                    const firmas = htmlFirmasPDF();
+                    const encabezadoGeneral = htmlEncabezadoGeneralPDF();
+                    return paginas.map((pagina, idx) => `
+                        <div class="papel-fisico hoja-vista-a4">
+                            ${{encabezadoGeneral}}
+                            <div class="p-body-lines">
+                                <div class="pagina-cuaderno">
+                                    <div class="lapicero">
+                                        ${{htmlEncabezadoPagina(asiento, fecha, pagina.continuacion)}}
+                                        ${{pagina.modulos.map(modulo => `
+                                            <div class="modulo-redaccion">
+                                                ${{modulo.continuacionModulo ? '' : `<span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>`}}
+                                                ${{htmlContenidoModulo(modulo)}}
+                                            </div>
+                                        `).join('')}}
+                                        ${{pagina.van ? '<span class="van-final">van . . .</span>' : ''}}
+                                    </div>
+                                </div>
+                            </div>
+                            ${{firmas}}
+                            <div class="page-counter">${{idx + 1}} de ${{paginas.length}}</div>
                         </div>
                     `).join('');
-
-                    return `
-                        <div class="pagina-cuaderno">
-                            <div class="lapicero">
-                                <div class="encabezado-asiento">
-                                    <div class="titulo-asiento">ASIENTO N° ${{escapar(asiento)}} DEL RESIDENTE DE OBRA</div>
-                                    <div class="fecha-asiento">${{escapar(fecha)}}</div>
-                                </div>
-                                ${{contenido}}
-                            </div>
-                        </div>
-                    `;
                 }}
+
+                function actualizarQRCuaderno() {{
+                    const fechaRaw = String(window.g_fechaRaw || '').trim();
+                    const destino = fechaRaw
+                        ? `${{window.location.origin}}/resumen_asiento/${{encodeURIComponent(fechaRaw)}}`
+                        : `${{window.location.origin}}/cuaderno`;
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=${{encodeURIComponent(destino)}}`;
+                    document.querySelectorAll('#qrCuadernoLink, .qr-cuaderno-link, .p-qr-link').forEach(link => {{
+                        link.href = destino;
+                    }});
+                    document.querySelectorAll('#qrCuadernoImg, .qr-cuaderno-img').forEach(img => {{
+                        if (img.getAttribute('src') !== qrUrl) img.setAttribute('src', qrUrl);
+                    }});
+                }}
+                window.actualizarQRCuaderno = actualizarQRCuaderno;
 
                 window.samuActualizarCuaderno = function() {{
                     const numero = String(window.g_numAsiento || (typeof g_numAsiento !== 'undefined' ? g_numAsiento : '') || '').trim();
                     const fecha = String(window.g_fechaAsiento || (typeof g_fechaAsiento !== 'undefined' ? g_fechaAsiento : '') || document.getElementById('lbl_hoja_fecha')?.innerText || '').trim();
-                    const contenedor = document.getElementById('contenedorLineasCuaderno');
+                    const contenedor = document.getElementById('papelOficial');
                     if (!contenedor || !numero) return;
-                    contenedor.innerHTML = htmlCuadernoPlano(numero.padStart(4, '0'), fecha, modulosCuaderno());
+                    contenedor.innerHTML = htmlCuadernoVistaA4(numero.padStart(4, '0'), fecha, modulosCuaderno());
+                    actualizarQRCuaderno();
                 }};
 
                 window.samuPrepararResumenPDF = function() {{
@@ -1471,7 +1837,10 @@ def redaccion_asiento_residente():
                 function htmlEncabezadoGeneralPDF() {{
                     const top = document.querySelector('#papelOficial .p-header-top')?.outerHTML || '';
                     const meta = document.querySelector('#papelOficial .p-meta')?.outerHTML || '';
-                    return `${{top}}${{meta}}`;
+                    return `${{top}}${{meta}}`
+                        .replaceAll(' id="qrCuadernoLink"', '')
+                        .replaceAll('class="p-qr-link"', 'class="p-qr-link qr-cuaderno-link"')
+                        .replaceAll('id="qrCuadernoImg"', 'class="qr-cuaderno-img"');
                 }}
 
                 function htmlCuadernoPDF(asiento, fecha, modulos) {{
@@ -1480,14 +1849,14 @@ def redaccion_asiento_residente():
                     const encabezadoGeneral = htmlEncabezadoGeneralPDF();
                     return paginas.map((pagina, idx) => `
                         <div class="papel-fisico hoja-pdf">
-                            ${{idx === 0 ? encabezadoGeneral : ''}}
+                            ${{encabezadoGeneral}}
                             <div class="p-body-lines">
                                 <div class="pagina-cuaderno">
                                     <div class="lapicero">
                                         ${{htmlEncabezadoPagina(asiento, fecha, pagina.continuacion)}}
                                         ${{pagina.modulos.map(modulo => `
                                             <div class="modulo-redaccion">
-                                                <span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>
+                                                ${{modulo.continuacionModulo ? '' : `<span class="modulo-titulo">${{escapar(modulo.titulo)}}</span>`}}
                                                 ${{htmlContenidoModulo(modulo)}}
                                             </div>
                                         `).join('')}}
@@ -1496,7 +1865,7 @@ def redaccion_asiento_residente():
                                 </div>
                             </div>
                             ${{firmas}}
-                            <div class="page-counter">Página ${{idx + 1}} de ${{paginas.length}}</div>
+                            <div class="page-counter">${{idx + 1}} de ${{paginas.length}}</div>
                         </div>
                     `).join('');
                 }}
@@ -1505,22 +1874,48 @@ def redaccion_asiento_residente():
                     guardarEstadoLocal();
                     const step = Math.max(1, Math.min(totalModulos, parseInt(stepIndex, 10) || 1));
                     window.samuCurrentStep = step;
+                    window.samuMaxStepReached = Math.max(parseInt(window.samuMaxStepReached || 1, 10) || 1, step);
+                    try {{
+                        localStorage.setItem(moduloActivoKey, String(step));
+                        sessionStorage.setItem(moduloActivoKey, String(step));
+                    }} catch (e) {{}}
                     if (typeof currentStep !== 'undefined') currentStep = step;
                     document.querySelectorAll('.step-view').forEach(vista => vista.classList.remove('active', 'exit'));
                     document.querySelectorAll('.step-btn').forEach(btn => btn.classList.remove('active'));
                     document.getElementById(`step${{step}}`)?.classList.add('active');
                     document.getElementById(`btnStep${{step}}`)?.classList.add('active');
-                    document.getElementById('btnAtras')?.classList.toggle('d-none', step <= 1 || step === 10);
-                    document.getElementById('asientoActions')?.classList.toggle('visible', step === 10);
+                    document.getElementById('btnAtras')?.classList.toggle('d-none', step <= 1);
+                    document.getElementById('asientoActions')?.classList.toggle('visible', step > 1);
+                    document.getElementById('btnEnviarInspector')?.classList.toggle('d-none', step !== 10);
                     document.getElementById('moduloNavActions')?.classList.toggle('d-none', step === 10);
                     if (window.borradorAsiento?.campos) aplicarCamposFormulario(window.borradorAsiento.campos);
                     restaurarRenderModulos();
                     setTimeout(window.samuActualizarCuaderno, 30);
+                    guardarEstadoLocalInmediato();
                 }};
 
-                window.siguienteModulo = function() {{
+                window.omitirModulo = function() {{
+                    guardarEstadoLocalInmediato();
                     window.irModulo((window.samuCurrentStep || 1) + 1);
                 }};
+
+                window.guardarYContinuarModulo = async function() {{
+                    const btn = document.getElementById('btnGuardarContinuar');
+                    if (btn?.disabled) return;
+                    if (btn) btn.disabled = true;
+                    try {{
+                        guardarEstadoLocalInmediato();
+                        const data = await guardarAsientoSeguro('Borrador', {{ mostrarModal: false }});
+                        if (data) {{
+                            window.irModulo((window.samuCurrentStep || 1) + 1);
+                            limpiarDraftAsientoCliente();
+                        }}
+                    }} finally {{
+                        if (btn) btn.disabled = false;
+                    }}
+                }};
+
+                window.siguienteModulo = window.guardarYContinuarModulo;
 
                 window.anteriorModulo = function() {{
                     window.irModulo((window.samuCurrentStep || 1) - 1);
@@ -1543,6 +1938,8 @@ def redaccion_asiento_residente():
                     window.g_numAsiento = numero;
                     window.g_fechaRaw = fecha;
                     window.g_fechaAsiento = `${{dias[dayIndex]}}, ${{d}}/${{m}}/${{y}}`;
+                    const pasoInicial = Math.max(1, Math.min(totalModulos, parseInt(window.__samuModuloInicial || localStorage.getItem(moduloActivoKey) || sessionStorage.getItem(moduloActivoKey) || '1', 10) || 1));
+                    window.samuMaxStepReached = pasoInicial;
                     if (typeof g_numAsiento !== 'undefined') g_numAsiento = window.g_numAsiento;
                     if (typeof g_fechaRaw !== 'undefined') g_fechaRaw = window.g_fechaRaw;
                     if (typeof g_fechaAsiento !== 'undefined') g_fechaAsiento = window.g_fechaAsiento;
@@ -1563,30 +1960,50 @@ def redaccion_asiento_residente():
                     }}
                     document.getElementById('bottomBarUI')?.classList.add('unlocked');
                     document.getElementById('mobilePreviewBtn')?.classList.add('unlocked');
-                    window.irModulo(1);
+                    window.irModulo(pasoInicial);
                     window.samuActualizarCuaderno();
                     guardarEstadoLocal();
                 }};
 
-                async function guardarAsientoSeguro(estado) {{
+                function mostrarEstadoGuardado(tipo, texto) {{
+                    const estadoEl = document.getElementById('saveInlineStatus');
+                    if (!estadoEl) return;
+                    estadoEl.classList.remove('saving', 'saved', 'error');
+                    estadoEl.classList.add('visible', tipo);
+                    const icono = tipo === 'saving' ? 'bi-arrow-repeat' : (tipo === 'error' ? 'bi-exclamation-triangle-fill' : 'bi-check2-circle');
+                    estadoEl.innerHTML = `<i class="bi ${{icono}}"></i><span>${{texto}}</span>`;
+                    clearTimeout(window.__samuSaveStatusTimer);
+                    if (tipo !== 'saving') {{
+                        window.__samuSaveStatusTimer = setTimeout(() => {{
+                            estadoEl.classList.remove('visible', 'saving', 'saved', 'error');
+                        }}, 2400);
+                    }}
+                }}
+
+                async function guardarAsientoSeguro(estado, opciones = {{}}) {{
+                    const silencioso = !!opciones.silencioso;
+                    const mostrarModal = opciones.mostrarModal !== false;
+                    if (!silencioso) mostrarEstadoGuardado('saving', 'Guardando...');
                     window.samuActualizarCuaderno();
                     const numero = String(window.g_numAsiento || '').trim();
                     const fecha = String(window.g_fechaRaw || '').trim();
                     if (!numero || !fecha) {{
                         if (typeof mostrarAlerta === 'function') mostrarAlerta('Primero inicie el asiento.', 'error');
-                        return;
+                        if (!silencioso) mostrarEstadoGuardado('error', 'No iniciado');
+                        return null;
                     }}
                     const payload = {{
                         numero,
                         fecha,
                             estado,
                         avance: 100,
+                        modulo_activo: window.samuCurrentStep || 1,
                         contenido: {{
                             numero,
                             fecha,
                             fecha_texto: window.g_fechaAsiento || '',
                             modulos: modulosCuadernoCompleto(),
-                            texto_html: document.getElementById('contenedorLineasCuaderno')?.innerHTML || '',
+                            texto_html: document.getElementById('papelOficial')?.innerHTML || '',
                             estado_local: estadoActualAsiento()
                         }}
                     }};
@@ -1602,7 +2019,7 @@ def redaccion_asiento_residente():
                     }}
 
                     let guardadoServidor = false;
-                    let redirectUrlServidor = '';
+                    let respuestaGuardado = null;
                     try {{
                         const resp = await fetch('/residencia/api/asiento', {{
                             method: 'POST',
@@ -1610,11 +2027,11 @@ def redaccion_asiento_residente():
                             body: JSON.stringify(payload)
                         }});
                         const data = await resp.json().catch(() => ({{ ok: false, error: 'Respuesta inválida' }}));
+                        respuestaGuardado = data;
                         if (!resp.ok || !data.ok) {{
                             console.warn('No se pudo guardar en servidor:', data.error || resp.status);
                         }} else {{
                             guardadoServidor = true;
-                            redirectUrlServidor = data.redirect_url || '';
                             try {{
                                 localStorage.setItem('samu_dashboard_refresh', JSON.stringify({{
                                     numero,
@@ -1629,32 +2046,92 @@ def redaccion_asiento_residente():
                         console.error('Error guardando asiento:', error);
                     }}
                     if (guardadoServidor) {{
+                        mostrarEstadoGuardado('saved', 'Guardado correctamente');
+                        if (!silencioso) limpiarDraftAsientoCliente();
+                    }} else if (!silencioso) {{
+                        mostrarEstadoGuardado('error', 'Sin conexión');
+                    }}
+                    if (guardadoServidor && estado !== 'Borrador') {{
                         try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
                     }}
-                    mostrarVentanaExitoGuardado(estado, guardadoServidor, redirectUrlServidor);
+                    if (mostrarModal) {{
+                        mostrarVentanaExitoGuardado(estado, guardadoServidor, respuestaGuardado);
+                    }}
+                    return guardadoServidor ? respuestaGuardado : null;
                 }}
 
-                function mostrarVentanaExitoGuardado(estado, guardadoServidor=true, redirectUrlServidor='') {{
+                async function guardarBorradorSilenciosoServidor() {{
+                    const numero = String(window.g_numAsiento || '').trim();
+                    const fecha = String(window.g_fechaRaw || '').trim();
+                    if (!numero || !fecha) return;
+                    if (window.__samuGuardandoBorradorSilencioso) return;
+                    window.__samuGuardandoBorradorSilencioso = true;
+                    try {{
+                        if (typeof window.samuActualizarCuaderno === 'function') window.samuActualizarCuaderno();
+                        guardarEstadoLocal();
+                        const payload = {{
+                            numero,
+                            fecha,
+                            estado: 'Borrador',
+                            avance: 100,
+                            modulo_activo: window.samuCurrentStep || 1,
+                            contenido: {{
+                                numero,
+                                fecha,
+                                fecha_texto: window.g_fechaAsiento || '',
+                                modulos: modulosCuadernoCompleto(),
+                                texto_html: document.getElementById('papelOficial')?.innerHTML || '',
+                                estado_local: estadoActualAsiento()
+                            }}
+                        }};
+                        const resp = await fetch('/residencia/api/asiento', {{
+                            method: 'POST',
+                            headers: {{ 'Content-Type': 'application/json' }},
+                            body: JSON.stringify(payload)
+                        }});
+                        const data = await resp.json().catch(() => null);
+                        if (resp.ok && data?.ok) {{
+                            localStorage.setItem('samu_ultimo_autoguardado_residencia', JSON.stringify({{
+                                numero,
+                                fecha,
+                                estado: 'Borrador',
+                                updated_at: new Date().toISOString()
+                            }}));
+                        }}
+                    }} catch (error) {{
+                        console.warn('Autoguardado silencioso pendiente de sincronizar.', error);
+                    }} finally {{
+                        window.__samuGuardandoBorradorSilencioso = false;
+                    }}
+                }}
+
+                function mostrarVentanaExitoGuardado(estado, guardadoServidor=true, respuestaGuardado=null) {{
                     const enviadoInspector = estado === 'Enviado Inspector';
                     const fechaResumen = encodeURIComponent(window.g_fechaRaw || '');
                     const numeroResumen = encodeURIComponent(window.g_numAsiento || '');
-                    if (guardadoServidor && !enviadoInspector) {{
-                        window.location.href = redirectUrlServidor || (fechaResumen && numeroResumen ? `/cuaderno/resumen?fecha=${{fechaResumen}}&asiento=${{numeroResumen}}` : '/cuaderno');
+                    if (!guardadoServidor) {{
+                        mostrarModalResidencia(
+                            'No se pudo guardar el borrador',
+                            'El servidor no confirmó el guardado en PostgreSQL. Revise la conexión e intente nuevamente.',
+                            'warning',
+                            0
+                        );
+                        return;
+                    }}
+                    if (!enviadoInspector) {{
+                        window.ultimoBorradorGuardadoFecha = String(respuestaGuardado?.fecha || window.g_fechaRaw || '');
+                        document.getElementById('modalBorradorGuardado')?.classList.add('active');
                         return;
                     }}
                     const titulo = guardadoServidor
                         ? (enviadoInspector ? 'Asiento enviado al Inspector' : 'Borrador guardado exitosamente')
                         : 'No se pudo sincronizar con el servidor';
                     const texto = guardadoServidor
-                        ? (enviadoInspector ? 'La Residencia queda bloqueada y el Inspector podrá revisar el asiento.' : 'El calendario se actualizará automáticamente.')
+                        ? (enviadoInspector ? 'La Residencia queda lista para que el Inspector revise y firme.' : 'El asiento se guardó realmente en la base de datos. El calendario lo mostrará en amarillo como borrador.')
                         : 'Se creó un respaldo local para no perder información. Revise la conexión antes de cerrar definitivamente.';
                     const tipo = guardadoServidor ? 'success' : 'warning';
                     mostrarModalResidencia(titulo, texto, tipo, 1100).then(() => {{
                         setTimeout(() => {{
-                            if (redirectUrlServidor) {{
-                                window.location.href = redirectUrlServidor;
-                                return;
-                            }}
                             if (!enviadoInspector && fechaResumen && numeroResumen) {{
                                 window.location.href = `/cuaderno/resumen?fecha=${{fechaResumen}}&asiento=${{numeroResumen}}`;
                                 return;
@@ -1678,19 +2155,39 @@ def redaccion_asiento_residente():
                     hero?.classList.toggle('draft', !esCierre);
                     boton?.classList.toggle('draft', !esCierre);
                     if (icon) icon.innerHTML = esCierre ? '<i class="bi bi-shield-lock-fill"></i>' : '<i class="bi bi-save2-fill"></i>';
-                    if (titulo) titulo.innerText = esCierre ? 'Enviar asiento al Inspector' : 'Guardar borrador';
+                    if (titulo) titulo.innerText = esCierre ? 'Enviar asiento al Inspector' : 'Guardar como Borrador';
                     if (subtitulo) subtitulo.innerText = esCierre
                         ? 'Confirme el envío para que el Inspector pueda revisar y firmar.'
-                        : '¿Desea guardar el borrador y pasar al resumen del asiento?';
+                        : '¿Desea guardar el borrador del asiento?';
                     if (mensaje) mensaje.innerHTML = esCierre
                         ? '<i class="bi bi-exclamation-triangle-fill me-1"></i> Al enviar el asiento quedará listo para firma del Inspector. Podrá corregirse desde el resumen mientras no esté firmado.'
-                        : '<i class="bi bi-info-circle-fill me-1"></i> Al confirmar, se guardará el avance y se abrirá el resumen del asiento.';
+                        : '<i class="bi bi-info-circle-fill me-1"></i> Al confirmar, se guardará el avance real en la base de datos y luego podrá seguir asentando otro día o cerrar.';
                     if (cancelar) cancelar.innerText = esCierre ? 'Seguir editando' : 'Cancelar';
                     if (boton) boton.innerText = esCierre ? 'Sí, enviar a firma' : 'Confirmar';
                 }}
                 window.mostrarConfirmarGuardarBorrador = function() {{
-                    configurarConfirmacionAsiento('Borrador');
-                    document.getElementById('confirmAccionAsiento')?.classList.add('active');
+                    guardarAsientoSeguro('Borrador');
+                }};
+                function urlCalendarioDesdeFechaAsiento(fechaISO) {{
+                    const partes = String(fechaISO || '').split('-').map(n => parseInt(n, 10));
+                    if (partes.length !== 3 || partes.some(Number.isNaN)) return '/cuaderno';
+                    let [anio, mes, dia] = partes;
+                    const ultimoDiaMes = new Date(anio, mes, 0).getDate();
+                    if (dia === ultimoDiaMes) {{
+                        mes += 1;
+                        if (mes > 12) {{
+                            mes = 1;
+                            anio += 1;
+                        }}
+                    }}
+                    return `/cuaderno?mes=${{mes}}&anio=${{anio}}`;
+                }}
+                window.seguirAsentandoOtroDia = function() {{
+                    const fecha = window.ultimoBorradorGuardadoFecha || window.g_fechaRaw || '';
+                    window.location.href = urlCalendarioDesdeFechaAsiento(fecha);
+                }};
+                window.cerrarModalBorradorGuardado = function() {{
+                    window.location.href = '/cuaderno';
                 }};
                 window.mostrarConfirmarCerrarAsiento = function() {{
                     configurarConfirmacionAsiento('Enviado Inspector');
@@ -1789,6 +2286,11 @@ def redaccion_asiento_residente():
                     if (!fecha || !numero) return false;
 
                     try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
+                    window.__samuModuloInicial = moduloDestino;
+                    try {{
+                        localStorage.setItem(moduloActivoKey, String(moduloDestino));
+                        sessionStorage.setItem(moduloActivoKey, String(moduloDestino));
+                    }} catch (e) {{}}
                     const inputNumero = document.getElementById('initNumAsiento');
                     const inputFecha = document.getElementById('initFecha');
                     if (inputNumero) inputNumero.value = String(numero).replace(/\\D/g, '');
@@ -1834,21 +2336,36 @@ def redaccion_asiento_residente():
                     const form = document.getElementById('formResidencia');
                     if (form) {{
                         const refrescarYGuardar = () => {{
+                            guardarDraftAsientoCliente();
                             clearTimeout(window.__samuRefrescoTimer);
                             window.__samuRefrescoTimer = setTimeout(() => {{
                                 window.samuActualizarCuaderno();
                                 guardarEstadoLocal();
-                            }}, 160);
+                                programarAutoGuardadoContinuo();
+                            }}, 35);
                         }};
-                        ['input', 'change', 'click'].forEach(evento => {{
+                        ['input', 'change'].forEach(evento => {{
                             form.addEventListener(evento, refrescarYGuardar);
                         }});
+                        form.addEventListener('click', () => {{
+                            setTimeout(refrescarYGuardar, 0);
+                        }});
+                        document.addEventListener('modulo:cambio', guardarDraftAsientoCliente);
                     }}
-                    setTimeout(async () => {{
+                    (async () => {{
                         const iniciadoDesdeURL = await iniciarAsientoDesdeParametrosURL();
-                        if (!iniciadoDesdeURL) restaurarEstadoLocal();
-                    }}, 120);
-                    window.addEventListener('beforeunload', guardarEstadoLocal);
+                        if (!iniciadoDesdeURL) {{
+                            if (!restaurarDraftAsientoCliente()) restaurarEstadoLocal();
+                        }} else {{
+                            restaurarDraftAsientoCliente();
+                        }}
+                        document.documentElement.classList.remove('samu-restoring');
+                    }})();
+                    window.addEventListener('beforeunload', guardarEstadoLocalInmediato);
+                    window.addEventListener('pagehide', guardarEstadoLocalInmediato);
+                    document.addEventListener('visibilitychange', () => {{
+                        if (document.visibilityState === 'hidden') guardarEstadoLocalInmediato();
+                    }});
                 }});
             }})();
         </script>

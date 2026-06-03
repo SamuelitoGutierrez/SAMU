@@ -143,33 +143,38 @@ def ver_asiento_cuaderno(numero):
             .asiento-btn { border: 0; border-radius: 999px; padding: 10px 14px; font-size: 12px; font-weight: 900; text-decoration: none; color: #fff; background: #0f172a; }
             .asiento-btn.pdf { background: linear-gradient(135deg,#991b1b,#ef4444); }
             .asiento-paper { background: #fff; border-radius: 28px; padding: 20px; box-shadow: 0 24px 60px rgba(15,23,42,.12); overflow-x: auto; }
-            .pagina-cuaderno { background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px); line-height: 26px; min-height: 760px; padding-top: 0; position: relative; }
-            .lapicero { font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
+            .papel-fisico { position: relative; width: 100%; height: 1123px; min-height: 1123px; max-height: 1123px; padding: 30px 46px 34px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa; border: 1px solid #e2e8f0; box-shadow: 0 18px 45px rgba(15,23,42,0.10); font-family: Arial, sans-serif; color: #000; }
+            .pagina-cuaderno { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 25px, #cbd5e1 25px, #cbd5e1 26px); background-size: 100% 26px; background-position: top left; line-height: 26px; height: 780px; min-height: 780px; max-height: 780px; padding-top: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+            .lapicero { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
             .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-weight: 700; }
             .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
             .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; }
+            .encabezado-asiento.continuacion .titulo-asiento { padding: 0 128px 0 8px; text-align: center; text-transform: none; }
             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
             .modulo-contenido { display: block; padding-left: 22px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
             .personal-bloque { display: block; padding-left: 22px; }
             .personal-subtitulo { display: block; padding-left: 18px; font-weight: 700; line-height: 26px; }
             .personal-gastos-linea { display: block; padding-left: 48px; line-height: 26px; text-align: justify; }
             .personal-costo-fila { display: block; padding-left: 0; line-height: 26px; text-align: center; white-space: pre-wrap; }
-            .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
-            .page-counter { position: absolute; right: 14mm; bottom: 6mm; font-size: 10px; font-weight: 700; color: #64748b; }
-            .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+            .van-final { margin-top: auto; display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
+            .page-counter { position: absolute; right: 14mm; bottom: 5mm; font-size: 9px; font-weight: 600; color: #94a3b8; }
+            .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+            .p-header-side { width: 86px; flex: 0 0 86px; }
+            .p-qr-link { width: 62px; display: block; margin-left: auto; text-decoration: none; }
+            .p-qr-link img { width: 62px; height: 62px; display: block; object-fit: contain; border: 0; border-radius: 0; padding: 0; background: transparent; }
             .p-title-box { text-align: center; flex: 1; margin-left: 0; }
             .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0; }
             .p-num { font-size: 24px; font-weight: bold; }
-            .p-meta { margin-bottom: 6px; padding-bottom: 7px; border-bottom: 3px solid #000; }
-            .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 4px; }
+            .p-meta { margin-bottom: 3px; padding-bottom: 4px; border-bottom: 3px solid #000; }
+            .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 2px; }
             .p-meta-field { display: flex; align-items: flex-end; min-width: 0; }
             .p-meta-field.fecha { flex: 0 0 46%; }
             .p-meta-field.modalidad { flex: 1 1 auto; }
-            .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
+            .p-row { display: flex; align-items: flex-end; margin-bottom: 2px; }
             .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
-            .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
-            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; font-weight: 500; white-space: nowrap; }
-            .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000; }
+            .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 17px; }
+            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 16px; font-weight: 500; white-space: nowrap; }
+            .p-footer { display: flex; justify-content: space-between; margin-top: auto; padding-top: 18px; padding-bottom: 8px; font-size: 12px; font-weight: bold; color: #000; }
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
             .modulo-editable { position: relative; border-radius: 14px; padding-right: 42px; }
             .edit-module-btn { position: absolute; top: 0; right: 4px; width: 30px; height: 30px; border: 0; border-radius: 999px; background: #2563eb; color: #fff; display: grid; place-items: center; box-shadow: 0 10px 22px rgba(37,99,235,.22); }
@@ -180,16 +185,18 @@ def ver_asiento_cuaderno(numero):
                 #asientoPaper, #asientoPaper * { visibility: visible !important; }
                 @page { size: A4; margin: 0; }
                 #asientoPaper { position: absolute; left: 0; top: 0; width: 210mm; box-shadow: none; border-radius: 0; padding: 0; background: #fff; }
-                #asientoPaper .papel-fisico { position: relative; width: 210mm !important; height: 297mm !important; min-height: 297mm !important; box-sizing: border-box !important; padding: 12mm 14mm 20mm !important; margin: 0 !important; box-shadow: none !important; border: none !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa !important; }
+                #asientoPaper .papel-fisico { position: relative; width: 210mm !important; height: 297mm !important; min-height: 297mm !important; max-height: 297mm !important; box-sizing: border-box !important; padding: 8mm 12mm 9mm !important; margin: 0 !important; box-shadow: none !important; border: none !important; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa !important; }
                 #asientoPaper .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
-                #asientoPaper .p-header-top { flex: 0 0 auto; margin-bottom: 7mm !important; }
-                #asientoPaper .p-meta { flex: 0 0 auto; margin-bottom: 3mm !important; padding-bottom: 2mm !important; }
-                #asientoPaper .p-body-lines { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-                #asientoPaper .pagina-cuaderno { flex: 1 1 auto; min-height: 0 !important; overflow: hidden; background-size: auto 26px; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px) !important; display: flex; flex-direction: column; }
+                #asientoPaper .p-header-top { flex: 0 0 auto; margin-bottom: 2mm !important; }
+                #asientoPaper .p-meta { flex: 0 0 auto; margin-bottom: 1mm !important; padding-bottom: 1mm !important; }
+                #asientoPaper .p-body-lines { flex: 0 0 780px !important; min-height: 780px !important; max-height: 780px !important; margin-top: 1px !important; margin-bottom: 2mm !important; overflow: hidden; display: flex; flex-direction: column; }
+                #asientoPaper .pagina-cuaderno { flex: 0 0 780px !important; height: 780px !important; min-height: 780px !important; max-height: 780px !important; overflow: hidden; background-size: 100% 26px !important; background-position: top left !important; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 25px, #cbd5e1 25px, #cbd5e1 26px) !important; display: flex; flex-direction: column; }
                 #asientoPaper .lapicero { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; font-size: 17px; line-height: 26px; overflow-wrap: anywhere; word-break: break-word; }
                 #asientoPaper .modulo-contenido, #asientoPaper .almacen-detalle, #asientoPaper .maquinaria-bloque { overflow-wrap: anywhere !important; word-break: break-word !important; }
                 #asientoPaper .van-final { margin-top: auto !important; text-align: right !important; padding-right: 8px !important; }
-                #asientoPaper .p-footer { flex: 0 0 auto; margin-top: 6mm !important; padding-top: 0 !important; page-break-inside: avoid; break-inside: avoid; }
+                #asientoPaper .encabezado-asiento.continuacion .titulo-asiento { padding: 0 128px 0 8px !important; text-align: center !important; text-transform: none !important; }
+                #asientoPaper .encabezado-asiento.continuacion .fecha-asiento { display: block !important; }
+                #asientoPaper .p-footer { flex: 0 0 auto; margin-top: auto !important; padding-top: 5mm !important; padding-bottom: 2mm !important; page-break-inside: avoid; break-inside: avoid; }
                 #asientoPaper .p-sig { page-break-inside: avoid; break-inside: avoid; }
             }
         </style>
@@ -242,10 +249,11 @@ def ver_asiento_cuaderno(numero):
             }
 
             function htmlModuloVista(modulo) {
+                const tituloHtml = modulo.continuacionModulo ? '' : `<span class="modulo-titulo">${esc(modulo.titulo)}</span>`;
                 if (String(modulo.titulo || '').startsWith('2.')) {
-                    return `<div class="modulo-redaccion"><span class="modulo-titulo">${esc(modulo.titulo)}</span><div class="personal-bloque">${htmlPersonalObraVista(modulo.contenido)}</div></div>`;
+                    return `<div class="modulo-redaccion">${tituloHtml}<div class="personal-bloque">${htmlPersonalObraVista(modulo.contenido)}</div></div>`;
                 }
-                return `<div class="modulo-redaccion"><span class="modulo-titulo">${esc(modulo.titulo)}</span><span class="modulo-contenido">${esc(modulo.contenido || '-').replace(/\\n/g, '<br>')}</span></div>`;
+                return `<div class="modulo-redaccion">${tituloHtml}<span class="modulo-contenido">${esc(modulo.contenido || '-').replace(/\\n/g, '<br>')}</span></div>`;
             }
 
             function htmlPersonalObraVista(texto) {
@@ -272,9 +280,10 @@ def ver_asiento_cuaderno(numero):
                 const contenido = String(modulo.titulo || '').startsWith('2.')
                     ? `<div class="personal-bloque">${htmlPersonalObraVista(modulo.contenido)}</div>`
                     : `<span class="modulo-contenido">${esc(modulo.contenido || '-').replace(/\\n/g, '<br>')}</span>`;
+                const tituloHtml = modulo.continuacionModulo ? '' : `<span class="modulo-titulo">${esc(modulo.titulo)}</span>`;
                 return `<div class="modulo-redaccion modulo-editable">
                     <button type="button" class="edit-module-btn" title="Editar módulo ${step}" onclick="editarModuloResumen(${step})"><i class="bi bi-pencil-fill"></i></button>
-                    <span class="modulo-titulo">${esc(modulo.titulo)}</span>
+                    ${tituloHtml}
                     ${contenido}
                 </div>`;
             }
@@ -324,9 +333,7 @@ def ver_asiento_cuaderno(numero):
 
             function activarEdicionModularResumen() {
                 if (!resumenEditable || !Array.isArray(asientoModulos) || asientoModulos.length === 0) return;
-                const paper = document.getElementById('asientoPaper');
-                if (!paper) return;
-                paper.innerHTML = `<div class="pagina-cuaderno"><div class="lapicero">${asientoModulos.map(htmlModuloEditable).join('')}</div></div>`;
+                renderAsientoPaginado(true);
             }
 
             const PDF_LINE_HEIGHT_PX = 26;
@@ -357,16 +364,63 @@ def ver_asiento_cuaderno(numero):
                 return medidor;
             }
 
+            function anchoLineaCuadernoVista() {
+                const hoja = document.querySelector('#asientoPaper .pagina-cuaderno') || document.querySelector('.pagina-cuaderno');
+                const ancho = hoja?.clientWidth || 836;
+                return Math.max(760, Math.floor(ancho - 28));
+            }
+
+            function contextoLineasCuadernoVista() {
+                if (!window.__samuVistaLineMeasureCanvas) {
+                    window.__samuVistaLineMeasureCanvas = document.createElement('canvas');
+                }
+                const ctx = window.__samuVistaLineMeasureCanvas.getContext('2d');
+                ctx.font = 'italic 17px Candara, Calibri, Arial, sans-serif';
+                return ctx;
+            }
+
+            function contarLineasTextoVista(texto) {
+                const ctx = contextoLineasCuadernoVista();
+                const anchoMaximo = anchoLineaCuadernoVista();
+                const parrafos = String(texto || '-').split('\\n');
+                let total = 0;
+
+                parrafos.forEach(parrafo => {
+                    const limpio = String(parrafo || '').trim();
+                    if (!limpio) {
+                        total += 1;
+                        return;
+                    }
+
+                    let lineaActual = '';
+                    limpio.split(/\\s+/).filter(Boolean).forEach(palabra => {
+                        const candidata = lineaActual ? `${lineaActual} ${palabra}` : palabra;
+                        if (lineaActual && ctx.measureText(candidata).width > anchoMaximo) {
+                            total += 1;
+                            lineaActual = palabra;
+                        } else {
+                            lineaActual = candidata;
+                        }
+                    });
+                    total += 1;
+                });
+
+                return Math.max(1, total);
+            }
+
             function lineasModuloVista(modulo, incluirVan=false) {
-                const medidor = obtenerMedidorVistaPDF();
-                medidor.innerHTML = `${htmlModuloVista(modulo)}${incluirVan ? '<span class="van-final">van . . .</span>' : ''}`;
-                return Math.max(1, Math.ceil(medidor.scrollHeight / PDF_LINE_HEIGHT_PX));
+                const titulo = modulo.continuacionModulo ? 0 : 1;
+                const html = htmlModuloVista(modulo);
+                const bloques = Math.max(0, (html.match(/<div\b/gi) || []).length - 1);
+                const saltos = (html.match(/<br\s*\/?\s*>/gi) || []).length;
+                const estimadoHtml = bloques + saltos;
+                return Math.max(1, titulo + Math.max(contarLineasTextoVista(modulo.contenido || '-'), estimadoHtml) + (incluirVan ? 1 : 0));
             }
 
             function htmlPaginaVistaTemporal(modulos, continuacion=false, van=false) {
                 return `
-                    <div class="pagina-cuaderno">
-                        <div class="lapicero">
+                    <div class="pagina-cuaderno" style="height:auto;min-height:0;max-height:none;overflow:visible;background:none;display:block;">
+                        <div class="lapicero" style="display:block;min-height:0;overflow:visible;">
                             ${encabezadoVista(continuacion)}
                             ${modulos.map(htmlModuloVista).join('')}
                             ${van ? '<span class="van-final">van . . .</span>' : ''}
@@ -379,42 +433,18 @@ def ver_asiento_cuaderno(numero):
                 const medidor = obtenerMedidorVistaPDF();
                 medidor.style.width = '650px';
                 medidor.innerHTML = htmlPaginaVistaTemporal(modulos, continuacion, van);
-                return medidor.scrollHeight || 0;
+                const contenido = medidor.querySelector('.lapicero');
+                return contenido ? contenido.scrollHeight : (medidor.scrollHeight || 0);
             }
 
             function estimarLineasTextoVista(texto) {
-                return String(texto || '-').split('\\n').reduce((sum, linea) => sum + Math.max(1, Math.ceil(String(linea || '').length / 96)), 0);
+                return contarLineasTextoVista(texto);
             }
 
             function dividirModuloVista(modulo, maxLineas) {
                 const texto = String(modulo.contenido || '-').trim();
                 const lineasDisponibles = Math.max(1, maxLineas);
-                const partes = texto.split(/(\\s+)/).filter(parte => parte.length > 0);
-                if (partes.length <= 1) return [{...modulo, contenido: texto || '-'}, {...modulo, contenido: ''}];
-
-                let bajo = 1;
-                let alto = partes.length;
-                let mejor = 1;
-                while (bajo <= alto) {
-                    const medio = Math.floor((bajo + alto) / 2);
-                    const candidato = partes.slice(0, medio).join('').trim();
-                    if (lineasModuloVista({...modulo, contenido: candidato}, true) <= lineasDisponibles) {
-                        mejor = medio;
-                        bajo = medio + 1;
-                    } else {
-                        alto = medio - 1;
-                    }
-                }
-                if (mejor >= partes.length) mejor = Math.max(1, partes.length - 1);
-                return [
-                    {...modulo, contenido: partes.slice(0, mejor).join('').trim() || '-'},
-                    {...modulo, contenido: partes.slice(mejor).join('').trim()}
-                ];
-            }
-
-            function dividirModuloVistaPorAltura(modulo, modulosPrevios, continuacion, maxAltura) {
-                const texto = String(modulo.contenido || '-').trim();
-                const partes = texto.split(/(\s+)/).filter(parte => parte.length > 0);
+                const partes = texto.split(/\\s+/).filter(Boolean);
                 if (partes.length <= 1) return [{...modulo, contenido: texto || '-'}, {...modulo, contenido: ''}];
 
                 let bajo = 1;
@@ -422,8 +452,39 @@ def ver_asiento_cuaderno(numero):
                 let mejor = 0;
                 while (bajo <= alto) {
                     const medio = Math.floor((bajo + alto) / 2);
-                    const candidato = {...modulo, contenido: partes.slice(0, medio).join('').trim()};
-                    const altura = medirPaginaVista([...modulosPrevios, candidato], continuacion, true);
+                    const candidato = partes.slice(0, medio).join(' ').trim();
+                    if (lineasModuloVista({...modulo, contenido: candidato}, false) <= lineasDisponibles) {
+                        mejor = medio;
+                        bajo = medio + 1;
+                    } else {
+                        alto = medio - 1;
+                    }
+                }
+                if (mejor <= 0) {
+                    return [
+                        {...modulo, contenido: '', continuacionModulo: modulo.continuacionModulo},
+                        {...modulo, contenido: texto || '-', continuacionModulo: true}
+                    ];
+                }
+                if (mejor >= partes.length) mejor = Math.max(1, partes.length - 1);
+                return [
+                    {...modulo, contenido: partes.slice(0, mejor).join(' ').trim() || '-'},
+                    {...modulo, contenido: partes.slice(mejor).join(' ').trim(), continuacionModulo: true}
+                ];
+            }
+
+            function dividirModuloVistaPorAltura(modulo, modulosPrevios, continuacion, maxAltura) {
+                const texto = String(modulo.contenido || '-').trim();
+                const partes = texto.split(/\s+/).filter(Boolean);
+                if (partes.length <= 1) return [{...modulo, contenido: texto || '-'}, {...modulo, contenido: ''}];
+
+                let bajo = 1;
+                let alto = partes.length;
+                let mejor = 0;
+                while (bajo <= alto) {
+                    const medio = Math.floor((bajo + alto) / 2);
+                    const candidato = {...modulo, contenido: partes.slice(0, medio).join(' ').trim()};
+                    const altura = medirPaginaVista([...modulosPrevios, candidato], continuacion, false);
                     if (altura <= maxAltura) {
                         mejor = medio;
                         bajo = medio + 1;
@@ -433,8 +494,8 @@ def ver_asiento_cuaderno(numero):
                 }
                 if (mejor >= partes.length) mejor = Math.max(1, partes.length - 1);
                 return [
-                    {...modulo, contenido: partes.slice(0, mejor).join('').trim()},
-                    {...modulo, contenido: partes.slice(mejor).join('').trim()}
+                    {...modulo, contenido: partes.slice(0, mejor).join(' ').trim()},
+                    {...modulo, contenido: partes.slice(mejor).join(' ').trim(), continuacionModulo: true}
                 ];
             }
 
@@ -443,82 +504,108 @@ def ver_asiento_cuaderno(numero):
                 let actual = [];
                 let usadas = 1;
                 let continuacion = false;
-                const maxLineasPagina = () => continuacion ? 32 : 27;
-                const maxAlturaPagina = () => continuacion ? 870 : 735;
+                const maxLineasContenido = () => 29;
+                const maxAlturaContenido = () => PDF_LINE_HEIGHT_PX * maxLineasContenido();
                 modulos.forEach(original => {
                     let pendiente = {...original};
                     while (pendiente && String(pendiente.contenido || '').trim()) {
-                        if (medirPaginaVista([...actual, pendiente], continuacion, false) <= maxAlturaPagina()) {
+                        const lineasPendiente = lineasModuloVista(pendiente);
+                        const lineasDisponibles = maxLineasContenido() - usadas;
+
+                        if (lineasPendiente <= lineasDisponibles) {
                             actual.push(pendiente);
-                            usadas += lineasModuloVista(pendiente);
+                            usadas += lineasPendiente;
                             pendiente = null;
                             continue;
                         }
 
-                        {
-                            const partes = dividirModuloVistaPorAltura(pendiente, actual, continuacion, maxAlturaPagina());
+                        if (lineasDisponibles >= 1) {
+                            const partes = dividirModuloVista(pendiente, lineasDisponibles);
+                            const resto = String(partes[1].contenido || '').trim();
                             if (String(partes[0].contenido || '').trim()) {
                                 actual.push(partes[0]);
+                            }
+                            if (resto) {
                                 paginas.push({modulos: actual, continuacion, van: true});
                                 actual = [];
                                 usadas = 1;
                                 continuacion = true;
-                                pendiente = partes[1].contenido.trim() ? partes[1] : null;
-                                continue;
+                                pendiente = {...partes[1], contenido: resto};
+                            } else {
+                                pendiente = null;
                             }
+                            continue;
+                        }
 
-                            if (actual.length > 0) {
-                                paginas.push({modulos: actual, continuacion, van: true});
-                                actual = [];
-                                usadas = 1;
-                                continuacion = true;
-                                continue;
-                            }
-
-                            const forzado = dividirModuloVista(pendiente, Math.max(2, maxLineasPagina() - usadas));
-                            actual.push(forzado[0]);
+                        if (actual.length > 0) {
                             paginas.push({modulos: actual, continuacion, van: true});
                             actual = [];
                             usadas = 1;
                             continuacion = true;
-                            pendiente = forzado[1].contenido.trim() ? forzado[1] : null;
+                            continue;
+                        }
+
+                        const forzado = dividirModuloVista(pendiente, Math.max(2, maxLineasContenido() - usadas));
+                        const restoForzado = String(forzado[1].contenido || '').trim();
+                        actual.push(forzado[0]);
+                        if (restoForzado) {
+                            paginas.push({modulos: actual, continuacion, van: true});
+                            actual = [];
+                            usadas = 1;
+                            continuacion = true;
+                            pendiente = {...forzado[1], contenido: restoForzado};
+                        } else {
+                            pendiente = null;
                         }
                     }
                 });
-                paginas.push({modulos: actual, continuacion, van: false});
+                if (actual.length > 0 || paginas.length === 0) {
+                    paginas.push({modulos: actual, continuacion, van: false});
+                }
                 return paginas;
             }
 
             function encabezadoVista(continuacion) {
                 const titulo = continuacion ? `. . . viene del ASIENTO N° ${asientoNumero} DEL RESIDENTE DE OBRA` : `ASIENTO N° ${asientoNumero} DEL RESIDENTE DE OBRA`;
-                return `<div class="encabezado-asiento"><div class="titulo-asiento">${esc(titulo)}</div><div class="fecha-asiento">${esc(asientoFechaTexto)}</div></div>`;
+                return `<div class="encabezado-asiento ${continuacion ? 'continuacion' : ''}"><div class="titulo-asiento">${esc(titulo)}</div><div class="fecha-asiento">${esc(asientoFechaTexto)}</div></div>`;
             }
 
-            function prepararAsientoPDF() {
+            function renderAsientoPaginado(editable=false) {
                 if (!Array.isArray(asientoModulos) || asientoModulos.length === 0) return;
                 const paginas = paginarVista(asientoModulos);
+                const renderModulo = editable ? htmlModuloEditable : htmlModuloVista;
                 document.getElementById('asientoPaper').innerHTML = paginas.map((p, idx) => `
                     <div class="papel-fisico hoja-pdf">
-                        ${idx === 0 ? encabezadoGeneralVista() : ''}
+                        ${encabezadoGeneralVista()}
                         <div class="p-body-lines">
                             <div class="pagina-cuaderno"><div class="lapicero">
                                 ${encabezadoVista(p.continuacion)}
-                                ${p.modulos.map(htmlModuloVista).join('')}
+                                ${p.modulos.map(renderModulo).join('')}
                                 ${p.van ? '<span class="van-final">van . . .</span>' : ''}
                             </div></div>
                         </div>
                         ${firmasVista()}
-                        <div class="page-counter">Página ${idx + 1} de ${paginas.length}</div>
+                        <div class="page-counter">${idx + 1} de ${paginas.length}</div>
                     </div>
                 `).join('');
             }
 
+            function prepararAsientoPDF() {
+                renderAsientoPaginado(false);
+            }
+
             function encabezadoGeneralVista() {
+                const destino = `${window.location.origin}/resumen_asiento/${encodeURIComponent(asientoFechaRaw || '')}`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=${encodeURIComponent(destino)}`;
                 return `
                     <div class="p-header-top">
-                        <div style="width: 80px;"></div>
+                        <div class="p-header-side"></div>
                         <div class="p-title-box"><h1>CUADERNO DE OBRA</h1></div>
-                        <div style="width: 80px;"></div>
+                        <div class="p-header-side">
+                            <a class="p-qr-link" href="${destino}" target="_blank" rel="noopener">
+                                <img alt="QR para ver PDF del asiento" src="${qrUrl}">
+                            </a>
+                        </div>
                     </div>
                     <div class="p-meta">
                         <div class="p-meta-row">
@@ -540,7 +627,7 @@ def ver_asiento_cuaderno(numero):
             function exportarAsientoPDF() {
                 prepararAsientoPDF();
                 imprimirAsientoEnVentana();
-                setTimeout(() => { document.getElementById('asientoPaper').innerHTML = asientoHtmlNormal; }, 700);
+                setTimeout(() => { renderAsientoPaginado(resumenEditable); }, 700);
             }
 
             function imprimirAsientoEnVentana() {
@@ -562,27 +649,32 @@ def ver_asiento_cuaderno(numero):
                             @page { size: A4; margin: 0; }
                             html, body { margin: 0; padding: 0; background: #fff; }
                             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                            .papel-fisico { position: relative; width: 210mm; height: 297mm; min-height: 297mm; box-sizing: border-box; padding: 12mm 14mm 20mm; margin: 0; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa; border: none; box-shadow: none; font-family: Arial, sans-serif; color: #000; }
+                            .papel-fisico { position: relative; width: 210mm; height: 297mm; min-height: 297mm; max-height: 297mm; box-sizing: border-box; padding: 8mm 12mm 9mm; margin: 0; page-break-after: always; break-after: page; display: flex; flex-direction: column; overflow: hidden; background: #fdfdfa; border: none; box-shadow: none; font-family: Arial, sans-serif; color: #000; }
                             .papel-fisico:last-child { page-break-after: auto; break-after: auto; }
-                            .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7mm; flex: 0 0 auto; }
+                            .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2mm; flex: 0 0 auto; }
+                            .p-header-side { width: 86px; flex: 0 0 86px; }
+                            .p-qr-link { width: 62px; display: block; margin-left: auto; text-decoration: none; }
+                            .p-qr-link img { width: 62px; height: 62px; display: block; object-fit: contain; border: 0; border-radius: 0; padding: 0; background: transparent; }
                             .p-title-box { text-align: center; flex: 1; margin-left: 0; }
                             .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0; }
                             .p-num { font-size: 24px; font-weight: bold; }
-                            .p-meta { flex: 0 0 auto; margin-bottom: 3mm; padding-bottom: 2mm; border-bottom: 3px solid #000; }
-                            .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 4px; }
+                            .p-meta { flex: 0 0 auto; margin-bottom: 1mm; padding-bottom: 1mm; border-bottom: 3px solid #000; }
+                            .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 2px; }
                             .p-meta-field { display: flex; align-items: flex-end; min-width: 0; }
                             .p-meta-field.fecha { flex: 0 0 46%; }
                             .p-meta-field.modalidad { flex: 1 1 auto; }
-                            .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
+                            .p-row { display: flex; align-items: flex-end; margin-bottom: 2px; }
                             .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
-                            .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
-                            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; font-weight: 500; white-space: nowrap; }
-                            .p-body-lines { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-                            .pagina-cuaderno { flex: 1 1 auto; min-height: 0; overflow: hidden; background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px); background-size: auto 26px; line-height: 26px; display: flex; flex-direction: column; }
+                            .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 17px; }
+                            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 16px; font-weight: 500; white-space: nowrap; }
+                            .p-body-lines { flex: 0 0 780px; min-height: 780px; max-height: 780px; margin-top: 1px; margin-bottom: 2mm; overflow: hidden; display: flex; flex-direction: column; }
+                            .pagina-cuaderno { flex: 0 0 780px; height: 780px; min-height: 780px; max-height: 780px; overflow: hidden; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 25px, #cbd5e1 25px, #cbd5e1 26px); background-size: 100% 26px; background-position: top left; line-height: 26px; display: flex; flex-direction: column; }
                             .lapicero { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: #0263a0; font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
                             .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-weight: 700; }
                             .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
                             .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; }
+                            .encabezado-asiento.continuacion .titulo-asiento { padding: 0 128px 0 8px; text-align: center; text-transform: none; }
+                            .encabezado-asiento.continuacion .fecha-asiento { display: block; }
                             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
                             .modulo-contenido { display: block; padding-left: 22px; text-indent: 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
                             .personal-bloque { display: block; padding-left: 22px; }
@@ -590,9 +682,9 @@ def ver_asiento_cuaderno(numero):
                             .personal-gastos-linea { display: block; padding-left: 48px; line-height: 26px; text-align: justify; }
                             .personal-costo-fila { display: block; padding-left: 0; line-height: 26px; text-align: center; white-space: pre-wrap; }
                             .van-final { margin-top: auto; display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
-                            .p-footer { flex: 0 0 auto; display: flex; justify-content: space-between; margin-top: 6mm; font-size: 12px; font-weight: bold; color: #000; page-break-inside: avoid; break-inside: avoid; }
+                            .p-footer { flex: 0 0 auto; display: flex; justify-content: space-between; margin-top: auto; padding-top: 5mm; padding-bottom: 2mm; font-size: 12px; font-weight: bold; color: #000; page-break-inside: avoid; break-inside: avoid; }
                             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
-                            .page-counter { position: absolute; right: 14mm; bottom: 6mm; font-size: 10px; font-weight: 700; color: #64748b; }
+                            .page-counter { position: absolute; right: 14mm; bottom: 5mm; font-size: 9px; font-weight: 600; color: #94a3b8; }
                         </style>
                     </head>
                     <body>${contenido.innerHTML}</body>
@@ -602,7 +694,11 @@ def ver_asiento_cuaderno(numero):
                 ventana.focus();
                 setTimeout(() => ventana.print(), 350);
             }
-            document.addEventListener('DOMContentLoaded', activarEdicionModularResumen);
+            document.addEventListener('DOMContentLoaded', () => {
+                if (Array.isArray(asientoModulos) && asientoModulos.length > 0) {
+                    renderAsientoPaginado(resumenEditable);
+                }
+            });
         </script>
     </body>
     </html>
@@ -1363,6 +1459,43 @@ def panel_cuaderno():
                 background: linear-gradient(135deg, #dcfce7 0%, #dcfce7 49%, #dbeafe 50%, #dbeafe 100%);
             }
             .calendar-day.mixto .day-number { background: linear-gradient(135deg, #16a34a, #2563eb); color: #fff; }
+            .calendar-day.pending,
+            .calendar-day.pending.residencia,
+            .calendar-day.pending.supervision,
+            .calendar-day.pending.mixto {
+                border-color: #fecaca;
+                background: linear-gradient(135deg, #fff1f2, #fee2e2);
+            }
+            .calendar-day.pending .day-number { background: #ef4444; color: #fff; }
+            .calendar-day.draft,
+            .calendar-day.draft.residencia,
+            .calendar-day.draft.supervision,
+            .calendar-day.draft.mixto,
+            .calendar-day.observed,
+            .calendar-day.observed.residencia,
+            .calendar-day.observed.supervision,
+            .calendar-day.observed.mixto {
+                border-color: #fde68a;
+                background: linear-gradient(135deg, #fefce8, #fef3c7);
+            }
+            .calendar-day.draft .day-number,
+            .calendar-day.observed .day-number { background: #facc15; color: #713f12; }
+            .calendar-day.sent,
+            .calendar-day.sent.residencia,
+            .calendar-day.sent.supervision,
+            .calendar-day.sent.mixto {
+                border-color: #86efac;
+                background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            }
+            .calendar-day.sent .day-number { background: #22c55e; color: #fff; }
+            .calendar-day.signed,
+            .calendar-day.signed.residencia,
+            .calendar-day.signed.supervision,
+            .calendar-day.signed.mixto {
+                border-color: #93c5fd;
+                background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            }
+            .calendar-day.signed .day-number { background: #2563eb; color: #fff; }
 
             .calendar-tooltip {
                 position: absolute;
@@ -1631,6 +1764,34 @@ def panel_cuaderno():
                 background: linear-gradient(135deg, #dcfce7 0%, #dcfce7 49%, #dbeafe 50%, #dbeafe 100%);
                 color: #0f172a;
             }
+            .mini-seat-day.draft,
+            .mini-seat-day.draft.residencia,
+            .mini-seat-day.draft.supervision,
+            .mini-seat-day.draft.mixto,
+            .mini-seat-day.observed,
+            .mini-seat-day.observed.residencia,
+            .mini-seat-day.observed.supervision,
+            .mini-seat-day.observed.mixto {
+                border-color: #fde68a;
+                background: linear-gradient(135deg, #fefce8, #fef3c7);
+                color: #713f12;
+            }
+            .mini-seat-day.sent,
+            .mini-seat-day.sent.residencia,
+            .mini-seat-day.sent.supervision,
+            .mini-seat-day.sent.mixto {
+                border-color: #86efac;
+                background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+                color: #166534;
+            }
+            .mini-seat-day.signed,
+            .mini-seat-day.signed.residencia,
+            .mini-seat-day.signed.supervision,
+            .mini-seat-day.signed.mixto {
+                border-color: #93c5fd;
+                background: linear-gradient(135deg, #eff6ff, #dbeafe);
+                color: #1d4ed8;
+            }
 
             .mini-seat-day.selected {
                 outline: 3px solid rgba(2,99,160,.26);
@@ -1818,9 +1979,10 @@ def panel_cuaderno():
                                 </div>
                             </div>
                             <div class="legend-dashboard">
-                                <div><span><span class="dot" style="background:#22c55e;"></span> Enviados/Firmados</span><b id="closedCount">0</b></div>
+                                <div><span><span class="dot" style="background:#2563eb;"></span> Firmados Inspector</span><b id="signedCount">0</b></div>
+                                <div><span><span class="dot" style="background:#22c55e;"></span> Enviados a Inspector</span><b id="sentCount">0</b></div>
                                 <div><span><span class="dot" style="background:#facc15;"></span> Borradores</span><b id="draftCount">0</b></div>
-                                <div><span><span class="dot" style="background:#ef4444;"></span> Pendientes vencidos</span><b id="pendingCount">0</b></div>
+                                <div><span><span class="dot" style="background:#ef4444;"></span> Sin registro</span><b id="pendingCount">0</b></div>
                             </div>
                         </div>
 
@@ -1868,7 +2030,7 @@ def panel_cuaderno():
                 <div class="seat-modal-head">
                     <div>
                         <h3 id="seatEntryTitle">Redactar Asiento</h3>
-                        <p id="seatEntrySubtitle">Seleccione una fecha. Rojo crea un asiento nuevo, amarillo continúa borrador y verde abre solo lectura.</p>
+                        <p id="seatEntrySubtitle">Seleccione una fecha. Rojo sin registro, amarillo borrador, verde enviado al Inspector y azul firmado.</p>
                     </div>
                     <button type="button" class="seat-modal-close" onclick="cerrarModalAsiento()" aria-label="Cerrar">&times;</button>
                 </div>
@@ -1886,7 +2048,8 @@ def panel_cuaderno():
                         <span class="inline-flex items-center gap-2 text-[11px] font-black text-slate-500">
                             <span class="inline-block h-2.5 w-2.5 rounded-full bg-red-500"></span>Nuevo
                             <span class="inline-block h-2.5 w-2.5 rounded-full bg-yellow-400"></span>Borrador
-                            <span class="inline-block h-2.5 w-2.5 rounded-full bg-green-500"></span>Enviado/Firmado
+                            <span class="inline-block h-2.5 w-2.5 rounded-full bg-green-500"></span>Enviado
+                            <span class="inline-block h-2.5 w-2.5 rounded-full bg-blue-600"></span>Firmado
                         </span>
                     </div>
                     <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black uppercase text-slate-400">
@@ -1956,7 +2119,13 @@ def panel_cuaderno():
                 observado: '#f97316'
             };
 
+            const paramsInicialesPanel = new URLSearchParams(window.location.search || '');
             let mesActivo = new Date();
+            const yearInicial = parseInt(paramsInicialesPanel.get('anio') || paramsInicialesPanel.get('year') || '', 10);
+            const monthInicial = parseInt(paramsInicialesPanel.get('mes') || paramsInicialesPanel.get('month') || '', 10);
+            if (!Number.isNaN(yearInicial) && !Number.isNaN(monthInicial) && monthInicial >= 1 && monthInicial <= 12) {
+                mesActivo = new Date(yearInicial, monthInicial - 1, 1);
+            }
             mesActivo.setDate(1);
             let doughnutChart = null;
             let asientosMesActivo = new Map();
@@ -1978,11 +2147,22 @@ def panel_cuaderno():
 
             function normalizarEstado(valor) {
                 const estado = String(valor || '').trim().toLowerCase();
+                if (estado.includes('firmado_inspector')) return 'firmado_inspector';
                 if (estado.includes('borrador') || estado.includes('redacción') || estado.includes('redaccion')) return 'borrador';
                 if (estado.includes('observ')) return 'observado';
                 if (estado.includes('enviado') && estado.includes('inspector')) return 'enviado_inspector';
-                if (estado.includes('cerrado') || estado.includes('firmado')) return 'cerrado';
+                if (estado.includes('cerrado') || estado.includes('firmado')) return 'firmado_inspector';
                 return 'pendiente';
+            }
+
+            function estadoCalendarioAsiento(asiento) {
+                if (!asiento) return 'pendiente';
+                const estadoInspector = normalizarEstado(asiento.inspector_estado || '');
+                const estado = normalizarEstado(asiento.estado || '');
+                if (estadoInspector === 'firmado_inspector' || estado === 'firmado_inspector') return 'signed';
+                if (estado === 'enviado_inspector' || estadoInspector === 'enviado_inspector') return 'sent';
+                if (estado === 'borrador' || estadoInspector === 'borrador' || estado === 'observado') return 'draft';
+                return estado === 'future' ? 'future' : 'pending';
             }
 
             function parseFechaLocal(fechaISO) {
@@ -2045,35 +2225,31 @@ def panel_cuaderno():
                 document.getElementById('monthLabel').textContent = nombreMes(mesActivo);
 
                 const totalDias = datos.estadisticas?.dias_mes || diasEnMes(year, month);
-                let cerrados = Number(datos.estadisticas?.cerrados || 0);
-                let borradores = Number(datos.estadisticas?.borradores || 0);
-                let sinRegistro = Number(datos.estadisticas?.sin_registro || 0);
-                let avance = Number(datos.estadisticas?.avance || 0);
-                if (!datos.estadisticas) {
-                    let observados = 0;
-                    for (const asiento of porDia.values()) {
-                        const estado = normalizarEstado(asiento.estado);
-                        if (estado === 'cerrado' || estado === 'enviado_inspector') cerrados += 1;
-                        if (estado === 'borrador') borradores += 1;
-                        if (estado === 'observado') observados += 1;
-                    }
-                    sinRegistro = Math.max(0, totalDias - cerrados - borradores - observados);
-                    avance = Math.round((cerrados / totalDias) * 100);
+                let firmados = 0;
+                let enviados = 0;
+                let borradores = 0;
+                for (const asiento of porDia.values()) {
+                    const estado = estadoCalendarioAsiento(asiento);
+                    if (estado === 'signed') firmados += 1;
+                    if (estado === 'sent') enviados += 1;
+                    if (estado === 'draft') borradores += 1;
                 }
-                sinRegistro = contarPendientesVencidos(year, month, totalDias, porDia);
+                const sinRegistro = contarPendientesVencidos(year, month, totalDias, porDia);
+                const avance = totalDias > 0 ? Math.round(((firmados + enviados) / totalDias) * 100) : 0;
 
-                renderChart(cerrados, borradores, sinRegistro, avance);
+                renderChart(firmados, enviados, borradores, sinRegistro, avance);
                 renderCalendar(year, month, totalDias, porDia);
             }
 
-            function renderChart(cerrados, borradores, sinRegistro, avance) {
+            function renderChart(firmados, enviados, borradores, sinRegistro, avance) {
                 document.getElementById('monthPercent').textContent = `${avance}%`;
-                document.getElementById('closedCount').textContent = cerrados;
+                document.getElementById('signedCount').textContent = firmados;
+                document.getElementById('sentCount').textContent = enviados;
                 document.getElementById('draftCount').textContent = borradores;
                 document.getElementById('pendingCount').textContent = sinRegistro;
 
                 const ctx = document.getElementById('monthlyDoughnut');
-                const data = [cerrados, borradores, sinRegistro];
+                const data = [firmados, enviados, borradores, sinRegistro];
                 if (doughnutChart) {
                     doughnutChart.destroy();
                     doughnutChart = null;
@@ -2081,10 +2257,10 @@ def panel_cuaderno():
                 doughnutChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Días enviados o firmados', 'Días en borrador', 'Días pendientes vencidos'],
+                        labels: ['Días firmados por Inspector', 'Días enviados al Inspector', 'Días en borrador', 'Días sin registro'],
                         datasets: [{
                             data,
-                            backgroundColor: ['#22c55e', '#facc15', '#ef4444'],
+                            backgroundColor: ['#2563eb', '#22c55e', '#facc15', '#ef4444'],
                             borderColor: '#ffffff',
                             borderWidth: 6,
                             hoverOffset: 8
@@ -2125,8 +2301,8 @@ def panel_cuaderno():
                 for (let dia = 1; dia <= totalDias; dia += 1) {
                     const asiento = porDia.get(dia);
                     const fechaISO = fechaISODesdePartes(year, month, dia);
-                    const estado = asiento ? normalizarEstado(asiento.estado) : (esFechaFutura(fechaISO) ? 'future' : 'pendiente');
-                    const estadoVisual = estado === 'enviado_inspector' ? 'cerrado' : estado;
+                    const estado = asiento ? estadoCalendarioAsiento(asiento) : (esFechaFutura(fechaISO) ? 'future' : 'pending');
+                    const estadoVisual = estado;
                     const tipoVisual = asiento ? claseOrigenAsiento(asiento) : '';
                     const item = document.createElement('button');
                     item.type = 'button';
@@ -2151,7 +2327,7 @@ def panel_cuaderno():
                     item.dataset.fecha = fechaISO;
                     if (asiento && (asiento.numero || asiento.residencia_numero || asiento.inspector_numero)) {
                         item.addEventListener('click', () => abrirAsientoHistorico(asiento, fechaISO));
-                    } else if (!asiento && estado === 'pendiente') {
+                    } else if (!asiento && estado === 'pending') {
                         item.addEventListener('click', () => abrirModalAsientoResidencia(null, fechaISO));
                     }
                     grid.appendChild(item);
@@ -2182,18 +2358,20 @@ def panel_cuaderno():
 
             function repintarDashboardDesdeMapa(year, month, porDia) {
                 const totalDias = diasEnMes(year, month);
-                let cerrados = 0;
+                let firmados = 0;
+                let enviados = 0;
                 let borradores = 0;
                 for (const asiento of porDia.values()) {
-                    const estado = normalizarEstado(asiento.estado);
-                    if (estado === 'cerrado' || estado === 'enviado_inspector') cerrados += 1;
-                    if (estado === 'borrador' || estado === 'observado') borradores += 1;
+                    const estado = estadoCalendarioAsiento(asiento);
+                    if (estado === 'signed') firmados += 1;
+                    if (estado === 'sent') enviados += 1;
+                    if (estado === 'draft') borradores += 1;
                 }
                 const pendientes = contarPendientesVencidos(year, month, totalDias, porDia);
-                const avance = totalDias > 0 ? Math.round((cerrados / totalDias) * 100) : 0;
+                const avance = totalDias > 0 ? Math.round(((firmados + enviados) / totalDias) * 100) : 0;
                 asientosMesActivo = porDia;
                 document.getElementById('monthLabel').textContent = nombreMes(mesActivo);
-                renderChart(cerrados, borradores, pendientes, avance);
+                renderChart(firmados, enviados, borradores, pendientes, avance);
                 renderCalendar(year, month, totalDias, porDia);
             }
 
@@ -2281,7 +2459,7 @@ def panel_cuaderno():
                 modoModalAsiento = 'residencia';
                 const modal = document.getElementById('seatEntryModal');
                 document.getElementById('seatEntryTitle').textContent = 'Redactar Asiento de Residencia';
-                document.getElementById('seatEntrySubtitle').textContent = 'Seleccione una fecha. Rojo crea un asiento nuevo, amarillo continúa borrador y verde abre solo lectura.';
+                document.getElementById('seatEntrySubtitle').textContent = 'Seleccione una fecha. Rojo sin registro, amarillo continúa borrador, verde enviado al Inspector y azul firmado.';
                 const fecha = parseFechaLocal(fechaISO || fechaPorDefectoModal());
                 if (fecha) modalMesActivo = new Date(fecha.year, fecha.monthIndex, 1);
                 modal.classList.remove('hidden');
@@ -2336,8 +2514,8 @@ def panel_cuaderno():
                 for (let dia = 1; dia <= totalDias; dia += 1) {
                     const fechaISO = fechaISODesdePartes(year, month, dia);
                     const asiento = buscarAsientoPorFecha(fechaISO, modalAsientosMes, year, month);
-                    const estado = asiento ? normalizarEstado(asiento.estado) : (esFechaFutura(fechaISO) ? 'future' : 'pendiente');
-                    const estadoVisual = estado === 'observado' ? 'draft' : (estado === 'enviado_inspector' ? 'cerrado' : estado);
+                    const estado = asiento ? estadoCalendarioAsiento(asiento) : (esFechaFutura(fechaISO) ? 'future' : 'pending');
+                    const estadoVisual = estado;
                     const tipoVisual = asiento ? claseOrigenAsiento(asiento) : '';
                     const day = document.createElement('button');
                     day.type = 'button';
@@ -2465,10 +2643,10 @@ def panel_cuaderno():
             function textoEstado(asiento, estado) {
                 if (estado === 'future') return 'Futuro';
                 if (!asiento) return 'Sin registro';
-                if (estado === 'enviado_inspector') return 'Enviado Inspector';
-                if (estado === 'cerrado') return 'Firmado';
-                if (estado === 'borrador') return 'Borrador';
-                if (estado === 'observado') return 'Observado';
+                if (estado === 'sent') return 'Enviado Inspector';
+                if (estado === 'signed') return 'Firmado Inspector';
+                if (estado === 'draft') return 'Borrador';
+                if (estado === 'observed') return 'Observado';
                 return 'Pendiente';
             }
 
@@ -2671,7 +2849,9 @@ def panel_cuaderno():
                 }
                 try { localStorage.removeItem('samu_dashboard_refresh'); } catch (e) {}
                 const estadoCambio = String(cambio.estado || '').toLowerCase();
-                const estado = estadoCambio.includes('inspector') ? 'Asiento enviado al Inspector' : (estadoCambio.includes('cerrado') ? 'Asiento firmado exitosamente' : 'Borrador guardado exitosamente');
+                const estado = estadoCambio.includes('firmado') || estadoCambio.includes('cerrado')
+                    ? 'Asiento firmado exitosamente'
+                    : (estadoCambio.includes('inspector') ? 'Asiento enviado al Inspector' : 'Borrador guardado exitosamente');
                 mostrarModalElegante(estado, `El Asiento N° ${String(cambio.numero || '').padStart(3, '0')} ya fue sincronizado en el calendario.`, 'success');
             }
 
@@ -2680,7 +2860,7 @@ def panel_cuaderno():
                 renderTimeline();
                 prepararAnimacionFlotarAdentro();
                 refrescarDashboardSiHayCambios();
-                const accionInicial = new URLSearchParams(window.location.search || '').get('abrir');
+                const accionInicial = paramsInicialesPanel.get('abrir');
                 if (accionInicial === 'residencia') {
                     setTimeout(() => abrirModalAsientoResidencia(null), 250);
                 }

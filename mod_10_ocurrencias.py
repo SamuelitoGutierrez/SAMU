@@ -13,9 +13,9 @@ OCURRENCIAS_HTML = """
     .m10-editor { border: 1px solid #fecaca; border-radius: 18px; background: #fff; padding: 12px; }
     .m10-editor textarea { width: 100%; min-height: 170px; border: 0; outline: 0; resize: vertical; font-size: 13px; line-height: 1.55; color: #334155; }
     .m10-history { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .m10-card { border: 1px solid #e2e8f0; border-radius: 18px; background: #f8fafc; padding: 12px; min-height: 92px; }
+    .m10-card { border: 1px solid #e2e8f0; border-radius: 18px; background: #f8fafc; padding: 12px; min-height: 92px; overflow: visible; }
     .m10-card h6 { margin: 0 0 6px; font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: .35px; }
-    .m10-card p { margin: 0; font-size: 12px; color: #64748b; line-height: 1.45; white-space: pre-wrap; }
+    .m10-card p { margin: 0; font-size: 12px; color: #64748b; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; max-height: none; overflow: visible; }
     .m10-preview { border-radius: 16px; min-height: 96px; resize: vertical; font-size: 12px; background: #f8fafc; }
     @media (max-width: 768px) { .m10-tabs, .m10-history { grid-template-columns: 1fr; } }
 </style>
@@ -38,7 +38,7 @@ OCURRENCIAS_HTML = """
 
         <div class="m10-panel">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="m-0 fw-bold text-muted text-uppercase" style="font-size:11px; letter-spacing:.35px;">Dos asentados anteriores</h6>
+                <h6 class="m-0 fw-bold text-muted text-uppercase" style="font-size:11px; letter-spacing:.35px;">Ocurrencias del día laborable anterior</h6>
                 <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill fw-bold" onclick="m10_render_historial()">Actualizar</button>
             </div>
             <div class="m10-history" id="m10_historial"></div>
@@ -64,6 +64,12 @@ OCURRENCIAS_HTML = """
             : (fechaModal ? fechaModal.value : new Date().toISOString().slice(0, 10));
     }
 
+    function m10_fecha_iso_actual() {
+        const fechaModal = document.getElementById('initFecha');
+        if (fechaModal && fechaModal.value) return fechaModal.value;
+        return new Date().toISOString().slice(0, 10);
+    }
+
     function m10_tipo(tipo) {
         window.m10_tipo_actual = tipo;
         document.getElementById('m10_tab_ocurrencia').classList.toggle('active', tipo === 'Ocurrencia');
@@ -71,43 +77,35 @@ OCURRENCIAS_HTML = """
         m10_sincronizar();
     }
 
-    function m10_historial_guardado() {
-        try { return JSON.parse(localStorage.getItem('samu_m10_historial') || '[]'); }
-        catch (e) { return []; }
-    }
-
-    function m10_guardar_historial(texto) {
-        const limpio = String(texto || '').trim();
-        if (!limpio) return;
-        const fecha = m10_fecha_actual();
-        let historial = m10_historial_guardado().filter(item => item.fecha !== fecha);
-        historial.push({ fecha, tipo: window.m10_tipo_actual, texto: limpio });
-        historial = historial.slice(-20);
-        localStorage.setItem('samu_m10_historial', JSON.stringify(historial));
-    }
-
-    function m10_render_historial() {
-        const fecha = m10_fecha_actual();
-        const recientes = m10_historial_guardado().filter(item => item.fecha !== fecha).slice(-2).reverse();
+    async function m10_render_historial() {
         const cont = document.getElementById('m10_historial');
-        if (recientes.length === 0) {
-            cont.innerHTML = `<div class="m10-card"><h6>Sin registros previos</h6><p>Aquí aparecerán los dos asentados anteriores registrados en este equipo.</p></div>`;
-            return;
+        if (!cont) return;
+        cont.innerHTML = `<div class="m10-card"><h6>Cargando...</h6><p>Consultando ocurrencias del día laborable anterior.</p></div>`;
+        try {
+            const fecha = m10_fecha_iso_actual();
+            const resp = await fetch(`/residencia/api/ocurrencias-previas?fecha=${encodeURIComponent(fecha)}`);
+            const data = await resp.json().catch(() => null);
+            if (!resp.ok || !data?.ok) throw new Error(data?.error || 'No se pudo consultar.');
+            const residencia = String(data.residencia?.texto || '').trim();
+            const supervision = String(data.supervision?.texto || '').trim();
+            cont.innerHTML = `
+                <div class="m10-card">
+                    <h6>${m10_escape(data.fecha_anterior)} - Residencia de Obra</h6>
+                    <p>${m10_escape(residencia)}</p>
+                </div>
+                <div class="m10-card">
+                    <h6>${m10_escape(data.fecha_anterior)} - Supervisión de Obra</h6>
+                    <p>${m10_escape(supervision)}</p>
+                </div>
+            `;
+        } catch (error) {
+            cont.innerHTML = `<div class="m10-card"><h6>No se pudo cargar</h6><p>Revise la conexión con la base de datos e intente actualizar nuevamente.</p></div>`;
         }
-        cont.innerHTML = recientes.map(item => `
-            <div class="m10-card">
-                <h6>${m10_escape(item.fecha)} - ${m10_escape(item.tipo)}</h6>
-                <p>${m10_escape(item.texto)}</p>
-            </div>
-        `).join('');
     }
 
     function m10_sincronizar() {
         const texto = String(document.getElementById('m10_texto').value || '').trim();
-        const salida = texto ? `* ${window.m10_tipo_actual}:\\n${texto}` : '';
-        document.getElementById('v_ocurrencia').value = salida;
-        m10_guardar_historial(texto);
-        m10_render_historial();
+        document.getElementById('v_ocurrencia').value = texto;
         if (typeof sincronizarDatos === 'function') sincronizarDatos();
     }
 

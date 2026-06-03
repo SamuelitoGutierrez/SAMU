@@ -2,26 +2,33 @@ CUADERNO_OBRA_CSS = """
             /* ==========================================
                CUADERNO FISICO / PREVISUALIZACION
                ========================================== */
-            .papel-fisico { background: #fdfdfa; width: 100%; min-height: 980px; padding: 34px 46px 42px; box-shadow: 0 18px 45px rgba(15,23,42,0.10); border: 1px solid #e2e8f0; font-family: Arial, sans-serif; color: #000; position: relative; overflow: hidden; }
-            .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+            .papel-fisico { background: #fdfdfa; width: 100%; min-height: 980px; padding: 30px 46px 34px; box-shadow: 0 18px 45px rgba(15,23,42,0.10); border: 1px solid #e2e8f0; font-family: Arial, sans-serif; color: #000; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+            .p-header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 4px; }
+            .p-header-side { width: 86px; flex: 0 0 86px; }
+            .p-qr-link { width: 62px; display: block; margin-left: auto; text-decoration: none; }
+            .p-qr-link img { width: 62px; height: 62px; display: block; object-fit: contain; border: 0; border-radius: 0; padding: 0; background: transparent; }
             .p-title-box { text-align: center; flex: 1; margin-left: 0;}
             .p-title-box h1 { font-size: 28px; font-weight: bold; text-decoration: underline; letter-spacing: 1.5px; margin: 0;}
             .p-num { font-size: 24px; font-weight: bold; }
-            .p-meta { margin-bottom: 6px; padding-bottom: 7px; border-bottom: 3px solid #000; }
-            .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 4px; }
+            .cuaderno-preview-pages { width: 100%; display: grid; gap: 24px; }
+            .papel-fisico.hoja-vista-a4 { height: 1123px; min-height: 1123px; max-height: 1123px; }
+            .papel-fisico.hoja-vista-a4 .p-body-lines { flex: 0 0 780px; min-height: 780px; max-height: 780px; }
+            .papel-fisico.hoja-vista-a4 .pagina-cuaderno { height: 780px; min-height: 780px; max-height: 780px; }
+            .p-meta { margin-bottom: 3px; padding-bottom: 4px; border-bottom: 3px solid #000; }
+            .p-meta-row { display: flex; align-items: flex-end; gap: 15px; width: 100%; margin-bottom: 2px; }
             .p-meta-field { display: flex; align-items: flex-end; min-width: 0; }
             .p-meta-field.fecha { flex: 0 0 46%; }
             .p-meta-field.modalidad { flex: 1 1 auto; }
-            .p-row { display: flex; align-items: flex-end; margin-bottom: 4px; }
+            .p-row { display: flex; align-items: flex-end; margin-bottom: 2px; }
             .p-label { font-size: 14px; font-weight: bold; margin-right: 8px; }
-            .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 20px; }
-            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 17px; font-weight: 500; white-space: nowrap; }
-            .p-body-lines { position: relative; margin-top: 3px; }
-            .pagina-cuaderno { background-image: repeating-linear-gradient(transparent, transparent 25px, #cbd5e1 26px); line-height: 26px; min-height: 760px; padding-top: 0; position: relative; }
-            .lapicero { font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
+            .p-line { flex: 1; border-bottom: 1px solid #000; position: relative; height: 17px; }
+            .lapicero-meta { position: absolute; bottom: -1px; left: 10px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 16px; font-weight: 500; white-space: nowrap; }
+            .p-body-lines { position: relative; margin-top: 1px; margin-bottom: 8px; flex: 0 0 780px; min-height: 780px; max-height: 780px; overflow: hidden; }
+            .pagina-cuaderno { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 25px, #cbd5e1 25px, #cbd5e1 26px); background-size: 100% 26px; background-position: top left; line-height: 26px; height: 780px; min-height: 780px; max-height: 780px; padding-top: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+            .lapicero { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 17px; line-height: 26px; padding-left: 2px; font-weight: 400; text-align: justify; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
             .encabezado-asiento { position: relative; margin: 0 0 3px; min-height: 26px; font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; color: var(--celeste-obra); font-size: 16px; line-height: 26px; font-weight: 700; }
             .encabezado-asiento .titulo-asiento { width: 100%; text-align: center; text-transform: uppercase; color: var(--celeste-obra); font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; font-size: 16px; letter-spacing: 0.1px; font-weight: 800; padding: 0 128px 0 8px; white-space: nowrap; }
-            .encabezado-asiento.continuacion .titulo-asiento { text-transform: none; color: var(--celeste-obra); font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; font-size: 16px; font-weight: 800; }
+            .encabezado-asiento.continuacion .titulo-asiento { padding: 0 128px 0 8px; text-align: center; text-transform: none; color: var(--celeste-obra); font-family: Candara, Calibri, Arial, sans-serif; font-style: italic; font-size: 16px; font-weight: 800; }
             .encabezado-asiento .fecha-asiento { position: absolute; top: 0; right: 0; text-align: right; white-space: nowrap; color: var(--celeste-obra); }
             .modulo-redaccion { margin: 0 0 0; }
             .modulo-titulo { display: block; font-weight: 700; color: #075985; }
@@ -41,19 +48,24 @@ CUADERNO_OBRA_CSS = """
             .maquinaria-sub { display: block; padding-left: 44px; line-height: 26px; }
             .maquinaria-fila { display: grid; grid-template-columns: 30% 20% 20% 15% 15%; column-gap: 0; padding-left: 44px; line-height: 26px; font-size: 16px; white-space: nowrap; }
             .maquinaria-fila span { min-width: 0; white-space: nowrap; overflow: visible; }
-            .van-final { display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
-            .p-footer { display: flex; justify-content: space-between; margin-top: 46px; font-size: 12px; font-weight: bold; color: #000;}
+            .van-final { margin-top: auto; display: block; text-align: right; padding-right: 8px; font-weight: 800; color: #075985; }
+            .p-footer { display: flex; justify-content: space-between; margin-top: auto; padding-top: 18px; padding-bottom: 8px; font-size: 12px; font-weight: bold; color: #000;}
             .p-sig { border-top: 1px solid #000; width: 28%; text-align: center; padding-top: 5px; }
-            .page-counter { position: absolute; right: 14mm; bottom: 6mm; font-size: 10px; font-weight: 700; color: #64748b; }
+            .page-counter { position: absolute; right: 14mm; bottom: 5mm; font-size: 9px; font-weight: 600; color: #94a3b8; }
 """
 
 def obtener_cuaderno_obra_html(numero_hoja):
     return f"""
-                <div class="papel-fisico" id="papelOficial">
+                <div class="cuaderno-preview-pages" id="papelOficial">
+                <div class="papel-fisico hoja-vista-a4">
                     <div class="p-header-top">
-                        <div style="width: 80px;"></div>
+                        <div class="p-header-side"></div>
                         <div class="p-title-box"><h1>CUADERNO DE OBRA</h1></div>
-                        <div style="width: 80px;"></div>
+                        <div class="p-header-side">
+                            <a class="p-qr-link" id="qrCuadernoLink" href="/cuaderno" target="_blank" rel="noopener">
+                                <img id="qrCuadernoImg" alt="QR para ver PDF del asiento" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&amp;margin=0&amp;data=/cuaderno" />
+                            </a>
+                        </div>
                     </div>
                     <div class="p-meta">
                         <div class="p-meta-row">
@@ -70,6 +82,7 @@ def obtener_cuaderno_obra_html(numero_hoja):
                     <div class="p-footer">
                         <div class="p-sig">ING. INSPECTOR</div><div class="p-sig">ING. RESIDENTE</div><div class="p-sig">ING. SUPERVISOR</div>
                     </div>
+                </div>
                 </div>
 """
 
@@ -404,7 +417,7 @@ CUADERNO_OBRA_JS = """
             }
 
             function construirPaginas(asiento, fecha, modulos) {
-                const maxHeight = 760;
+                const maxHeight = 780;
                 const paginas = [];
                 let actual = [];
                 let continuacion = false;

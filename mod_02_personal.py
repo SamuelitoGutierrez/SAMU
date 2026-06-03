@@ -22,11 +22,14 @@ PERSONAL_HTML = """
     #step2 .qty-btn:hover { transform: translateY(-1px) scale(1.05); background: #bae6fd; }
     #step2 .gg-card { margin-top: 18px; border: 1px solid #dbeafe; border-radius: 24px; background: linear-gradient(135deg, #f8fafc, #eef6ff); padding: 16px; box-shadow: 0 14px 30px rgba(15,23,42,.06); }
     #step2 .m2-collapse { border: 1px solid #dbeafe; border-radius: 24px; background: #fff; margin-bottom: 14px; overflow: hidden; box-shadow: 0 14px 30px rgba(15,23,42,.06); }
-    #step2 .m2-collapse-head { width: 100%; border: 0; background: linear-gradient(135deg, #eff6ff, #ffffff); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 950; color: #075985; }
-    #step2 .m2-collapse-head i { transition: transform .2s ease; }
-    #step2 .m2-collapse.closed .m2-collapse-head i { transform: rotate(-90deg); }
-    #step2 .m2-collapse-body { padding: 16px; }
-    #step2 .m2-collapse.closed .m2-collapse-body { display: none; }
+    #step2 .m2-collapse-head { width: 100%; border: 0; background: linear-gradient(135deg, #eff6ff, #ffffff); padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-weight: 950; color: #075985; text-transform: uppercase; letter-spacing: .035em; transition: background .28s ease, color .28s ease; }
+    #step2 .m2-collapse-head:hover { background: linear-gradient(135deg, #e0f2fe, #ffffff); color: #0f172a; }
+    #step2 .m2-head-title { display: inline-flex; align-items: center; gap: 10px; text-align: left; }
+    #step2 .m2-head-icon { width: 34px; height: 34px; border-radius: 14px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #075985, #0ea5e9); box-shadow: 0 10px 20px rgba(2,132,199,.16); }
+    #step2 .m2-caret { transition: transform .42s cubic-bezier(.16,1,.3,1); }
+    #step2 .m2-collapse.closed .m2-caret { transform: rotate(-90deg); }
+    #step2 .m2-collapse-body { box-sizing: border-box; height: auto; overflow: hidden; padding: 16px; opacity: 1; transform: translateY(0); transition: height .48s cubic-bezier(.16,1,.3,1), opacity .32s ease, transform .48s cubic-bezier(.16,1,.3,1), padding .42s cubic-bezier(.16,1,.3,1); will-change: height, opacity, transform; }
+    #step2 .m2-collapse.closed .m2-collapse-body { height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; transform: translateY(-10px); }
     #step2 .gg-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
     #step2 .gg-item { display: flex; align-items: center; gap: 9px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; padding: 10px 11px; font-size: 12px; font-weight: 850; color: #334155; cursor: pointer; transition: .18s ease; }
     #step2 .gg-item:has(input:checked) { border-color: #2563eb; color: #1d4ed8; background: #eff6ff; box-shadow: 0 10px 22px rgba(37,99,235,.10); }
@@ -40,10 +43,11 @@ PERSONAL_HTML = """
 
 <div class="step-view" id="step2">
     <div class="step-title">2.- Personal de Obra</div>
-    <div class="m2-collapse" id="m2_panel_gastos">
+    <div class="m2-collapse closed" id="m2_panel_gastos">
         <button type="button" class="m2-collapse-head" onclick="m2_toggle_panel('m2_panel_gastos')">
-            <span><i class="bi bi-chevron-down me-2"></i>Personal de Gastos Generales</span>
+            <span class="m2-head-title"><span class="m2-head-icon"><i class="bi bi-person-lines-fill"></i></span>Personal de Gastos Generales</span>
             <span class="personal-total">Seleccionados: <span id="m2_total_gg">0</span></span>
+            <i class="bi bi-chevron-down m2-caret"></i>
         </button>
         <div class="m2-collapse-body">
             <p class="text-muted small fw-bold">Se arrastra automáticamente desde el asiento anterior y puede ajustarse para hoy.</p>
@@ -54,10 +58,11 @@ PERSONAL_HTML = """
             </div>
         </div>
     </div>
-    <div class="m2-collapse" id="m2_panel_directo">
+    <div class="m2-collapse closed" id="m2_panel_directo">
         <button type="button" class="m2-collapse-head" onclick="m2_toggle_panel('m2_panel_directo')">
-            <span><i class="bi bi-chevron-down me-2"></i>Personal de Costo Directo</span>
+            <span class="m2-head-title"><span class="m2-head-icon"><i class="bi bi-person-workspace"></i></span>Personal de Costo Directo</span>
             <span class="personal-total">Total: <span id="m2_total_personal">0</span></span>
+            <i class="bi bi-chevron-down m2-caret"></i>
         </button>
         <div class="m2-collapse-body">
             <div class="personal-head">
@@ -79,7 +84,39 @@ PERSONAL_HTML = """
 </div>
 <script>
     function m2_toggle_panel(id) {
-        document.getElementById(id)?.classList.toggle('closed');
+        const panel = document.getElementById(id);
+        const body = panel?.querySelector('.m2-collapse-body');
+        if (!panel || !body) return;
+        const cerrado = panel.classList.contains('closed');
+        body.style.overflow = 'hidden';
+
+        if (cerrado) {
+            panel.classList.remove('closed');
+            body.style.height = '0px';
+            body.style.opacity = '0';
+            body.style.transform = 'translateY(-10px)';
+            requestAnimationFrame(() => {
+                body.style.height = body.scrollHeight + 'px';
+                body.style.opacity = '1';
+                body.style.transform = 'translateY(0)';
+            });
+            const alTerminar = (event) => {
+                if (event.propertyName !== 'height') return;
+                body.style.height = 'auto';
+                body.removeEventListener('transitionend', alTerminar);
+            };
+            body.addEventListener('transitionend', alTerminar);
+        } else {
+            body.style.height = body.scrollHeight + 'px';
+            body.style.opacity = '1';
+            body.style.transform = 'translateY(0)';
+            requestAnimationFrame(() => {
+                panel.classList.add('closed');
+                body.style.height = '0px';
+                body.style.opacity = '0';
+                body.style.transform = 'translateY(-10px)';
+            });
+        }
     }
 
     function m2_ids_personal() {
