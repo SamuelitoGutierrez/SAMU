@@ -926,6 +926,24 @@ def redaccion_asiento_residente():
                 }};
             }}
 
+            function mensajeErrorServidor(resp, data=null) {{
+                if (!resp || !resp.ok) return `Error en el servidor (${{resp?.status || 500}})`;
+                return data?.error || 'No se pudo guardar el asiento.';
+            }}
+
+            function esErrorDeRed(error) {{
+                const mensaje = String(error?.message || error || '');
+                return error instanceof TypeError || /Failed to fetch|NetworkError|Load failed|fetch/i.test(mensaje);
+            }}
+
+            function mensajeErrorFetch(error) {{
+                return esErrorDeRed(error) ? 'Sin conexión' : (error?.message || 'Error inesperado al guardar.');
+            }}
+
+            async function leerJsonSeguro(resp) {{
+                return await resp.json().catch(() => ({{ ok: false, error: 'Respuesta inválida del servidor' }}));
+            }}
+
             async function enviarAsiento(estado, silencioso=false) {{
                 if (!g_numAsiento || !g_fechaRaw) {{
                     if (!silencioso) mostrarAlerta("Primero inicie el asiento con número y fecha.", "error");
@@ -944,17 +962,22 @@ def redaccion_asiento_residente():
                     modulo_activo: window.samuCurrentStep || 1,
                     contenido: contenidoAsiento()
                 }};
-                const resp = await fetch('/residencia/api/asiento', {{
-                    method: 'POST',
-                    headers: {{ 'Content-Type': 'application/json' }},
-                    body: JSON.stringify(payload)
-                }});
-                const data = await resp.json().catch(() => ({{ ok: false, error: 'Respuesta inválida del servidor' }}));
-                if (!resp.ok || !data.ok) {{
-                    if (!silencioso) mostrarAlerta(data.error || "No se pudo guardar el asiento.", "error");
+                try {{
+                    const resp = await fetch('/residencia/api/asiento', {{
+                        method: 'POST',
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        body: JSON.stringify(payload)
+                    }});
+                    const data = await leerJsonSeguro(resp);
+                    if (!resp.ok || !data.ok) {{
+                        if (!silencioso) mostrarAlerta(mensajeErrorServidor(resp, data), "error");
+                        return null;
+                    }}
+                    return data;
+                }} catch (error) {{
+                    if (!silencioso) mostrarAlerta(mensajeErrorFetch(error), "error");
                     return null;
                 }}
-                return data;
             }}
 
             async function autoGuardarBorrador() {{
@@ -1965,6 +1988,24 @@ def redaccion_asiento_residente():
                     guardarEstadoLocal();
                 }};
 
+                function mensajeErrorServidor(resp, data=null) {{
+                    if (!resp || !resp.ok) return `Error en el servidor (${{resp?.status || 500}})`;
+                    return data?.error || 'No se pudo guardar el asiento.';
+                }}
+
+                function esErrorDeRed(error) {{
+                    const mensaje = String(error?.message || error || '');
+                    return error instanceof TypeError || /Failed to fetch|NetworkError|Load failed|fetch/i.test(mensaje);
+                }}
+
+                function mensajeErrorFetch(error) {{
+                    return esErrorDeRed(error) ? 'Sin conexión' : (error?.message || 'Error inesperado al guardar.');
+                }}
+
+                async function leerJsonSeguro(resp) {{
+                    return await resp.json().catch(() => ({{ ok: false, error: 'Respuesta inválida del servidor' }}));
+                }}
+
                 function mostrarEstadoGuardado(tipo, texto) {{
                     const estadoEl = document.getElementById('saveInlineStatus');
                     if (!estadoEl) return;
@@ -2020,16 +2061,19 @@ def redaccion_asiento_residente():
 
                     let guardadoServidor = false;
                     let respuestaGuardado = null;
+                    let mensajeErrorGuardado = '';
                     try {{
                         const resp = await fetch('/residencia/api/asiento', {{
                             method: 'POST',
                             headers: {{ 'Content-Type': 'application/json' }},
                             body: JSON.stringify(payload)
                         }});
-                        const data = await resp.json().catch(() => ({{ ok: false, error: 'Respuesta inválida' }}));
+                        const data = await leerJsonSeguro(resp);
                         respuestaGuardado = data;
                         if (!resp.ok || !data.ok) {{
-                            console.warn('No se pudo guardar en servidor:', data.error || resp.status);
+                            mensajeErrorGuardado = mensajeErrorServidor(resp, data);
+                            respuestaGuardado = {{ ...data, ok: false, error: mensajeErrorGuardado }};
+                            console.warn('No se pudo guardar en servidor:', mensajeErrorGuardado);
                         }} else {{
                             guardadoServidor = true;
                             try {{
@@ -2043,13 +2087,15 @@ def redaccion_asiento_residente():
                             }} catch (e) {{}}
                         }}
                     }} catch (error) {{
+                        mensajeErrorGuardado = mensajeErrorFetch(error);
+                        respuestaGuardado = {{ ok: false, error: mensajeErrorGuardado }};
                         console.error('Error guardando asiento:', error);
                     }}
                     if (guardadoServidor) {{
                         mostrarEstadoGuardado('saved', 'Guardado correctamente');
                         if (!silencioso) limpiarDraftAsientoCliente();
                     }} else if (!silencioso) {{
-                        mostrarEstadoGuardado('error', 'Sin conexión');
+                        mostrarEstadoGuardado('error', mensajeErrorGuardado || 'No se pudo guardar');
                     }}
                     if (guardadoServidor && estado !== 'Borrador') {{
                         try {{ localStorage.removeItem(estadoKey); }} catch (e) {{}}
@@ -2112,7 +2158,7 @@ def redaccion_asiento_residente():
                     if (!guardadoServidor) {{
                         mostrarModalResidencia(
                             'No se pudo guardar el borrador',
-                            'El servidor no confirmó el guardado en PostgreSQL. Revise la conexión e intente nuevamente.',
+                            respuestaGuardado?.error || 'El servidor no confirmó el guardado en PostgreSQL. Revise la conexión e intente nuevamente.',
                             'warning',
                             0
                         );
