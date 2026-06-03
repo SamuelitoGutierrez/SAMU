@@ -6,6 +6,7 @@
 from flask import Blueprint, render_template_string, session, redirect, url_for, request, jsonify
 from navbar import obtener_navbar
 from datetime import datetime, timedelta
+import traceback
 from cuaderno_obra import CUADERNO_OBRA_CSS, CUADERNO_OBRA_JS, obtener_cuaderno_obra_html
 from resumen_asiento import RESUMEN_ASIENTO_HTML
 from cuaderno_store import (
@@ -111,67 +112,86 @@ def api_ocurrencias_previas_residencia():
 @residencia_bp.route('/residencia/api/asiento', methods=['POST'])
 @residencia_bp.route('/guardar_asiento', methods=['POST'])
 def api_guardar_asiento():
-    if 'usuario_id' not in session:
-        return jsonify({"ok": False, "error": "No autorizado"}), 401
-
-    data = request.get_json(silent=True) or {}
     try:
+        if 'usuario_id' not in session:
+            return jsonify({"ok": False, "status": "error", "message": "No autorizado", "error": "No autorizado"}), 401
+
+        data = request.get_json(silent=True) or {}
         numero = int(data.get("numero"))
         avance = max(0, min(100, int(data.get("avance", 0))))
     except (TypeError, ValueError):
-        return jsonify({"ok": False, "error": "Número de asiento o avance inválido"}), 400
+        return jsonify({"ok": False, "status": "error", "message": "Número de asiento o avance inválido", "error": "Número de asiento o avance inválido"}), 400
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"ok": False, "status": "error", "message": str(e), "error": str(e)}), 500
 
-    estado_raw = str(data.get("estado") or "Borrador").strip().lower()
-    estado = "Enviado Inspector" if estado_raw in ("enviado_inspector", "enviado inspector", "enviar a inspector", "cerrado", "firmado", "vista previa y firmar", "closed") else "Borrador"
-    tipo_raw = data.get("tipo") or data.get("autor_tipo") or session.get("rol") or "Residente"
-    tipo = "Inspector" if ("inspector" in str(tipo_raw).lower() or "super" in str(tipo_raw).lower()) else "Residente"
+    try:
+        estado_raw = str(data.get("estado") or "Borrador").strip().lower()
+        estado = "Enviado Inspector" if estado_raw in ("enviado_inspector", "enviado inspector", "enviar a inspector", "cerrado", "firmado", "vista previa y firmar", "closed") else "Borrador"
+        tipo_raw = data.get("tipo") or data.get("autor_tipo") or session.get("rol") or "Residente"
+        tipo = "Inspector" if ("inspector" in str(tipo_raw).lower() or "super" in str(tipo_raw).lower()) else "Residente"
 
-    existente = obtener_asiento(numero)
-    if existente and (existente.get("estado") in ("Cerrado", "Firmado") or (existente.get("bloqueado") and existente.get("estado") != "Enviado Inspector")) and session.get("rol") != "Admin":
-        return jsonify({"ok": False, "error": "El asiento ya fue firmado o cerrado. Solo el dueño/Admin puede editarlo."}), 403
-    contenido = data.get("contenido")
-    if not contenido:
-        contenido = {
-            "numero": numero,
-            "fecha": data.get("fecha") or datetime.now().strftime('%Y-%m-%d'),
-            "modulos": data.get("modulos") or [],
-            "observaciones": data.get("observaciones") or data.get("observacion") or "",
-        }
+        existente = obtener_asiento(numero)
+        if existente and (existente.get("estado") in ("Cerrado", "Firmado") or (existente.get("bloqueado") and existente.get("estado") != "Enviado Inspector")) and session.get("rol") != "Admin":
+            mensaje = "El asiento ya fue firmado o cerrado. Solo el dueño/Admin puede editarlo."
+            return jsonify({"ok": False, "status": "error", "message": mensaje, "error": mensaje}), 403
 
-    resultado = guardar_asiento(
-        numero=numero,
-        fecha=data.get("fecha") or datetime.now().strftime('%Y-%m-%d'),
-        estado=estado,
-        avance=avance,
-        contenido=contenido,
-        usuario=session.get("nombre", "Sistema"),
-        tipo=tipo,
-        puede_editar_cerrado=session.get("rol") == "Admin",
-    )
-    if resultado.get("ok"):
-        status = 200
-    elif "cerrado" in str(resultado.get("error", "")).lower() or "bloqueado" in str(resultado.get("error", "")).lower():
-        status = 403
-    else:
-        print("[CUADERNO][ERROR] No se pudo guardar asiento:", resultado.get("error"))
-        status = 500
-    if resultado.get("ok"):
-        estado_api = str(resultado.get("estado") or estado).strip().lower().replace(" ", "_")
-        fecha_guardada = data.get("fecha") or resultado.get("fecha") or datetime.now().strftime('%Y-%m-%d')
-        redirect_url = "" if estado_api == "borrador" else f"/resumen_asiento/{fecha_guardada}"
-        modulo_activo = data.get("modulo_activo")
-        if not modulo_activo and isinstance(contenido, dict):
-            modulo_activo = (contenido.get("estado_local") or {}).get("step")
-        resultado = {
-            **resultado,
-            "status": "success",
-            "fecha": fecha_guardada,
-            "estado": estado_api,
-            "estado_label": resultado.get("estado"),
-            "redirect_url": redirect_url,
-            "modulo_activo": modulo_activo,
-        }
-    return jsonify(resultado), status
+        contenido = data.get("contenido")
+        if not contenido:
+            contenido = {
+                "numero": numero,
+                "fecha": data.get("fecha") or datetime.now().strftime('%Y-%m-%d'),
+                "modulos": data.get("modulos") or [],
+                "observaciones": data.get("observaciones") or data.get("observacion") or "",
+            }
+
+        resultado = guardar_asiento(
+            numero=numero,
+            fecha=data.get("fecha") or datetime.now().strftime('%Y-%m-%d'),
+            estado=estado,
+            avance=avance,
+            contenido=contenido,
+            usuario=session.get("nombre", "Sistema"),
+            tipo=tipo,
+            puede_editar_cerrado=session.get("rol") == "Admin",
+        )
+        if resultado.get("ok"):
+            status = 200
+        elif "cerrado" in str(resultado.get("error", "")).lower() or "bloqueado" in str(resultado.get("error", "")).lower():
+            status = 403
+        else:
+            print("[CUADERNO][ERROR] No se pudo guardar asiento:", resultado.get("error"))
+            status = 500
+
+        if resultado.get("ok"):
+            estado_api = str(resultado.get("estado") or estado).strip().lower().replace(" ", "_")
+            fecha_guardada = data.get("fecha") or resultado.get("fecha") or datetime.now().strftime('%Y-%m-%d')
+            redirect_url = "" if estado_api == "borrador" else f"/resumen_asiento/{fecha_guardada}"
+            modulo_activo = data.get("modulo_activo")
+            if not modulo_activo and isinstance(contenido, dict):
+                modulo_activo = (contenido.get("estado_local") or {}).get("step")
+            resultado = {
+                **resultado,
+                "status": "success",
+                "fecha": fecha_guardada,
+                "estado": estado_api,
+                "estado_label": resultado.get("estado"),
+                "redirect_url": redirect_url,
+                "modulo_activo": modulo_activo,
+            }
+        else:
+            mensaje = str(resultado.get("error") or "No se pudo guardar el asiento.")
+            resultado = {
+                **resultado,
+                "ok": False,
+                "status": "error",
+                "message": mensaje,
+                "error": mensaje,
+            }
+        return jsonify(resultado), status
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"ok": False, "status": "error", "message": str(e), "error": str(e)}), 500
 
 @residencia_bp.route('/residencia')
 def redaccion_asiento_residente():
@@ -927,8 +947,10 @@ def redaccion_asiento_residente():
             }}
 
             function mensajeErrorServidor(resp, data=null) {{
+                const detalle = data?.message || data?.error || data?.detail;
+                if (detalle) return `Error: ${{detalle}}`;
                 if (!resp || !resp.ok) return `Error en el servidor (${{resp?.status || 500}})`;
-                return data?.error || 'No se pudo guardar el asiento.';
+                return 'No se pudo guardar el asiento.';
             }}
 
             function esErrorDeRed(error) {{
@@ -1989,8 +2011,10 @@ def redaccion_asiento_residente():
                 }};
 
                 function mensajeErrorServidor(resp, data=null) {{
+                    const detalle = data?.message || data?.error || data?.detail;
+                    if (detalle) return `Error: ${{detalle}}`;
                     if (!resp || !resp.ok) return `Error en el servidor (${{resp?.status || 500}})`;
-                    return data?.error || 'No se pudo guardar el asiento.';
+                    return 'No se pudo guardar el asiento.';
                 }}
 
                 function esErrorDeRed(error) {{
