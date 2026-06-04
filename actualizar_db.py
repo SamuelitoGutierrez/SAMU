@@ -1,18 +1,31 @@
 import os
 import sys
+from urllib.parse import quote_plus
 
 import psycopg2
 
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+if load_dotenv:
+    load_dotenv()
 
 DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "localhost"),
     "database": os.environ.get("DB_NAME", "samu"),
     "user": os.environ.get("DB_USER", "postgres"),
-    "password": os.environ.get("DB_PASSWORD", ""),
+    "password": os.environ.get("DB_PASSWORD", "AQUI_VA_LA_CLAVE"),
     "port": int(os.environ.get("DB_PORT", "5432")),
 }
+
+DEFAULT_DATABASE_URL = "postgresql://postgres:AQUI_VA_LA_CLAVE@localhost:5432/samu"
+LOCAL_DATABASE_URL = (
+    f"postgresql://{quote_plus(DB_CONFIG['user'])}:{quote_plus(DB_CONFIG['password'])}"
+    f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+)
+DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("SQLALCHEMY_DATABASE_URI") or LOCAL_DATABASE_URL or DEFAULT_DATABASE_URL
 
 
 MIGRACIONES = [

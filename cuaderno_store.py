@@ -8,6 +8,7 @@ from database import get_connection, release_connection
 ESTADOS_BORRADOR = {"borrador", "en redacción", "en redaccion", "draft"}
 ESTADOS_CERRADO = {"cerrado", "firmado", "closed", "vista previa y firmar"}
 ESTADOS_ENVIADO_INSPECTOR = {"enviado_inspector", "enviado inspector", "enviar a inspector", "enviado al inspector"}
+ULTIMO_ERROR_DB = ""
 
 
 def normalizar_estado(estado):
@@ -35,8 +36,13 @@ def _fetchall_dict(cursor):
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
+def obtener_ultimo_error_db():
+    return ULTIMO_ERROR_DB or "Error desconocido de base de datos"
+
+
 def asegurar_tablas_cuaderno():
     """Prepara tablas persistentes para que Coolify redeploy no borre datos."""
+    global ULTIMO_ERROR_DB
     conn = None
     try:
         conn = get_connection()
@@ -148,8 +154,10 @@ def asegurar_tablas_cuaderno():
         )
         conn.commit()
         cur.close()
+        ULTIMO_ERROR_DB = ""
         return True
     except Exception as exc:
+        ULTIMO_ERROR_DB = str(exc)
         if conn:
             with suppress(Exception):
                 conn.rollback()
@@ -420,7 +428,7 @@ def obtener_panel_cuaderno():
 def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo="Residente", puede_editar_cerrado=False):
     conectado = asegurar_tablas_cuaderno()
     if not conectado:
-        return {"ok": False, "error": "Base de datos no conectada"}
+        return {"ok": False, "error": obtener_ultimo_error_db()}
 
     conn = None
     try:
@@ -527,7 +535,7 @@ def guardar_asiento(numero, fecha, estado, avance, contenido, usuario=None, tipo
 def obtener_datos_mes_cuaderno(year=None, month=None):
     conectado = asegurar_tablas_cuaderno()
     if not conectado:
-        return {"ok": False, "error": "Base de datos no conectada", "asientos": [], "estadisticas": {}}
+        return {"ok": False, "error": obtener_ultimo_error_db(), "asientos": [], "estadisticas": {}}
 
     hoy = date.today()
     year = int(year or hoy.year)
@@ -908,7 +916,7 @@ def obtener_inspector_asiento(numero=None, fecha=None):
 def guardar_asiento_inspector(numero=None, fecha=None, estado="Borrador", contenido=None, usuario=None):
     conectado = asegurar_tablas_cuaderno()
     if not conectado:
-        return {"ok": False, "error": "Base de datos no conectada"}
+        return {"ok": False, "error": obtener_ultimo_error_db()}
     estado_normalizado = "firmado_inspector" if str(estado or "").strip().lower() in ("firmado", "firmar", "definitivo", "firmado_inspector") else "borrador_inspector"
     contenido = contenido or {}
     contenido_texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
@@ -1008,7 +1016,7 @@ def guardar_asiento_inspector(numero=None, fecha=None, estado="Borrador", conten
 
 def anular_firma_asiento(numero, usuario=None):
     if not asegurar_tablas_cuaderno():
-        return {"ok": False, "error": "Base de datos no conectada"}
+        return {"ok": False, "error": obtener_ultimo_error_db()}
     conn = None
     try:
         conn = get_connection()
