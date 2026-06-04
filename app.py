@@ -16,6 +16,11 @@ if load_dotenv:
 
 from flask import Flask, session, request, redirect, url_for, render_template_string, Blueprint
 from mod_07_almacen import mod_07_bp
+from vistas_cuaderno import cuaderno_bp
+from vistas_inspector import inspector_bp
+from vistas_inicio import inicio_bp
+from vistas_login import login_bp
+from vistas_residencia import residencia_bp
 
 def crear_servidor_samu():
     app = Flask(__name__)
@@ -29,16 +34,30 @@ def crear_servidor_samu():
     print("Iniciando Motor SAMU...")
     print("Buscando módulos en el sistema...")
 
-    # Registro directo del Modulo 7 para que funcione aunque este servidor
-    # cargue solo los archivos vistas_*.py por auto-descubrimiento.
+    # Registro directo de rutas críticas para que funcionen aunque falle el auto-descubrimiento.
+    app.register_blueprint(login_bp)
+    app.register_blueprint(inicio_bp)
+    app.register_blueprint(cuaderno_bp)
+    app.register_blueprint(residencia_bp)
+    app.register_blueprint(inspector_bp)
     app.register_blueprint(mod_07_bp)
-    print(" [+] Módulo conectado: mod_07_almacen -> (Ruta: /almacen)")
+    modulos_registrados_directamente = {
+        "mod_07_almacen",
+        "vistas_cuaderno",
+        "vistas_inspector",
+        "vistas_inicio",
+        "vistas_login",
+        "vistas_residencia",
+    }
+    print(" [+] Módulos críticos conectados: login, inicio, cuaderno, residencia, inspector, almacen")
     
     # Escanea todos los archivos en el directorio actual
     for archivo in os.listdir(BASE_DIR):
         # Solo procesa los archivos que son vistas (interfaces)
         if archivo.startswith('vistas_') and archivo.endswith('.py'):
             nombre_modulo = archivo[:-3] # Quita el '.py'
+            if nombre_modulo in modulos_registrados_directamente:
+                continue
             try:
                 # Importa el archivo automáticamente
                 modulo = importlib.import_module(nombre_modulo)

@@ -13,37 +13,28 @@ if load_dotenv:
     load_dotenv(encoding="utf-8")
 
 
-def valor_env(nombre, respaldo):
+def valor_env(nombre, requerido=True, respaldo=None):
     valor = os.environ.get(nombre)
-    return valor if valor not in (None, "") else respaldo
+    if valor not in (None, ""):
+        return valor
+    if respaldo is not None:
+        return respaldo
+    if requerido:
+        raise RuntimeError(f"Variable de entorno obligatoria no configurada: {nombre}")
+    return ""
 
 
 DB_CONFIG = {
-    "host": valor_env("DB_HOST", "localhost"),
-    "database": valor_env("DB_NAME", "samu"),
-    "user": valor_env("DB_USER", "postgres"),
-    "password": valor_env("DB_PASSWORD", "716285"),
-    "port": int(valor_env("DB_PORT", "5432")),
+    "host": valor_env("DB_HOST"),
+    "database": valor_env("DB_NAME"),
+    "user": valor_env("DB_USER"),
+    "password": valor_env("DB_PASSWORD"),
+    "port": int(valor_env("DB_PORT", requerido=False, respaldo="5432")),
 }
 
-DEFAULT_DATABASE_URL = "postgresql://postgres:716285@localhost:5432/samu"
-LOCAL_DATABASE_URL = (
+DATABASE_URL = (
     f"postgresql://{DB_CONFIG['user']}:{quote_plus(DB_CONFIG['password'])}"
-    f"@localhost:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
-)
-
-
-def normalizar_database_url(url):
-    if not url:
-        return url
-    return (
-        url.replace("@postgresql:", "@localhost:")
-        .replace("@postgresql/", "@localhost/")
-    )
-
-
-DATABASE_URL = normalizar_database_url(
-    os.environ.get("DATABASE_URL") or os.environ.get("SQLALCHEMY_DATABASE_URI") or LOCAL_DATABASE_URL or DEFAULT_DATABASE_URL
+    f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
 )
 
 _connection_pool = None

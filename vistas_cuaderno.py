@@ -926,6 +926,12 @@ def panel_cuaderno():
     if 'usuario_id' not in session: 
         return redirect(url_for('login.mostrar_login'))
 
+    abrir = (request.args.get("abrir") or "").strip().lower()
+    if abrir == "residencia":
+        return redirect(url_for("residencia.redaccion_asiento_residente"))
+    if abrir in ("inspector", "supervision", "supervisión"):
+        return redirect(url_for("inspector.redactar_asiento_inspector"))
+
     es_admin = session.get('rol') == 'Admin'
     nombre_completo = session.get('nombre', 'Visitante')
     menu_superior = obtener_navbar(es_admin, nombre_completo)

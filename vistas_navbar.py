@@ -314,8 +314,8 @@ HTML_NAVBAR = """
             navLabel: "Cuaderno de Obra", navUrl: "/cuaderno",
             title: "Módulos de Registro", 
             main: [
-                { label: "Asentar asiento de Residencia", url: "/cuaderno?abrir=residencia" },
-                { label: "Asentar asiento de Supervisión", url: "/cuaderno?abrir=inspector" }
+                { label: "Asentar asiento de Residencia", url: "/residencia" },
+                { label: "Asentar asiento de Supervisión", url: "/inspector" }
             ], 
             sub: [{ label: "Análisis General", url: "#" }] 
         },

@@ -16,6 +16,11 @@ if load_dotenv:
 
 from flask import Flask, session, request, redirect, url_for, render_template_string, Blueprint
 from mod_07_almacen import mod_07_bp
+from vistas_cuaderno import cuaderno_bp
+from vistas_inspector import inspector_bp
+from vistas_inicio import inicio_bp
+from vistas_login import login_bp
+from vistas_residencia import residencia_bp
 
 def iniciar_servidor_samu():
     aplicacion = Flask(__name__)
@@ -64,9 +69,21 @@ def iniciar_servidor_samu():
         "vistas_registro_personal", "vistas_residencia", "vistas_supervision", "vistas_topografia"
     ]
 
-    # Registro explicito del Modulo 7 - Movimientos de Almacen.
+    # Registro explicito de rutas críticas para no depender del auto-descubrimiento.
+    aplicacion.register_blueprint(login_bp)
+    aplicacion.register_blueprint(inicio_bp)
+    aplicacion.register_blueprint(cuaderno_bp)
+    aplicacion.register_blueprint(residencia_bp)
+    aplicacion.register_blueprint(inspector_bp)
     aplicacion.register_blueprint(mod_07_bp)
-    modulos_registrados_directamente = {"mod_07_almacen"}
+    modulos_registrados_directamente = {
+        "mod_07_almacen",
+        "vistas_cuaderno",
+        "vistas_inspector",
+        "vistas_inicio",
+        "vistas_login",
+        "vistas_residencia",
+    }
 
     print("Cargando y enlazando todo el ecosistema de SAMU...")
     for nombre_modulo in todos_los_modulos:
