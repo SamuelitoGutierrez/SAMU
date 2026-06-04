@@ -10,7 +10,7 @@ except ImportError:
     load_dotenv = None
 
 if load_dotenv:
-    load_dotenv()
+    load_dotenv(encoding="utf-8")
 
 
 def valor_env(nombre, respaldo):
@@ -28,7 +28,7 @@ DB_CONFIG = {
 
 DEFAULT_DATABASE_URL = "postgresql://postgres:PON_TU_CLAVE_AQUI@localhost:5432/samu"
 LOCAL_DATABASE_URL = (
-    f"postgresql://{quote_plus(DB_CONFIG['user'])}:{quote_plus(DB_CONFIG['password'])}"
+    f"postgresql://{DB_CONFIG['user']}:{quote_plus(DB_CONFIG['password'])}"
     f"@localhost:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
 )
 

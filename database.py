@@ -10,7 +10,7 @@ except ImportError:
     load_dotenv = None
 
 if load_dotenv:
-    load_dotenv()
+    load_dotenv(encoding="utf-8")
 
 
 def valor_env(nombre, respaldo):
@@ -22,13 +22,13 @@ DB_CONFIG = {
     "host": valor_env("DB_HOST", "localhost"),
     "database": valor_env("DB_NAME", "samu"),
     "user": valor_env("DB_USER", "postgres"),
-    "password": valor_env("DB_PASSWORD", "PON_TU_CLAVE_AQUI"),
+    "password": valor_env("DB_PASSWORD", "716285"),
     "port": int(valor_env("DB_PORT", "5432")),
 }
 
-DEFAULT_DATABASE_URL = "postgresql://postgres:PON_TU_CLAVE_AQUI@localhost:5432/samu"
+DEFAULT_DATABASE_URL = "postgresql://postgres:716285@localhost:5432/samu"
 LOCAL_DATABASE_URL = (
-    f"postgresql://{quote_plus(DB_CONFIG['user'])}:{quote_plus(DB_CONFIG['password'])}"
+    f"postgresql://{DB_CONFIG['user']}:{quote_plus(DB_CONFIG['password'])}"
     f"@localhost:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
 )
 
@@ -49,15 +49,17 @@ DATABASE_URL = normalizar_database_url(
 _connection_pool = None
 
 
-def init_connection_pool(minconn=1, maxconn=10):
+def init_connection_pool(minconn=None, maxconn=None):
     """Inicializa el pool de conexiones a PostgreSQL."""
     global _connection_pool
+    minconn = int(valor_env("DB_MIN_CONN", str(minconn or 1)))
+    maxconn = int(valor_env("DB_MAX_CONN", str(maxconn or 30)))
 
     if _connection_pool is None:
         if DATABASE_URL:
-            _connection_pool = pool.SimpleConnectionPool(minconn, maxconn, dsn=DATABASE_URL)
+            _connection_pool = pool.ThreadedConnectionPool(minconn, maxconn, dsn=DATABASE_URL)
         else:
-            _connection_pool = pool.SimpleConnectionPool(
+            _connection_pool = pool.ThreadedConnectionPool(
                 minconn=minconn,
                 maxconn=maxconn,
                 **DB_CONFIG,
@@ -69,7 +71,14 @@ def init_connection_pool(minconn=1, maxconn=10):
 def get_connection():
     """Obtiene una conexion disponible desde el pool."""
     connection_pool = init_connection_pool()
-    return connection_pool.getconn()
+    try:
+        return connection_pool.getconn()
+    except pool.PoolError as exc:
+        raise RuntimeError(
+            "No hay conexiones PostgreSQL disponibles en el pool. "
+            "Aumente DB_MAX_CONN o revise que las conexiones se liberen correctamente. "
+            f"Detalle: {exc}"
+        ) from exc
 
 
 def release_connection(connection):

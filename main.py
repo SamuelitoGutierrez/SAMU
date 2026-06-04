@@ -12,7 +12,7 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 if load_dotenv:
-    load_dotenv(os.path.join(BASE_DIR, ".env"))
+    load_dotenv(os.path.join(BASE_DIR, ".env"), encoding="utf-8")
 
 from flask import Flask, session, request, redirect, url_for, render_template_string, Blueprint
 from mod_07_almacen import mod_07_bp
