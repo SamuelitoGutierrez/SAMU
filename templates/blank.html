@@ -1,105 +1,139 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light">
-  <title></title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+{% extends "base.html" %}
+{% block title %}SAMU-GLOBAL KITS{% endblock %}
 
-    html,
-    body {
-      width: 100%;
-      min-height: 100vh;
-      overflow: hidden;
-    }
+{% block head %}
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes gradientFlow {
+    0%   { background-position: 0% 50%; transform: translate(0, 0); }
+    50%  { background-position: 100% 50%; transform: translate(-3%, -2%); }
+    100% { background-position: 0% 50%; transform: translate(0, 0); }
+  }
+  .animate-fade-in {
+    animation: fadeIn 1.1s ease-out forwards;
+  }
+  .splash-gradient {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 150, 190, 0.88) 0%,
+      rgba(140, 180, 255, 0.88) 38%,
+      rgba(255, 255, 255, 0.92) 52%,
+      rgba(200, 160, 255, 0.82) 68%,
+      rgba(120, 200, 255, 0.88) 100%
+    );
+    background-size: 400% 400%;
+    animation: gradientFlow 14s ease-in-out infinite;
+  }
+  .splash-gradient::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.24) 100%
+    );
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
 
-    body {
-      position: relative;
-      background: #f8f8fc;
-    }
+{% block body %}
 
-    /* Capa base: rosa y azul suaves (+20% blanco) */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(
-        135deg,
-        rgba(255, 214, 232, 0.72) 0%,
-        rgba(214, 232, 255, 0.72) 35%,
-        rgba(255, 255, 255, 0.88) 50%,
-        rgba(230, 210, 255, 0.68) 65%,
-        rgba(200, 228, 255, 0.72) 100%
-      );
-      background-size: 400% 400%;
-      animation: degradado-dinamico 14s ease-in-out infinite;
-      z-index: 0;
-    }
+<!-- ═══════════════════════════════════════════════════════════
+     SPLASH SCREEN — 2.5 s → transición al panel principal
+     ═══════════════════════════════════════════════════════════ -->
+<div id="splash-screen"
+     class="splash-gradient fixed inset-0 z-50 flex items-center justify-center overflow-hidden transition-opacity duration-500"
+     aria-live="polite"
+     aria-label="Cargando SAMU-GLOBAL KITS">
 
-    /* Capa de luz: empuja el tono un 20% hacia blanco */
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(
-        160deg,
-        rgba(255, 255, 255, 0.2) 0%,
-        rgba(255, 255, 255, 0.08) 45%,
-        rgba(255, 255, 255, 0.22) 100%
-      );
-      pointer-events: none;
-      z-index: 1;
-    }
+  <!-- Logo GK — centro absoluto -->
+  <div class="relative z-10 flex flex-col items-center px-6 animate-fade-in">
+    <img
+      src="{{ url_for('static', filename='logo_gk.png') }}"
+      alt="GLOBAL KITS"
+      class="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 object-contain drop-shadow-xl animate-pulse"
+      style="animation-duration: 2.8s;"
+      onerror="this.onerror=null;this.src='{{ url_for('static', filename='logo_gk.svg') }}';"
+    />
+  </div>
 
-    @keyframes degradado-dinamico {
-      0% {
-        transform: translate(0, 0) rotate(0deg);
-        background-position: 0% 50%;
-      }
-      25% {
-        background-position: 50% 100%;
-      }
-      50% {
-        transform: translate(-5%, -3%) rotate(2deg);
-        background-position: 100% 50%;
-      }
-      75% {
-        background-position: 50% 0%;
-      }
-      100% {
-        transform: translate(0, 0) rotate(0deg);
-        background-position: 0% 50%;
-      }
-    }
+  <!-- Powered by SAMU — inferior izquierda -->
+  <div class="absolute bottom-4 left-4 z-10 flex items-center gap-2 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] opacity-70">
+    <span class="text-[10px] uppercase tracking-[0.22em] text-slate-600/90 sm:text-xs">Powered by</span>
+    <span class="text-xs font-semibold tracking-widest text-slate-700/80 sm:text-sm">SAMU</span>
+  </div>
+</div>
 
-    .bienvenido {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-      font-family: "Segoe UI", system-ui, sans-serif;
-      font-size: clamp(2.5rem, 8vw, 5rem);
-      font-weight: 700;
-      letter-spacing: 0.35em;
-      text-indent: 0.35em;
-      color: rgba(255, 255, 255, 0.95);
-      text-shadow: 0 2px 24px rgba(120, 100, 180, 0.35);
-      pointer-events: none;
-      user-select: none;
-    }
-  </style>
-</head>
-<body>
-  <h1 class="bienvenido">BIENVENIDO</h1>
-</body>
-</html>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PANEL PRINCIPAL — oculto hasta terminar el splash
+     ═══════════════════════════════════════════════════════════ -->
+<div id="main-panel" class="hidden min-h-screen min-h-[100dvh] flex-col bg-slate-950 text-white">
+
+  <!-- Navbar -->
+  <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md pt-[env(safe-area-inset-top)]">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+      <div class="flex min-w-0 items-center gap-3">
+        <img
+          src="{{ url_for('static', filename='logo_gk.png') }}"
+          alt=""
+          class="h-9 w-9 rounded-lg object-contain sm:h-10 sm:w-10"
+          onerror="this.onerror=null;this.src='{{ url_for('static', filename='logo_gk.svg') }}';"
+        />
+        <div class="min-w-0">
+          <p class="truncate text-sm font-bold tracking-wide text-indigo-300 sm:text-base">GLOBAL KITS</p>
+          {% if usuario is defined and usuario %}
+          <p class="truncate text-xs text-slate-400">{{ usuario }}</p>
+          {% endif %}
+        </div>
+      </div>
+      <nav class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <a href="{{ url_for('panel.inicio') }}"
+           class="inline-flex min-h-[44px] items-center rounded-lg px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-800">
+          Inicio
+        </a>
+        <a href="{{ url_for('login.cerrar_sesion') }}"
+           class="inline-flex min-h-[44px] items-center rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700">
+          Salir
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Contenido central -->
+  <main class="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-4 py-10 sm:px-6 lg:px-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+    <div class="grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <section class="col-span-1 flex min-h-[50vh] items-center justify-center md:col-span-2 lg:col-span-3">
+        <h1 class="max-w-3xl text-center text-2xl font-bold leading-tight text-white sm:text-3xl md:text-4xl lg:text-5xl">
+          Bienvenido al Panel de Control de GLOBAL KITS
+        </h1>
+      </section>
+    </div>
+  </main>
+</div>
+
+
+<script>
+(function () {
+  var splash = document.getElementById("splash-screen");
+  var main   = document.getElementById("main-panel");
+  if (!splash || !main) return;
+
+  setTimeout(function () {
+    splash.classList.add("opacity-0");
+    setTimeout(function () {
+      splash.style.display = "none";
+      main.classList.remove("hidden");
+      main.classList.add("flex");
+    }, 500);
+  }, 2500);
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión · SAMU-GLOBAL KITS{% endblock %}
+{% block body %}
+<div class="relative flex min-h-screen min-h-[100dvh] items-center justify-center overflow-hidden px-4 py-8">
+  <!-- Fondo degradado animado -->
+  <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-pink-300/40 via-indigo-300/40 to-white/50"></div>
+  <div class="pointer-events-none absolute -inset-1/2 h-[200%] w-[200%] animate-pulse bg-gradient-to-r from-rose-200/30 via-sky-200/30 to-violet-200/30 opacity-70" style="animation-duration:14s"></div>
+
+  <form method="post" action="{{ url_for('login.iniciar_sesion') }}"
+        class="relative z-10 w-full max-w-md rounded-2xl border border-white/50 bg-white/70 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <h1 class="text-center text-2xl font-bold text-slate-900">SAMU-GLOBAL KITS</h1>
+    <p class="mt-1 mb-6 text-center text-sm text-slate-600">Inicio de sesión — comités y administración</p>
+
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% if mensajes %}
+        {% for categoria, mensaje in mensajes %}
+          <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-800">{{ mensaje }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="grid grid-cols-1 gap-4">
+      <label class="block text-sm font-semibold text-slate-800">
+        Usuario
+        <input type="text" name="usuario" required autocomplete="username"
+               class="mt-1 w-full min-h-[48px] rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+      </label>
+      <label class="block text-sm font-semibold text-slate-800">
+        Contraseña
+        <input type="password" name="clave" required autocomplete="current-password"
+               class="mt-1 w-full min-h-[48px] rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+      </label>
+      <button type="submit"
+              class="mt-2 min-h-[48px] w-full rounded-xl bg-gradient-to-r from-indigo-600 to-blue-500 font-bold text-white shadow-lg hover:brightness-105 active:scale-[0.98]">
+        Entrar
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

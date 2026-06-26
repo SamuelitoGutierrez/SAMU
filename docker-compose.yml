@@ -1,0 +1,48 @@
+# SAMU-GLOBAL KITS — Persistencia absoluta en VPS
+# Volúmenes en el host: los datos sobreviven Restart / Redeploy en Coolify
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: samu_global_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-samu}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD}
+    volumes:
+      # CRÍTICO: datos PostgreSQL fuera del contenedor
+      - /data/postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-samu}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: samu_global_web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      ENTORNO: produccion
+      SECRET_KEY: ${SECRET_KEY:?Defina SECRET_KEY}
+      DB_HOST: postgres
+      DB_NAME: ${DB_NAME:-samu}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: 5432
+      PUBLIC_URL: ${PUBLIC_URL:-http://85.31.62.90:3000}
+      STORAGE_DOCUMENTS: /app/storage/documents
+      LOGIN_USER: ${LOGIN_USER:-admin}
+      LOGIN_PASSWORD: ${LOGIN_PASSWORD:-admin123}
+      LOGIN_NOMBRE: ${LOGIN_NOMBRE:-Administrador}
+      FLASK_DEBUG: "0"
+      SESSION_COOKIE_SECURE: "0"
+    volumes:
+      # CRÍTICO: PDFs, cotizaciones y anexos fuera del contenedor
+      - /data/storage/documents:/app/storage/documents
+    depends_on:
+      postgres:
+        condition: service_healthy

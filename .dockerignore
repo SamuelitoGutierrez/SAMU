@@ -1,5 +1,7 @@
-.env
-__pycache__/
+venv
+__pycache__
 *.pyc
+.git
+.env
 storage/documents/*
 !storage/documents/.gitkeep
