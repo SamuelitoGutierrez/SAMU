@@ -79,7 +79,27 @@
         background-position: 0% 50%;
       }
     }
+
+    .bienvenido {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 700;
+      letter-spacing: 0.35em;
+      text-indent: 0.35em;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 2px 24px rgba(120, 100, 180, 0.35);
+      pointer-events: none;
+      user-select: none;
+    }
   </style>
 </head>
-<body></body>
+<body>
+  <h1 class="bienvenido">BIENVENIDO</h1>
+</body>
 </html>
