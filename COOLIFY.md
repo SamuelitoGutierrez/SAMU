@@ -1,82 +1,101 @@
-# SAMU-GLOBAL KITS — Persistencia en Coolify / VPS
+# SAMU-GLOBAL KITS — Despliegue Coolify (VPS 85.31.62.90)
 
-Servidor: **http://85.31.62.90:3000/**
+## Error `ERR_CONNECTION_TIMED_OUT` — solución
 
-## 1. Volúmenes obligatorios (anti-borrado en Restart / Redeploy)
+Ese error significa que **nada responde en el puerto 3000**. Sigue estos pasos en Coolify:
 
-En el VPS, crea las carpetas **antes** del primer despliegue:
+### Paso 1 — Puerto expuesto en Coolify
 
-```bash
-sudo mkdir -p /data/postgres_data
-sudo mkdir -p /data/storage/documents/cotizaciones
-sudo mkdir -p /data/storage/documents/boletas
-sudo mkdir -p /data/storage/documents/anexos
-sudo chown -R 999:999 /data/postgres_data
-sudo chown -R 1000:1000 /data/storage/documents
+En tu aplicación → **General** → **Ports**:
+
+| Campo | Valor |
+|-------|-------|
+| **Ports Exposes** | `3000` |
+| **Port Mappings** | `3000:3000` |
+
+Guarda y haz **Redeploy**.
+
+### Paso 2 — Comando de inicio (Build Pack / Docker)
+
+Usa el **Dockerfile** del repo (incluye `start.sh` que lee `$PORT`):
+
+```
+# No cambies el CMD — el Dockerfile ya usa start.sh
 ```
 
-### Opción A — docker-compose (recomendado)
+Si usas **Custom Start Command**, pon:
 
-```bash
-docker compose up -d --build
+```
+/app/start.sh
 ```
 
-El archivo `docker-compose.yml` ya mapea:
+**No uses** `python main.py` en producción.
 
-| Host (VPS) | Contenedor | Contenido |
-|------------|------------|-----------|
-| `/data/postgres_data` | `/var/lib/postgresql/data` | Base de datos PostgreSQL |
-| `/data/storage/documents` | `/app/storage/documents` | PDF, cotizaciones, boletas |
+### Paso 3 — Variables de entorno obligatorias
 
-### Opción B — Coolify UI (servicio manual)
-
-En **Storages / Volumes** del proyecto:
-
-1. **PostgreSQL**: montar `/data/postgres_data` → `/var/lib/postgresql/data`
-2. **App Flask**: montar `/data/storage/documents` → `/app/storage/documents`
-
-Sin estos volúmenes, un Redeploy **borra** usuarios, inventario y archivos.
-
-## 2. Variables de entorno en Coolify
+En Coolify → **Environment Variables**:
 
 ```
 ENTORNO=produccion
-SECRET_KEY=<mínimo 32 caracteres aleatorios>
-DB_HOST=postgres
+PORT=3000
+SECRET_KEY=pon_aqui_una_clave_larga_aleatoria_de_32_caracteres_minimo
+DB_HOST=<nombre-interno-postgres-coolify>
 DB_NAME=samu
 DB_USER=postgres
-DB_PASSWORD=<tu_clave>
+DB_PASSWORD=tu_clave_postgres
 DB_PORT=5432
 PUBLIC_URL=http://85.31.62.90:3000
 STORAGE_DOCUMENTS=/app/storage/documents
 LOGIN_USER=admin
-LOGIN_PASSWORD=<clave_segura>
-FLASK_DEBUG=0
-PORT=3000
+LOGIN_PASSWORD=tu_clave_admin
 ```
 
-## 3. Comando de arranque
+**`DB_HOST`**: en Coolify copia el **Internal URL / hostname** del servicio PostgreSQL (NO uses `localhost`).
 
-```
-gunicorn -w 2 -b 0.0.0.0:3000 --timeout 120 main:app
-```
+### Paso 4 — Volúmenes persistentes
 
-## 4. Comprobar salud
+| Ruta en VPS | Montar en contenedor |
+|-------------|----------------------|
+| `/data/postgres_data` | `/var/lib/postgresql/data` (servicio Postgres) |
+| `/data/storage/documents` | `/app/storage/documents` (app Flask) |
 
-```
-GET http://85.31.62.90:3000/health
-```
+En el VPS (SSH):
 
-Respuesta esperada:
-
-```json
-{"ok": true, "app": "SAMU-GLOBAL KITS", "db": true, "storage": "/app/storage/documents"}
+```bash
+sudo mkdir -p /data/postgres_data /data/storage/documents
 ```
 
-## 5. Seguridad implementada
+### Paso 5 — Firewall del VPS
 
-- CSRF en formularios (Flask-WTF)
-- `SECRET_KEY` obligatoria en producción
-- Contraseñas con hash **scrypt** (Werkzeug)
-- Cookies de sesión `HttpOnly` + `SameSite=Lax`
-- Documentos fuera del contenedor en volumen persistente
+Abre el puerto 3000 si accedes por IP directa:
+
+```bash
+sudo ufw allow 3000/tcp
+sudo ufw reload
+```
+
+### Paso 6 — Verificar logs en Coolify
+
+Tras Redeploy, en **Logs** debe aparecer:
+
+```
+SAMU-GLOBAL KITS
+Escuchando en 0.0.0.0:3000
+```
+
+Si ves error de Python al importar, revisa variables de entorno.
+
+### Paso 7 — Probar
+
+1. http://85.31.62.90:3000/ping → `{"ok": true}`
+2. http://85.31.62.90:3000/health → `"db": true`
+3. http://85.31.62.90:3000/login → pantalla de login
+
+---
+
+## Alternativa: URL de Coolify (sin puerto 3000)
+
+Coolify puede dar una URL tipo `https://samu.tudominio.com` por proxy (puertos 80/443).
+En ese caso usa esa URL en lugar de `:3000`.
+
+Configura `PUBLIC_URL` con la URL real que uses.

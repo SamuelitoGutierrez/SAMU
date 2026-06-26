@@ -4,6 +4,7 @@ WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    PORT=3000 \
     STORAGE_DOCUMENTS=/app/storage/documents
 
 RUN mkdir -p /app/storage/documents/cotizaciones \
@@ -14,7 +15,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+RUN chmod +x /app/start.sh
 
 EXPOSE 3000
 
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:3000", "--timeout", "120", "main:app"]
+# Coolify inyecta PORT — start.sh lo usa automáticamente
+CMD ["/app/start.sh"]

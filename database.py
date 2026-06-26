@@ -37,49 +37,64 @@ def _cargar_env_manual():
 _cargar_env_manual()
 
 
-def env(nombre, requerido=True, default=None):
+def env(nombre, default=None):
     valor = os.environ.get(nombre)
     if valor not in (None, ""):
         return valor
-    if default is not None:
-        return default
-    if requerido:
-        raise RuntimeError(f"Variable de entorno obligatoria: {nombre}")
-    return ""
+    return default
 
 
-DB = {
-    "host": env("DB_HOST"),
-    "database": env("DB_NAME"),
-    "user": env("DB_USER"),
-    "password": env("DB_PASSWORD"),
-    "port": int(env("DB_PORT", requerido=False, default="5432")),
-}
+def db_config():
+    """Lee configuración DB solo cuando se necesita (no rompe el arranque)."""
+    return {
+        "host": env("DB_HOST", "localhost"),
+        "database": env("DB_NAME", "samu"),
+        "user": env("DB_USER", "postgres"),
+        "password": env("DB_PASSWORD", ""),
+        "port": int(env("DB_PORT", "5432") or "5432"),
+    }
 
-DATABASE_URL = (
-    f"postgresql://{DB['user']}:{quote_plus(DB['password'])}"
-    f"@{DB['host']}:{DB['port']}/{DB['database']}"
-)
+
+def database_url():
+    c = db_config()
+    if not c["password"]:
+        return None
+    return (
+        f"postgresql://{c['user']}:{quote_plus(c['password'])}"
+        f"@{c['host']}:{c['port']}/{c['database']}"
+    )
+
 
 _pool = None
+ULTIMO_ERROR_CONEXION = ""
 
 
 def pool_db():
-    global _pool
-    if _pool is None:
-        minc = int(env("DB_MIN_CONN", requerido=False, default="1"))
-        maxc = int(env("DB_MAX_CONN", requerido=False, default="20"))
-        _pool = pool.ThreadedConnectionPool(minc, maxc, dsn=DATABASE_URL)
-    return _pool
+    global _pool, ULTIMO_ERROR_CONEXION
+    if _pool is not None:
+        return _pool
+    url = database_url()
+    if not url:
+        ULTIMO_ERROR_CONEXION = "DB_PASSWORD o credenciales no configuradas"
+        raise RuntimeError(ULTIMO_ERROR_CONEXION)
+    try:
+        minc = int(env("DB_MIN_CONN", "1") or "1")
+        maxc = int(env("DB_MAX_CONN", "20") or "20")
+        _pool = pool.ThreadedConnectionPool(minc, maxc, dsn=url)
+        return _pool
+    except Exception as exc:
+        ULTIMO_ERROR_CONEXION = str(exc)
+        raise
 
 
 def conexion():
-    try:
-        return pool_db().getconn()
-    except pool.PoolError as e:
-        raise RuntimeError(f"Pool de conexiones agotado: {e}") from e
+    return pool_db().getconn()
 
 
 def liberar(conn):
     if conn and _pool:
-        pool_db().putconn(conn)
+        _pool.putconn(conn)
+
+
+def error_conexion():
+    return ULTIMO_ERROR_CONEXION or "Error de conexión PostgreSQL"

@@ -42,14 +42,27 @@ def crear_app():
 
     @app.route("/health")
     def health():
-        db_ok = init_db()
+        db_ok = False
+        db_err = None
+        try:
+            db_ok = init_db()
+            if not db_ok:
+                db_err = ultimo_error()
+        except Exception as exc:
+            db_err = str(exc)
         return jsonify({
             "ok": True,
             "app": Config.NOMBRE_APP,
+            "port": Config.PORT,
             "db": db_ok,
             "storage": str(docs),
-            "error_db": None if db_ok else ultimo_error(),
+            "error_db": db_err,
+            "public_url": Config.PUBLIC_URL,
         })
+
+    @app.route("/ping")
+    def ping():
+        return jsonify({"ok": True, "message": "SAMU-GLOBAL KITS en línea"})
 
     return app
 

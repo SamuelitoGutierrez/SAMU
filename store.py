@@ -5,7 +5,7 @@ import os
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config
-from database import conexion, liberar
+from database import conexion, error_conexion, liberar
 
 ULTIMO_ERROR = ""
 
@@ -102,7 +102,7 @@ def init_db():
         conn.commit()
         return True
     except Exception as exc:
-        ULTIMO_ERROR = str(exc)
+        ULTIMO_ERROR = str(exc) or error_conexion()
         if conn:
             conn.rollback()
         return False
